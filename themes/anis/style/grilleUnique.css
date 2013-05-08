@@ -1,0 +1,15 @@
+td.presence {
+	width: 10em;
+	font-size: 10pt;
+	font-weight: bold;
+}
+td.locker {
+	background-color: #efe;
+	padding:0;
+}
+div.dateGrille {
+	font-size: 11pt;
+}
+.shift {
+	font-size: 11pt;
+}

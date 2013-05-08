@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<title>Planning annuel des &eacute;quipes du CRNA/N</title>
+<style type="text/css">
+	body {
+		background-color: #aa779a;
+		font-family: "Times New Roman", serif;
+		font-size: 8pt;
+	}
+	a, div, img, form {
+		text-decoration: none;
+		margin: 0;
+		padding: 0;
+		border: 0;
+		outline: 0;
+		background: transparent;
+	}
+	label {
+		font-family: "times new roman", serif;
+		font-size: 9pt;
+		background-color: #b584a3;
+		padding: 5px;
+	}
+	#formula {
+		display: block;
+		float: left;
+		padding-top: 1em;
+		width: 15em;
+	}
+	#modemp {
+		display: block;
+		float: right;
+		width: 26em;
+		font-family: sans;
+		font-size: 14px;
+		text-align: justify;
+		background-color: #ffdddd;
+		color: #cc3333;
+		padding: 5px;
+		border: 1px solid #000;
+	}
+	.jazz {
+		background-color: #ecaaaa;
+		text-align: center;
+	}
+	td.jazz {
+		width: 2.5em;
+		height: 2em;
+	}
+	.tek {
+		text-align: center;
+		background-color: #dd9f9f;
+		width: 2em;
+		padding: 0px;
+	}
+	.vacation {
+		text-align: center;
+		font-family: serif;
+		font-size: 11px;
+		background-color: #777777;
+		color: #ffffff;
+		width: 2em;
+		height: 1.5em;
+	}
+	.repos {
+		font-family: serif;
+		font-size: 11px;
+		width: 3em;
+		height: 1.5em;
+	}
+	.jour {
+		text-align: center;
+		vertical-align: top;
+		font-family: Serif;
+		font-size: 11px;
+		background-color: #fddddd;
+		color: #000000;
+		width: 3em;
+	}
+	.weekend {
+		text-align: center;
+		vertical-align: top;
+		font-family: Serif;
+		font-size: 11px;
+		background-color: #aa9999;
+		color: #000000;
+		width: 3em;
+	}
+	.pointer {
+		color: #800000;
+		cursor: pointer;
+	}
+	.pointer:hover {
+		color: #320000;
+		cursor: pointer;
+	}
+	#info {
+		color: #ff0000;
+		background-color: #ffffff;
+		text-align: center;
+		width: 30em;
+		margin: 0;
+		padding: .3em;
+		border: outset;
+		float: left;
+		display: none;
+	}
+	#anno, #licence {
+		display: block;
+		float: left;
+		width: 100%;
+		text-align: center;
+	}
+	#calendar {
+		display: block;
+		float: left;
+		text-align: center;
+	}
+	#planning {
+		display: inline;
+	}
+	#licence {
+		margin-top: 7px;
+	}
+	div.spons {
+		display: block;
+		float: right;
+		width: 160px;
+		padding: 5px;
+		padding-bottom: 0;
+		margin-top: 4em;
+		text-align: center;
+	}
+	img.winsins {
+		width: 100px;
+		height: 124px;
+	}
+	img.gnu {
+		width: 62px;
+		height: 61px;
+	}
+	img.debian {
+		width: 50px;
+		height: 62px;
+	}
+</style>
+<script type="text/javascript">
+	<!--
+	function jourParMois(annee) {
+		var nb_jours = new Array;
+		nb_jours['Jan'] = 31;
+		nb_jours['Mar'] = 31;
+		nb_jours['Apr'] = 30;
+		nb_jours['May'] = 31;
+		nb_jours['Jun'] = 30;
+		nb_jours['Jul'] = 31;
+		nb_jours['Aug'] = 31;
+		nb_jours['Sep'] = 30;
+		nb_jours['Oct'] = 31;
+		nb_jours['Nov'] = 30;
+		nb_jours['Dec'] = 31;
+		if (annee%4 == 0 && annee%100 != 0 || annee%400 == 0)
+			nb_jours['Feb'] = 29;
+		else
+			nb_jours['Feb'] = 28;
+		nb_jours['total'] = 337 + nb_jours['Feb'];
+		return nb_jours;
+	}
+	var year = 2007;
+	var mois = new Array("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec");
+	var weekday=new Array(7);
+	weekday[0]="Sun";
+	weekday[1]="Mon";
+	weekday[2]="Tue";
+	weekday[3]="Wed";
+	weekday[4]="Thu";
+	weekday[5]="Fri";
+	weekday[6]="Sat";
+	function distanceBetweenYears(annee) {
+		var distance = 0;
+		for (var a = year; a < annee; a++) {
+			var nb_jours = jourParMois(a);
+			distance += nb_jours['total'];
+		}
+		return distance;
+	}
+	function drawTable(annee) {
+		if (window.attachEvent) {
+			var objTextAdv = document.createTextNode("Je ne peux garantir le fonctionnement sous votre navigateur. Aussi, je vous conseille d'installer un ");
+			var objTextAdvEnd = document.createTextNode('.');
+			var objLienFirefox = document.createElement('a');
+			objLienFirefox.setAttribute('href', 'http://www.mozilla.com/fr/');
+			var objTextLienFf = document.createTextNode('navigateur supporté');
+			objLienFirefox.appendChild(objTextLienFf);
+			var objAdvice = document.getElementById('info');
+			objAdvice.appendChild(objTextAdv);
+			objAdvice.appendChild(objLienFirefox);
+			objAdvice.appendChild(objTextAdvEnd);
+			objAdvice.style.display = 'block';
+		} else {
+			var objAdvice = document.getElementById('info');
+			objAdvice.style.display = 'none';
+		}
+		if (!annee || annee < year) {
+			var dat = new Date();
+			annee = dat.getYear();
+			if (annee < year)
+				annee += 1900;
+		}
+		var nb_jours = jourParMois(annee);
+		var objExisting = document.getElementById('calendar');
+		var objTitle = document.createElement('h1');
+		var objNextYear = document.createElement('a');
+		objTitle.setAttribute('id', 'anno');
+		objNextYear.appendChild(document.createTextNode('>'));
+		objNextYear.setAttribute('class', 'pointer');
+		var t = annee+1;
+		objNextYear.setAttribute('title', 'Afficher '+t)
+		objNextYear.onmousedown = function() {annee++;return fillDayTable(annee);};
+		var objPreviousYear = document.createElement('a');
+		objPreviousYear.appendChild(document.createTextNode('<'));
+		objPreviousYear.setAttribute('class', 'pointer');
+		if (annee>year)
+			t = annee-1;
+		else
+			t = annee;
+		objPreviousYear.setAttribute('title', 'Afficher '+t)
+		objPreviousYear.onmousedown = function() {if (annee>year) annee--;return fillDayTable(annee)};
+		objTitle.appendChild(objPreviousYear);
+		var objTable = document.createElement('table');
+		objTable.setAttribute('id', 'planning');
+		objTitle.appendChild(document.createTextNode(annee));
+		objTitle.appendChild(objNextYear);
+		var objRow = document.createElement('tr');
+		for (var day = 0; day <= 31; day++) {
+			var objCell = document.createElement('td');
+			if (day != 0) {
+				objCell.appendChild(document.createTextNode(day));
+				objCell.setAttribute('class', 'jazz');
+			}
+			else {
+				objCell.appendChild(document.createTextNode(''));
+				objCell.setAttribute('class', 'repos');
+			}
+			objRow.appendChild(objCell);
+		}
+		objTable.appendChild(objRow);
+		for (var month = 1; month <= 12; month++) {
+			var objRow = document.createElement('tr');
+			for (var day = 0; day <= 31; day++) {
+				var objCell = document.createElement('td');
+				if (day != 0) {
+					var objInsideTable = document.createElement('table');
+					var objInsideFirstRow = document.createElement('tr');
+					var objInsideFirstCell = document.createElement('td');
+					var objInsideSecondRow = document.createElement('tr');
+					var objInsideSecondCell = document.createElement('td');
+					objInsideFirstCell.appendChild(document.createTextNode(''));
+					var cid = 'c'+day+'l'+month;
+					objInsideFirstCell.setAttribute('id', cid);
+					objInsideFirstRow.appendChild(objInsideFirstCell);
+					objInsideSecondCell.appendChild(document.createTextNode(''));
+					var id = 'm'+month+'d'+day;
+					objInsideSecondCell.setAttribute('id', id);
+					objInsideSecondRow.appendChild(objInsideSecondCell);
+					objInsideTable.appendChild(objInsideFirstRow);
+					objInsideTable.appendChild(objInsideSecondRow);
+					objCell.appendChild(objInsideTable);
+					objCell.setAttribute('class', 'tek');
+				}
+				else {
+					objCell.appendChild(document.createTextNode(mois[month-1]));
+					objCell.setAttribute('class', 'jazz');
+				}
+				objRow.appendChild(objCell);
+			}
+			objTable.appendChild(objRow);
+		}
+		if (objExisting) {
+			objExisting.appendChild(objTitle);
+			objExisting.appendChild(objTable);
+		}
+		else {
+		}
+		fillDayTable(annee);
+		fillTeamTable();
+	}
+	function fillDayTable(annee) {
+		document.body.style.cursor = 'wait';
+		showInformation('Patientez.... Chargement en cours.');
+		if (!annee || annee < year)
+			return false;
+		var nb_jours = jourParMois(annee);
+		var objInsideFirstCell = document.getElementById('c29l2');
+		if (objInsideFirstCell)
+			objInsideFirstCell.replaceChild(document.createTextNode(''), objInsideFirstCell.firstChild);
+		var objInsideSecondCell = document.getElementById('m2d29');
+		if (objInsideSecondCell)
+			objInsideSecondCell.replaceChild(document.createTextNode(''), objInsideSecondCell.firstChild);
+		var objExisting = document.getElementById('calendar');
+		var objTitle = document.getElementById('anno');
+		objTitle.replaceChild(document.createTextNode(annee), objTitle.childNodes[1]);
+		for (var month = 1; month <= 12; month++) {
+			for (var day = 1; day <= nb_jours[mois[month-1]]; day++) {
+				var objInsideFirstCell = document.getElementById('c'+day+'l'+month);
+				var da = new Date (annee, month-1, day);
+				var jourDeSemaine = weekday[da.getDay()];
+				var clas;
+				if (da.getDay() == 0 || da.getDay() == 6)
+					clas = 'weekend';
+				else
+					clas = 'jour';
+				if (objInsideFirstCell) {
+					objInsideFirstCell.replaceChild(document.createTextNode(jourDeSemaine), objInsideFirstCell.firstChild);
+					objInsideFirstCell.setAttribute('class', clas);
+				}
+			}
+		}
+		fillTeamTable();
+		showInformation('');
+		document.body.style.cursor = 'auto';
+	}
+	function fillTeamTable() {
+		var cycle = new Array ('J1', 'S1', 'N', '', '', '', 'M', 'J2', 'S2', '', '', '');
+		var objTitle = document.getElementById('anno');
+		var annee = objTitle.childNodes[1].data;
+		var objSelect = document.getElementById('team');
+		var team = objSelect.options.selectedIndex;
+		var distanceModulo = distanceBetweenYears(annee) % cycle.length;
+		var indexFirstDay = 11 - team + distanceModulo;
+		var nb_jours = jourParMois(annee);
+		for (var month = 1; month <= 12; month++) {
+			for (var day = 1; day <= nb_jours[mois[month-1]]; day++) {
+				var objInsideSecondCell = document.getElementById('m'+month+'d'+day);
+				var vacation = cycle[indexFirstDay%cycle.length];
+				if (vacation == '')
+					objInsideSecondCell.setAttribute('class', 'repos');
+				else
+					objInsideSecondCell.setAttribute('class', 'vacation');
+				indexFirstDay++;
+				if (objInsideSecondCell)
+					objInsideSecondCell.replaceChild(document.createTextNode(vacation), objInsideSecondCell.firstChild);
+			}
+		}
+	}
+	function showInformation(info) {
+		var objDiv = document.getElementById('info');
+		if (objDiv.firstChild)
+			objDiv.replaceChild(document.createTextNode(info), objDiv.firstChild);
+		else
+			objDiv.appendChild(document.createTextNode(info));
+		window.document.close();
+	}
+	-->
+</script>
+</head>
+<body onload="drawTable()">
+	<form method="post" action="#">
+		<div id="formula">
+			<label>Planning de l'</label>
+			<select id="team" class="jazz" onchange="fillTeamTable();">
+				<option value="0">&Eacute;quipe 1</option>
+				<option value="1">&Eacute;quipe 2</option>
+				<option value="2">&Eacute;quipe 3</option>
+				<option value="3">&Eacute;quipe 4</option>
+				<option value="4">&Eacute;quipe 5</option>
+				<option value="5">&Eacute;quipe 6</option>
+				<option value="6">&Eacute;quipe 7</option>
+				<option value="7">&Eacute;quipe 8</option>
+				<option value="8">&Eacute;quipe 9</option>
+				<option value="9" selected="selected">&Eacute;quipe 10</option>
+				<option value="10">&Eacute;quipe 11</option>
+				<option value="11">&Eacute;quipe 12</option>
+			</select>
+		</div>
+	</form>
+	<div id="info">
+	</div>
+	<div id="modemp">
+		Vous pouvez faire varier l'ann&eacute;e en cliquant les chevrons entourant l'ann&eacute;e actuellement affich&eacute;e.
+	</div>
+	<div id="calendar">
+	</div>
+	<div class="spons">
+		<a href="http://www.upgradefromwindows8.com"><img src="http://static.fsf.org/fsforg/graphics/windows-infographic_share.png" style="width:150px; height:150px" alt="Close Windows, Open Doors"/></a>
+		<a href="http://www.defectivebydesign.org/no-drm-in-html5/fr"><img src="/resources/hollywebshare.jpeg" alt="Stop DRM" /></a><br />
+		<a href="http://www.gnu.org/home.fr.html" title="GNU"><img src="/resources/gnu.png" alt="GNU" class="gnu" /></a>
+		<a href="http://www.debian.org" title="GNU"><img src="/resources/openlogo-100.png" alt="GNU" class="debian" /></a>
+	</div>
+	<div id="licence">Ce code est distribu&eacute; sous les termes de la <a href="http://www.gnu.org/licenses/agpl.html"><img src="/resources/agplv3-88x31.png" alt="AGPL v3" /></a><br />
+		<a href="http://www.manioul.org">http://www.manioul.org</a>
+	</div>
+</body>
+</html>

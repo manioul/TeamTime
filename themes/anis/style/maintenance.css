@@ -1,0 +1,79 @@
+body {
+	font-family: "Times New Roman", Times, "Liberation Serif", FreeSerif, serif;
+	font-size: 11pt;
+	background-color: #010;
+	color: #7b2;
+	margin: 0;
+	padding: 0;
+}
+h1 {
+	display: block;
+	width: 600px;
+	color: #793;
+}
+p {
+	padding-top: 8px;
+	text-align: justify;
+}
+div#container {
+	width: 600px;
+	margin: auto;
+	margin-top: 10px;
+	padding: 10px;
+	border: 1px solid #353;
+}
+.intro {
+	text-indent: 5em;
+}
+.signature {
+	margin-top: 2em;
+	padding-right: 5em;
+	text-align: right;
+}
+#dConnexion {
+	display: none;
+}
+input {
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	width: 8em;
+	font-size: 7pt;
+	background-color: #590;
+	color: #020;
+	border: 1px solid #363;
+	border-radius: 10px;
+}
+ul {
+	margin: 0;
+	padding: 5px;
+	list-style-type: none;
+	cursor: pointer;
+}
+div {
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	-ms-border-radius: 10px;
+}
+div#login {
+	float: right;
+	color: #242;
+	padding: 0;
+	margin: 5px;
+	width: 9em;
+	border: 1px solid #131;
+}
+div#login:hover {
+	-moz-transform: translateY(-3px) scale(1.05);
+	-moz-box-shadow: 0px 2px 7px #999;
+	-webkit-transform: translateY(-3px) scale(1.05);
+	-webkit-box-shadow: 0px 2px 7px #999;
+	-ms-transform: translateY(-3px) scale(1.05);
+	-ms-box-shadow: 0px 2px 7px #999;
+	box-shadow: 0px 2px 7px #999;
+}
+li div#dConnexion {
+	display: none;
+}
+li:hover div#dConnexion {
+	display: block;
+}

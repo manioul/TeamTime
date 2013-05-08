@@ -1,0 +1,212 @@
+
+/* Main menu */
+
+ul.menuHor
+{
+	display:table; /* Ceci permet de ne pas avoir un menu sur toute la largeur du parent. Sinon supprimer ou remplacer par width:100% */
+	margin: auto; /* auto pour centrer le menu dans le parent ; 0 pour le placer à gauche */
+	margin-bottom:15px;
+	margin-top:5px;
+	padding: 10px 0 0 0;
+	list-style: none;  
+	background: rgba(85,153,102,.9);
+	background: -moz-linear-gradient(rgba(153,204,153,.9), rgba(85,153,102,.9)); 
+	background: -webkit-gradient(linear,left bottom,left top,color-stop(0, rgba(85,153,102,.9)),color-stop(1, rgba(153,204,153,.9)));	
+	background: -webkit-linear-gradient(rgba(153,204,153,.9), rgba(85,153,102,.9));	
+	background: -o-linear-gradient(rgba(153,204,153,.9), rgba(85,153,102,.9));
+	background: -ms-linear-gradient(rgba(153,204,153,.9), rgba(85,153,102,.9));
+	background: linear-gradient(rgba(153,204,153,.9), rgba(85,153,102,.9));
+	-moz-border-radius: 50px;
+	border-radius: 50px;
+	-moz-box-shadow: 0 2px 1px #9c9c9c;
+	-webkit-box-shadow: 0 2px 1px #9c9c9c;
+	box-shadow: 0 2px 1px #9c9c9c;
+}
+
+ul.menuHor li
+{
+	float: left;
+	padding: 0 0 10px 0;
+	position: relative;
+	line-height: 0;
+}
+
+ul.menuHor a
+{
+	float: left;
+	height: 25px;
+	padding: 0 25px;
+	color: #020;
+	text-transform: uppercase;
+	font: bold 12px/25px Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	text-decoration: none;
+	text-shadow: 1px 1px 0 #aaccbb;
+}
+
+ul.menuHor li:hover > a,
+ul.menuHor li:focus > a
+{
+	text-shadow: 1px 1px 0 #97d697;
+}
+
+*html ul.menuHor li a:hover, /* IE6 */
+*html ul.menuHor li a:focus /* IE6 */
+{
+	color: #fafafa;
+}
+
+ul.menuHor li:hover > ul,
+ul.menuHor li:focus > ul
+{
+	display: block;
+}
+
+/* Sub-menu */
+
+ul.menuHor ul
+{
+    list-style: none;
+    margin: 0;
+    padding: 0;    
+    display: none;
+    position: absolute;
+    top: 35px;
+    left: 0;
+    z-index: 99999;    
+    background: rgba(153,204,153,.9);
+    background: -moz-linear-gradient(rgba(153,204,153,.9), rgba(85,153,102,.9));
+    background: -webkit-gradient(linear,left bottom,left top,color-stop(0, rgba(85,153,102,.9)),color-stop(1, rgba(153,204,153,.9)));
+    background: -webkit-linear-gradient(rgba(153,204,153,.9), rgba(85,153,102,.9));    
+    background: -o-linear-gradient(rgba(153,204,153,.9), rgba(85,153,102,.9));	
+    background: -ms-linear-gradient(rgba(153,204,153,.9), rgba(85,153,102,.9));	
+    background: linear-gradient(rgba(153,204,153,.9), rgba(85,153,102,.9));
+    -moz-box-shadow: 0 0 2px rgba(255,255,255,.5);
+    -webkit-box-shadow: 0 0 2px rgba(255,255,255,.5);
+    box-shadow: 0 0 2px rgba(255,255,255,.5);	
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+
+ul.menuHor ul ul
+{
+  top: 0;
+  left: 150px;
+}
+
+ul.menuHor ul li
+{
+    float: none;
+    margin: 0;
+    padding: 0;
+    display: block;  
+    -moz-box-shadow: 0 1px 0 #111111, 0 2px 0 #777777;
+    -webkit-box-shadow: 0 1px 0 #111111, 0 2px 0 #777777;
+    box-shadow: 0 1px 0 #111111, 0 2px 0 #777777;
+}
+
+ul.menuHor ul li:last-child
+{   
+    -moz-box-shadow: none;
+    -webkit-box-shadow: none;
+    box-shadow: none;    
+}
+
+ul.menuHor ul a
+{    
+    padding: 10px;
+	height: 10px;
+	min-width: 130px;
+	height: auto;
+    line-height: 1;
+    display: block;
+    white-space: nowrap;
+    float: none;
+	text-transform: none;
+}
+
+*html ul.menuHor ul a /* IE6 */
+{    
+	height: 10px;
+}
+
+*:first-child+html ul.menuHor ul a /* IE7 */
+{    
+	height: 10px;
+}
+
+ul.menuHor ul a:hover,
+ul.menuHor ul a:focus
+{
+	background: #5a7;
+	background: -moz-linear-gradient(#ccffcc,  #0186ba);	
+	background: -webkit-gradient(linear, left top, left bottom, from(#ccffcc), to(#0186ba));
+	background: -webkit-linear-gradient(#ccffcc,  #0186ba);
+	background: -o-linear-gradient(#ccffcc,  #0186ba);
+	background: -ms-linear-gradient(#ccffcc,  #0186ba);
+	background: linear-gradient(#ccffcc, #5a7);
+}
+
+ul.menuHor ul li:first-child > a
+{
+    -moz-border-radius: 5px 5px 0 0;
+    border-radius: 5px 5px 0 0;
+}
+
+ul.menuHor ul li:first-child > a:after
+{
+    content: '';
+    position: absolute;
+    left: 30px;
+    top: -8px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-bottom: 8px solid rgba(153,204,153,.9);
+}
+
+ul.menuHor ul ul li:first-child a:after
+{
+    left: -8px;
+    top: 12px;
+    width: 0;
+    height: 0;
+    border-left: 0;	
+    border-bottom: 5px solid transparent;
+    border-top: 5px solid transparent;
+    border-right: 8px solid rgba(153,204,153,.9);
+}
+
+ul.menuHor ul li:first-child a:hover:after,
+ul.menuHor ul li:first-child a:focus:after
+{
+    border-bottom-color: #ccffcc; 
+}
+
+ul.menuHor ul ul li:first-child a:hover:after,
+ul.menuHor ul ul li:first-child a:focus:after
+{
+    border-right-color: #ccffcc; 
+    border-bottom-color: transparent; 	
+}
+
+
+ul.menuHor ul li:last-child > a
+{
+    -moz-border-radius: 0 0 5px 5px;
+    border-radius: 0 0 5px 5px;
+}
+
+/* Clear floated elements */
+ul.menuHor:after 
+{
+	visibility: hidden;
+	display: block;
+	font-size: 0;
+	content: " ";
+	clear: both;
+	height: 0;
+}
+
+* html ul.menuHor             { zoom: 1; } /* IE6 */
+*:first-child+html ul.menuHor { zoom: 1; } /* IE7 */

@@ -1,0 +1,62 @@
+/*
+ * TimeInfo
+*/
+div#timeInfo {
+	width: 100%;
+	font-size: 5pt;
+	text-align: center;
+	margin-top: 10px;
+	padding: 2px;
+	color: #fff;
+	background-color: #373;
+}
+div#timeInfo .temps {
+	color: #711;
+	background-color: #ddd;
+}
+div#timeInfo table {
+	border-spacing: 0;
+	padding: 8px;
+	margin: auto;
+	border: none;
+	background-color: #373;
+}
+div#timeInfo th {
+	font-size: 5pt;
+	background-color: #373;
+	padding: 0;
+	padding-top: 5px;
+	border-top: 1px dashed #fff;
+}
+div#timeInfo td {
+	background-color: #373;
+	border: 1px dashed #fff;
+}
+/*
+ * Fin TimeInfo
+*/
+#debugMessages {
+	margin-left: 15px;
+}
+#debugMessages a {
+	font-size: .6em;
+	color: #555;
+}
+#debugMessages a:hover {
+	color: #999;
+}
+#debugMessages dl {
+	font-size: .6em;
+}
+#debugMessages dt {
+	display: inline;
+	margin: 0;
+	margin-left: 15px;
+	margin-right: 15px;
+	padding: 0;
+}
+#debugMessages dd {
+	display: inline;
+	margin: 0;
+	padding: 0;
+}

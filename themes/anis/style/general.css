@@ -1,0 +1,224 @@
+* {
+	margin:0;
+	padding:0;
+	border:0;
+}
+body {
+	font-family: "Times New Roman", Times, "Liberation Serif", FreeSerif, serif;
+	font-size: 8pt;
+	background-color: #efe;
+	margin: 0;
+	padding: 0;
+}
+h1 {
+	display: block;
+	margin: auto;
+	text-align: center;
+	color: #050;
+}
+h2 {
+	margin: 1em;
+	margin-top: 1.5em;
+}
+a {
+	text-decoration: none;
+}
+/*
+ * Page gestion.php
+ */
+div#dBriefing {
+	width:950px;
+	margin:auto;
+}
+div#dBriefing table {
+	margin: 10px;
+	margin-left:5em;
+}
+.genElem {
+	margin:auto;
+}
+/*
+ * fin page gestion.php
+ */
+div#contenu {
+	margin:auto;
+	width:98%;
+}
+div#container {
+	margin: auto;
+	width: 300px;
+}
+div.logo {
+	background: url('../images/glue.png') 0 0 no-repeat;
+	width:75px;
+	height:50px;
+}
+div.boule {
+	background: url('../images/glue.png') -47px -50px no-repeat;
+	width:20px;
+	height:20px;
+}
+div#logologin {
+	display: block;
+	margin-left: 10px;
+	float: left;
+	width: 75px;
+	height: 50px;
+}
+div.imgwrapper12 {
+	position:relative;
+	width:12px;
+	height:12px;
+}
+div.imgwrapper24 {
+	position:relative;
+	width:24px;
+	height:24px;
+}
+img.cnl {
+	position:absolute;
+	left:-75px;
+	top:-24px;
+	clip:rect(24px, 87px, 36px, 75px);
+}
+div.nav-present {
+	float:left;
+	padding-left:40px;
+	padding-right:30px;
+}
+div.nav-prev,div.nav-next {
+	position:relative;
+	float:left;
+}
+img.nav-prev {
+	position:absolute;
+	left:-63px;
+	top:-50px;
+	clip:rect(48px, 75px, 63px, 63px);
+}
+img.nav-next {
+	position:absolute;
+	left:-75px;
+	top:-12px;
+	clip:rect(12px, 87px, 24px, 75px);
+}
+img.cadenasO {
+	position:absolute;
+	left:-75px;
+	top:-36px;
+	clip:rect(36px, 87px, 48px, 75px);
+}
+img.cadenasF {
+	position:absolute;
+	left:-75px;
+	top:-48px;
+	clip:rect(48px, 87px, 60px, 75px);
+}
+/*
+ * Éléments de formulaire
+ */
+input, textarea {
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	font-size: 7pt;
+	background-color: #cfc;
+	color: #060;
+	border: 1px solid #060;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	border-radius: 3px;
+}
+label {
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	font-size: 7pt;
+	color: #060;
+	vertical-align: top;
+	padding: 5px;
+}
+select {
+	background-color: #cfc;
+}
+div#dConnexion {
+	width: 70px;
+	margin: auto;
+}
+div#dConnexion input {
+	margin-top: 3px;
+	width: 70px;
+	height: 1.5em;
+	font-size: 7pt;
+}
+table {
+	border-spacing: 2px;
+	/*border-top: 5px solid #9b9;*/
+	border-right: 5px solid #9b9;
+	border-bottom: 5px solid #beb;
+	border-left: 5px solid #beb;
+	background-color: #eee;
+	border-radius: 8px;
+	-moz-border-radius: 8px;
+	-ms-border-radius: 8px;
+	-o-border-radius: 8px;
+	-webkit-border-radius: 8px;
+}
+th {
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	font-weight: bold;
+	font-size: 9pt;
+	background-color: #dfd;
+}
+td {
+	padding: 5px;
+	text-align: center;
+	background-color: #faffcc;
+	border-radius:3px;
+	-moz-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	-webkit-border-radius: 3px;
+}
+/*
+ * Fenêtre d'information
+ */
+div#info {
+	position: absolute;
+	font-size: 2em;
+	display: none;
+	background-color: rgba(255,255,255,.9);
+	padding: 5px;
+	left: 300px;
+	top: 300px;
+	z-index:9999;
+}
+
+/*
+ * notes de version
+ */
+div#notesversion {
+	position: relative;
+	vertical-align: bottom;
+	margin-top: 5em;
+	padding: 10px;
+	width: 100%;
+	font-size: 9pt;
+	text-align: center;
+	color: #575;
+	background-color: #fff;
+}
+
+/*
+ * Choix du thème
+ */
+#choixTheme {
+	display: block;
+	float: right;
+	margin-right: 15px;
+}
+
+.redBorder {
+	border: 1px solid #f00;
+}
+.noBorder {
+	border: 0;
+}

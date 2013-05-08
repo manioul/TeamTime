@@ -1,0 +1,31 @@
+INSTALLATION NOTES
+******************
+
+Requirements
+------------
+
+A functionning smarty3 installation:
+aptitude install smarty3
+
+
+Installation of files
+---------------------
+
+Copy All the files in a directory and adapt your webserver configuration to
+point to this directory.
+
+Database configuration
+----------------------
+Create an empty database with the name you wish.
+
+Create a user with USAGE rights on this database and adapt globals_db.inc.php
+accordingly:
+  'admin' => array (...)
+
+Create the structure of the database using structure_db.sql.
+
+Adapt the installation directory in constantes.inc.php:
+  INSTALL_DIR
+
+Adapt the values in config.inc.php. Mainly $DEBUG and properties of the
+session cookie ($conf['session_cookie'])

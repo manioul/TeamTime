@@ -1,0 +1,222 @@
+/*
+ * Planning
+*/
+.annee {
+	height: 25px;
+}
+.idxJour {
+	font-size: 1em;
+	width: 33px;
+}
+table#grille {
+	margin: auto;
+}
+th.ferie {
+	background-color: #90c990;
+}
+th.conf {
+	cursor: pointer;
+}
+/* Période de charge sur la grille */
+div.charge {
+	height: 3px;
+	background-color: #f00;
+	border-top: 1px solid #fff;
+}
+div.notcharge {
+	height: 3px;
+	border-top: 1px solid #fff;
+}
+/* Vacances scolaires sur la grille */
+div.vacances {
+	height: 3px;
+	background-color: #00f;
+}
+div.notvacances {
+	height: 3px;
+}
+/* Période de briefing sur la grille */
+div.brief {
+	height: 3px;
+	background-color: #f90;
+	border-top: 1px solid #fff;
+}
+div.nobrief {
+	height: 3px;
+	border-top: 1px solid #fff;
+}
+.dateGrille {
+	text-align: center;
+	font-size: 9pt;
+	font-weight: normal;
+}
+/*
+ * Affichage des utilisateurs dans la grille
+*/
+td.nom {
+	font-weight: bold;
+	font-size: 12px;
+	padding: 1px;
+	width: 120px;
+	height: 22px;
+	cursor: pointer;
+}
+td.cds {
+	background-color: #50d053;
+}
+td.ce {
+	background-color: #72f676;
+}
+td.pc {
+	background-color: #93fda9;
+}
+td.c {
+	background-color: #b7f9bf;
+}
+td.dtch {
+	color: #900;
+}
+td.presence {
+	text-align: center;
+	font-size: 9pt;
+	font-weight: normal;
+	width: 2.5em;
+	cursor: pointer;
+}
+td.presence:hover {
+}
+/* Protection de la grille */
+td.protected {
+	color: #300;
+	cursor: default;
+}
+td.present {
+	background-color: #ccffcc;
+}
+td.absent {
+	background-color: #99cc99;
+}
+.pointer {
+	cursor: pointer;
+}
+.jdsc {
+	font-size: .9em;
+}
+div.ferie {
+	background-color: #ddb;
+	height: 1.2em;
+}
+div.semaine {
+	background-color: #f0f0c0;
+	height: 1.2em;
+}
+.shift {
+	font-size: 12px;
+	font-weight: bold;
+	text-align: center;
+	height: 1.2em;
+}
+.monat {
+	font-weight: bold;
+	background-color: #dfd;
+}
+/*
+ * Fenêtre de proposition de dispo
+*/
+div#sandbox {
+	position: absolute;
+	background: rgba(240,255,240,.8);
+	width:5em;
+	z-index: 90;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	border-radius: 3px;
+	box-shadow: 0 1px 3px rgba(0,0,0,.3),
+	0 3px 5px rgba(0,0,0,.2),
+	0 5px 10px rgba(0,0,0,.2),
+	0 20px 20px rgba(0,0,0,.15);
+}
+div#sandbox ul {
+	list-style-type: none;
+	font-size: .9em;
+}
+div#sandbox li {
+	margin: 0;
+	padding-left: 3px;
+	padding-right: 3px;
+}
+div#sandbox li:hover {
+	cursor: pointer;
+	font-weight: bold;
+	background-color: rgba(180,255,180,.5);
+	color:#330;
+	-moz-transform: translateY(-3px) scale(1.25);
+	-moz-box-shadow: 0px 2px 7px #999;
+	-webkit-transform: translateY(-3px) scale(1.2);
+	-webkit-box-shadow: 0px 2px 7px #999;
+	-ms-transform: translateY(-3px) scale(1.2);
+	-ms-box-shadow: 0px 2px 7px #999;
+	box-shadow: 0px 2px 7px #999;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	border-radius: 3px;
+	box-shadow: 0 1px 3px rgba(0,0,0,.3),
+	0 3px 5px rgba(0,0,0,.2),
+	0 5px 10px rgba(0,0,0,.2),
+	0 20px 20px rgba(0,0,0,.15);
+}
+/*
+ * Décompte des présents
+*/
+.decompte {
+	background-color: #ffd;
+}
+td.dcpt, td.dpt {
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	font-size: .9em;
+	background-color: #dfe;
+	border-top: 1px solid #5a6;
+	margin: 0;
+	padding: 0;
+	padding-top: 3px;
+	padding-bottom: 2px;
+}
+/*
+ * Modification du décompte
+ */
+div#decompteInsert {
+	position: absolute;
+	background-image: url('../images/separateur.png');
+	background-repeat: repeat;
+	z-index: 90;
+}
+div#dFormRemplacement {
+	position:absolute;
+	z-index:999;
+}
+div#dFormRemplacement table {
+	background-color:rgba(255,255,255,.9);
+	padding:10px;
+	border-spacing:0;
+	border:0px solid #fff;
+	-moz-border-radius:15px;
+	-webkit-border-radius: 15px;
+	-ms-border-radius: 15px;
+	-o-border-radius: 15px;
+	border-radius: 15px;
+	box-shadow: 0 1px 3px rgba(0,0,0,.3),
+	0 3px 5px rgba(0,0,0,.2),
+	0 5px 10px rgba(0,0,0,.2),
+	0 20px 20px rgba(0,0,0,.15);
+}
+div#dFormRemplacement table td {
+	background-color:transparent;
+}
+.emphasize {
+	background-color: #fdd;
+	color: #f00;
+}

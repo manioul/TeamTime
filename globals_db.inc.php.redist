@@ -1,0 +1,13 @@
+<?php
+// globals_db.inc.php
+$GLOBALS['DSN'] = array (
+	'admin' 	=> array ('hostname' 	=> "localhost" // administre les utilisateurs
+				,'phptype'	=> 'mysql' // type de bdd
+				,'host'		=> 'localhost' // localisation de la bdd
+				,'username' 	=> "" // Le nom d'utilisateur pour accéder à la base de données
+				,'password' 	=> "" // Le mot de passe pour accéder à la base de données
+				,'dbname' 	=> "" // Le nom de la base de données
+				,'NAMES'	=> 'utf8'
+				)
+		);
+?>

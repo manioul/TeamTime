@@ -1,0 +1,68 @@
+/*
+  Menu
+*/
+.selected {
+	background: rgba(255,255,255,.1);
+}
+.menu li:hover,
+.menu li:focus {
+	background: rgba(255,255,255,.2);
+}
+.selected,
+.menu li:hover,
+.menu li:focus {
+	box-shadow: 0 1px 0 rgba(255,255,255,.7) inset,
+	0 -1px 0 rgba(66,97,74,.2) inset,
+	0 -2px 0 rgba(66,97,74,.3) inset,
+	0 -3px 0 rgba(66,97,74,.4) inset,
+	0 -4px 0 rgba(66,97,74,.5) inset,
+	0 -5px 0 rgba(66,97,74,.6) inset;
+	-moz-transition: all 0.15s linear;
+	-webkit-transition: all 0.15s linear;
+	-ms-transition: all 0.15s linear;
+	-o-transition: all 0.15s linear;
+}
+.menu, .menu a {
+	color: #020;
+}
+.menu > ul {
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	padding-bottom: 15px;
+	list-style-type: none;
+	font-size: 13px;
+	text-shadow: 1px 1px 0 #aaccbb;
+}
+.menuHorizontal {
+	padding-top: 10px;
+}
+.menuHorizontal > ul {
+	display: table;
+	width: 450px;
+	margin: 10px auto;
+	background: #559966;
+	background: -webkit-linear-gradient(#99cc99,#559966);
+	background: -moz-linear-gradient(#99cc99,#559966);
+	background: -ms-linear-gradient(#99cc99,#559966);
+	background: -o-linear-gradient(#99cc99,#559966);
+	background: linear-gradient(#99cc99,#559966);
+	-moz-border-radius: 50px;
+	-webkit-border-radius: 50px;
+	-ms-border-radius: 50px;
+	-o-border-radius: 50px;
+	border-radius: 50px;
+	box-shadow: 0 1px 3px rgba(0,0,0,.3),
+	0 3px 5px rgba(0,0,0,.2),
+	0 5px 10px rgba(0,0,0,.2),
+	0 20px 20px rgba(0,0,0,.15);
+}
+.menuHorizontal > ul > li {
+	display: table-cell;
+	margin: 0;
+	padding: 15px 15px 15px;
+	text-align: center;
+	cursor: pointer;
+}
+/*
+  Fin menu
+*/
+
