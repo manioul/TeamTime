@@ -182,7 +182,28 @@ class Cycle {
 		$dateMin->subJours(self::getCycleLength()-1);
 		$dateMaxS = clone $dateDebut;
 		$dateMaxS->addJours(self::getCycleLength()-1);
-		$sql = sprintf("SELECT `date`, `TBL_GRILLE`.`cid`, `TBL_GRILLE`.`vsid`, `TBL_GRILLE`.`pcid`, `TBL_GRILLE`.`briefing`, `TBL_GRILLE`.`conf`, `TBL_GRILLE`.`readOnly`, `TBL_GRILLE`.`ferie`, `TBL_CYCLE`.`vacation` FROM `TBL_GRILLE`, `TBL_CYCLE` WHERE `TBL_CYCLE`.`cid` = `TBL_GRILLE`.`cid` AND `TBL_CYCLE`.`vacation` <> 'Repos' AND `date` BETWEEN (SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = 1 AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1) AND (SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = '%s' AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1) ORDER BY date ASC", $dateMin->date(), $dateDebut->date(), self::getCycleLength(), $dateDebut->date(), $dateMaxS->date());
+		$sql = sprintf("
+			SELECT `date`, `TBL_GRILLE`.`cid`,
+			`TBL_GRILLE`.`vsid`,
+			`TBL_GRILLE`.`pcid`,
+			`TBL_GRILLE`.`briefing`,
+			`TBL_GRILLE`.`conf`,
+			`TBL_GRILLE`.`readOnly`,
+			`TBL_GRILLE`.`ferie`,
+			`TBL_CYCLE`.`vacation`
+			FROM `TBL_GRILLE`,
+		       		`TBL_CYCLE`
+			WHERE `TBL_CYCLE`.`cid` = `TBL_GRILLE`.`cid`
+			AND `TBL_CYCLE`.`vacation` <> 'Repos'
+			AND `date` BETWEEN
+		       		(SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = 1 AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
+				AND (SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = '%s' AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
+				ORDER BY date ASC"
+				, $dateMin->date()
+				, $dateDebut->date()
+				, self::getCycleLength()
+				, $dateDebut->date()
+				, $dateMaxS->date());
 		//debug::getInstance()->postMessage($sql);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$check = true;
@@ -196,7 +217,25 @@ class Cycle {
 			}
 		}
 		mysqli_free_result($result);
-		$sql =  sprintf("SELECT `TL`.`uid`, `TL`.`date`, `dispo` FROM `TBL_L_SHIFT_DISPO` AS `TL`, `TBL_DISPO` AS `TD`, `TBL_USERS` AS `TU`, `TBL_GRILLE` AS `TG` WHERE `TG`.`date` = `TL`.`date` AND `TU`.`uid` = `TL`.`uid` AND `TU`.`actif` = '1' AND `TL`.`date` BETWEEN (SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = 1 AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1) AND (SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = '%s' AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1) AND `TD`.`did` = `TL`.`did` ORDER BY date ASC", $dateMin->date(), $dateDebut->date(), self::getCycleLength(), $dateDebut->date(), $dateMaxS->date());
+		$sql =  sprintf("
+			SELECT `TL`.`uid`, `TL`.`date`,
+			`dispo` FROM `TBL_L_SHIFT_DISPO` AS `TL`,
+			`TBL_DISPO` AS `TD`,
+			`TBL_USERS` AS `TU`,
+			`TBL_GRILLE` AS `TG`
+			WHERE `TG`.`date` = `TL`.`date`
+			AND `TU`.`uid` = `TL`.`uid`
+			AND `TU`.`actif` = '1'
+			AND `TL`.`date` BETWEEN
+		       		(SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = 1 AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
+				AND (SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = '%s' AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
+			AND `TD`.`did` = `TL`.`did`
+			ORDER BY date ASC"
+			, $dateMin->date()
+			, $dateDebut->date()
+			, self::getCycleLength()
+			, $dateDebut->date()
+			, $dateMaxS->date());
 		//debug::getInstance()->postMessage($sql);
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_row($result)) {
