@@ -347,6 +347,17 @@ class jourTravail extends Date {
 		}
 		return $this->previousWorkingDay;
 	}
+	// Essaie de créer l'objet à partir d'une chaîne correspondant à un id html
+	public function createFromId($id) {
+		if (!is_string($id)) return false;
+		$pattern = "/^deca(\d{4})m(\d{1,2})j(\d{1,2})s(.+)c\d+$/";
+		if (preg_match($pattern, $id, $row)) {
+			$this->annee($row[1]);
+			$this->mois($row[2]);
+			$this->jour($row[3]);
+			$this->vacation($row[4]);
+		}
+	}
 	// Affichage de l'objet
 	public function presente() {
 		//printf("%s ---> %s - %s<br />", $this->date_(), $this->vacation(), $this->jourDeLaSemaine());
