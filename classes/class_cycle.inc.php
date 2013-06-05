@@ -29,7 +29,7 @@ class Cycle {
 	private static $_cycleLengthNoRepos = null; // La longueur du cycle sans compter les jours de repos
 	private $cycleId; // Un Id pour identifier le cycle
 	private $dateRef; // La date de référence du cycle (date du premier jour) sous forme d'objet Date
-	private $dispos = array(); // La grille (jourTravail et dispos)
+	protected $dispos = array(); // La grille (jourTravail et dispos)
 	private $conf; // La configuration cds
 	private $decompte; // Un tableau contenant le décompte pour chaque utilisateur
 	private $compteTypeUser = array(); // Un tableau des décomptes par type (cf `type decompte` dans la bdd) et par utilisateur

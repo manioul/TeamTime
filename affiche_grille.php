@@ -27,6 +27,9 @@ $requireAuthenticatedUser = true;
 
 ob_start(); // Obligatoire pour firePHP
 
+// Choix du nombre de cycle à présenter
+$nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
+
 /*
  * Configuration de la page
  * Définition des include nécessaires
@@ -104,7 +107,7 @@ ob_start(); // Obligatoire pour firePHP
 	// Utilisation de la feuille de style general.css
 	$conf['page']['stylesheet']['general'] = true;
 	$conf['page']['stylesheet']['grille'] = true;
-	$conf['page']['stylesheet']['grilleUnique'] = true;
+	$conf['page']['stylesheet']['grilleUnique'] = ($nbCycle == 1 ? true : false);
 
 	// Compactage des pages
 	$conf['page']['compact'] = false;
@@ -128,309 +131,14 @@ if ($dateDebut != DATE_ERR_INVALID_FORMAT) {
 	$dateDebut = date("Y-m-d");
 }
 
-// Chargement des propriétés des dispos
-$proprietesDispos = jourTravail::proprietesDispo(1);
-
-
-// Date permettant de décaler d'un cycle plus tard ou avant
-$nextCycle = new Date($dateDebut);
-$previousCycle = new Date($dateDebut);
-$nextCycle->addJours(Cycle::getCycleLength());
-$smarty->assign('nextCycle', $nextCycle->date());
-$previousCycle->subJours(Cycle::getCycleLength());
-
-
-// Recherche des utilisateurs
-//
-
-if ($DEBUG) debug::getInstance()->startChrono('recherche utilisateurs'); // Début chrono
-
-
-// Les deux premières lignes du tableau sont dédiées au jourTravail (date, vacation...)
-$users[] = array('nom'		=> 'navigateur'
-		,'classe'	=> 'dpt'
-		,'id'		=> ''
-		,'uid'		=> 'jourTravail'
-	);
-$users[] = array('nom'		=> '<div class="boule"></div>'
-		,'classe'	=> 'dpt'
-		,'id'		=> ''
-		,'uid'		=> 'jourTravail'
-	);
-
-$sql = "SELECT `nom`, `classe`, `uid` FROM `TBL_USERS` WHERE `actif` = 1 ORDER BY `poids` ASC";
-
-$results = $_SESSION['db']->db_interroge($sql);
-while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$users[] = array('nom'	=> htmlentities($res['nom'])
-		,'classe'	=> sprintf('nom %s', implode(' ', explode(',',  $res['classe'])))
-		,'id'		=> sprintf("u%s", $res['uid'])
-		,'uid'		=> $res['uid']
-	);
-}
-mysqli_free_result($results);
-// Ajout d'une rangée pour le décompte des présences
-$users[] = array('nom'		=> 'décompte'
-		,'class'	=> 'dpt'
-		,'id'		=> 'dec'
-		,'uid'		=> 'dcpt'
-	);
-
-if ($DEBUG) debug::getInstance()->stopChrono("recherche utilisateurs"); // Fin chrono
-
-// Recherche des jours de travail
-//
-if ($DEBUG) debug::getInstance()->startChrono('load_planning_duree_norepos'); // Début chrono
-$cycle = new Cycle(new Date($dateDebut));
-$cycle->cycleId(0);
-if ($DEBUG) debug::getInstance()->stopChrono('load_planning_duree_norepos'); // Fin chrono
-
-
-if ($DEBUG) debug::getInstance()->startChrono('jour_de_la_semaine_courts'); // Début chrono
-$jdsc = Date::$jourSemaineCourt;
-if ($DEBUG) debug::getInstance()->stopChrono('jour_de_la_semaine_courts'); // Fin chrono
-
-// Récupération des compteurs
-if ($DEBUG) debug::getInstance()->startChrono('Relève compteur'); // Début chrono
-$sql = "SELECT `dispo`, `nom_long` FROM `TBL_DISPO` WHERE `actif` = TRUE AND `need_compteur` = TRUE AND `type decompte` != 'conges'";
-$results = $_SESSION['db']->db_interroge($sql);
-while ($res = $_SESSION['db']->db_fetch_array($results)) {
-	$evenSpec[$res[0]] = array(
-		'nomLong'	=> htmlspecialchars($res[1], ENT_COMPAT)
-		);
-}
-mysqli_free_result($results);
-
-/*
- * Recherche le décompte des évènements spéciaux
- * La liste est limitée en dur
- */
-$sql = sprintf("SELECT `uid`, `dispo`, COUNT(`td`.`did`), MAX(`date`)
-       	FROM `TBL_L_SHIFT_DISPO` AS `tl`, `TBL_DISPO` AS `td`
-	WHERE `td`.`did` = `tl`.`did`
-	AND `td`.`actif` = TRUE
-	AND `date` <= '%s'
-	AND `need_compteur` = TRUE
-	AND `type decompte` != 'conges'
-	GROUP BY `td`.`did`, `uid`"
-	, $cycle->dateRef()->date());
-
-$results = $_SESSION['db']->db_interroge($sql);
-if (mysql_error()) {
-	firePhpError($sql, mysql_error());
-}
-while ($res = $_SESSION['db']->db_fetch_array($results)) {
-	$evenSpec[$res[1]]['uid'][$res[0]] = array(
-		'nom'		=> $res[2]
-		,'title'	=> $res[3]
-		,'id'		=> "u" . $res[0] . "even" . $res[1]
-		,'classe'	=> ""
-		);
-}
-mysqli_free_result($results);
-if ($DEBUG) debug::getInstance()->stopChrono('Relève compteur'); // Fin chrono
-
-if ($DEBUG) debug::getInstance()->startChrono('création de la table'); // Début chrono
-
-$compteurLigne = 0;
-$lastLine = count($users)-1;
-foreach ($users as $user) {
-	switch ($compteurLigne) {
-	/*
-	 * Première ligne contenant le navigateur, l'année et le nom du mois
-	 */
-	case 0:
-		$grille[$compteurLigne][] = array(
-			'nom'		=> $cycle->dateRef()->annee()
-			,'id'		=> 'navigateur'
-			,'classe'	=> ''
-			,'colspan'	=> 2
-			,'navigateur'	=> 1 // Ceci permet à smarty de construire un navigateur entre les cycles
-			);
-		/*$grille[$compteurLigne][] = array(
-			'nom'		=> '<img src="favicon.ico" />'
-			,'id'		=> 'dcpt'
-			,'classe'	=> ''
-		);*/
-		$grille[$compteurLigne][] = array(
-			'nom'		=> $cycle->dateRef()->moisAsHTML()
-			,'id'		=> 'moisDuCycle'
-			,'classe'	=> ''
-			,'colspan'	=> Cycle::getCycleLengthNoRepos()+1+count($evenSpec)
-			);
-		break;
-	/*
-	 * Deuxième ligne contenant les dates, les vacations, charge et vacances scolaires
-	 */
-	case 1:
-	// La deuxième ligne contient la description de la vacation (date...)
-		// Ajout d'une colonne pour le nom de l'utilisateur
-		$grille[$compteurLigne][] = array(
-			'classe'		=> "entete"
-			,'id'			=> ""
-			,'nom'			=> htmlentities("Nom", ENT_NOQUOTES, 'utf-8')
-		);
-		// Ajout d'une colonne pour les décomptes
-		$grille[$compteurLigne][] = array(
-			'classe'		=> "conf"
-			,'id'			=> "conf" . $cycle->dateRef()->dateAsId()
-			,'nom'			=> $cycle->conf()
-		);
-		foreach ($cycle->dispos() as $dateVacation => $vacation) {
-			// Préparation des informations de jours, date, jour du cycle (en-têtes de la grille)
-			$grille[$compteurLigne][] = array(
-				'jds'			=> $jdsc[$vacation['jourTravail']->jourDeLaSemaine()]
-				,'jdm'			=> $vacation['jourTravail']->jour()
-				,'classe'		=> $vacation['jourTravail']->ferie() ? 'ferie' : 'semaine'
-				,'annee'		=> $vacation['jourTravail']->annee()
-				,'mois'			=> $vacation['jourTravail']->moisAsHTML()
-				,'vacation'		=> htmlentities($vacation['jourTravail']->vacation())
-				,'vacances'		=> $vacation['jourTravail']->vsid() > 0 ? 'vacances' : 'notvacances'
-				,'periodeCharge'	=> $vacation['jourTravail']->pcid() > 0 ? 'charge' : 'notcharge'
-				,'briefing'		=> $vacation['jourTravail']->briefing()
-				,'id'			=> sprintf("%ss%s", $vacation['jourTravail']->dateAsId(), $vacation['jourTravail']->vacation())
-				,'date'			=> $vacation['jourTravail']->date()
-			);
-		}
-		// Ajout d'une colonne en fin de cycle
-		$grille[$compteurLigne][] = array(
-			'classe'		=> ""
-			,'id'			=> sprintf("sepA%sM%sJ%s", $vacation['jourTravail']->annee(), $vacation['jourTravail']->mois(), $vacation['jourTravail']->jour())
-			,'date'			=> $vacation['jourTravail']->date()
-			,'nom'			=> '<div class="boule"></div>'
-		);
-		// Ajout d'une colonne pour les compteurs
-		foreach (array_keys($evenSpec) as $even) {
-			$grille[$compteurLigne][] = array(
-				'classe'		=> ""
-				,'id'			=> str_replace(" ", "", $evenSpec[$even]['nomLong']) // Certains noms longs comportent des espaces, ce qui n'est pas autorisé pour un id
-				,'date'			=> ""
-				,'nom'			=> ucfirst(substr($even, 0, 1))
-				,'title'		=> $evenSpec[$even]['nomLong']
-			);
-		}
-		break;
-	/*
-	 * Dernière ligne contenant le nombre de présents
-	 */
-	case $lastLine:
-		$grille[$compteurLigne][] = array(
-			'classe'		=> "decompte"
-			,'id'			=> ""
-			,'nom'			=> htmlentities("Présents", ENT_NOQUOTES, 'utf-8')
-			,'colspan'	=> 2
-		);
-		foreach ($cycle->dispos() as $dateVacation => $vacation) {
-			$grille[$compteurLigne][] = array(
-				'classe'		=> 'dcpt'
-				,'id'			=> sprintf("deca%sm%sj%ss%sc%s", $vacation['jourTravail']->annee(), $vacation['jourTravail']->mois(), $vacation['jourTravail']->jour(), $vacation['jourTravail']->vacation(), $cycle->cycleId())
-			);
-		}
-		// Ajout d'une colonne en fin de cycle qui permet le (dé)verrouillage du cycle
-		$jtRef = $cycle->dispos($cycle->dateRef()->date());
-		$lockClass = $jtRef['jourTravail']->readOnly() ? 'cadenasF' : 'cadenasO';
-		$lockTitle = $jtRef['jourTravail']->readOnly() ? 'Déverrouiller le cycle' : 'Verrouiller le cycle';
-		$un_lock = $jtRef['jourTravail']->readOnly() ? 'ouvre' : 'bloque';
-
-		$grille[$compteurLigne][] = array(
-			'classe'		=> "locker"
-			,'id'			=> sprintf("locka%sm%sj%sc%s", $cycle->dateRef()->annee(), $cycle->dateRef()->mois(), $cycle->dateRef()->jour(), $cycle->cycleId())
-			,'nom'			=> isset($_SESSION['EDITEURS']) ? sprintf("<div class=\"imgwrapper12\"><a href=\"lock.php?date=%s&amp;lock=%s&amp;noscript=1\"><img src=\"themes/%s/images/glue.png\" class=\"%s\" alt=\"#\" /></a></div>", $cycle->dateRef()->date(), $un_lock, $conf['theme']['current'], $lockClass) : sprintf("<div class=\"imgwrapper12\"><img src=\"themes/%s/images/glue.png\" class=\"%s\" alt=\"#\" /></div>", $conf['theme']['current'], $lockClass) // Les éditeurs ont le droit de (dé)verrouiller la grille
-			,'title'	=> htmlentities($lockTitle, ENT_NOQUOTES, 'utf-8')
-			,'colspan'	=> 1+count($evenSpec)
-		);
-		break;
-	/*
-	 * Lignes utilisateurs
-	 */
-	default:
-		/*
-		 * Première colonne
-		 */
-		// La première colonne contient les infos sur l'utilisateur
-		$grille[$compteurLigne][] = $user;
-		/*
-		 * Deuxième colonne
-		 */
-		// La deuxième colonne contient les décomptes horizontaux
-		$grille[$compteurLigne][] = array(
-			'nom'		=> 0+$cycle->compteTypeUser($user['uid'], 'dispo')
-			,'id'		=> sprintf("decDispou%sc%s", $user['uid'], $cycle->cycleId())
-			,'classe'	=> ''
-		);
-		/*
-		 * Colonnes du cycle
-		 */
-		// On itère sur les vacations du cycle
-		foreach ($cycle->dispos() as $dateVacation => $vacation) {
-			$classe = "presence";
-			if ($vacation['jourTravail']->readOnly()) $classe .= " protected";
-			if (!empty($vacation[$user['uid']]) && !empty($proprietesDispos[$vacation[$user['uid']]]) && 1 == $proprietesDispos[$vacation[$user['uid']]]['absence']) {
-				$classe .= " absent";
-			} else {
-				$classe .= " present";
-			}
-			/*
-			 * Affichage remplacements
-			 */
-			if (!empty($vacation[$user['uid']]) && "Rempla" == $vacation[$user['uid']]) {
-				$proprietesDispos[$vacation[$user['uid']]]['nom_long'] = "Mon remplaçant";
-				$sql = sprintf("SELECT * FROM `TBL_REMPLA` WHERE `uid` = %s AND `date` = '%s'", $user['uid'], $vacation['jourTravail']->date());
-				$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
-				$proprietesDispos[$vacation[$user['uid']]]['nom_long'] = $row['nom'] . " | " . $row['phone'];
-			} //
-			$grille[$compteurLigne][] = array(
-				'nom'		=> isset($vacation[$user['uid']]) ? htmlentities($vacation[$user['uid']], ENT_NOQUOTES, 'utf-8') : " "
-				,'id'		=> sprintf("u%sa%sm%sj%ss%sc%s", $user['uid'], $vacation['jourTravail']->annee(), $vacation['jourTravail']->mois(), $vacation['jourTravail']->jour(), $vacation['jourTravail']->vacation(), $cycle->cycleId())
-				,'classe'	=> $classe
-				,'title'	=> isset($vacation[$user['uid']]['nom_long']) ? $proprietesDispos[$vacation[$user['uid']]]['nom_long'] : ''
-			);
-		}
-		/*
-		 * Dernière colonne
-		 */
-		// La dernière colonne contient les décomptes horizontaux calculés
-		// La date est celle de dateRef + durée du cycle - 1
-		/*$dateSuivante = clone $cycle->dateRef();
-		$dateSuivante->addJours(Cycle::getCycleLength());*/
-		$grille[$compteurLigne][] = array(
-			'nom'		=> 0+$cycle->compteTypeUserFin($user['uid'], 'dispo')
-			,'id'		=> sprintf("decDispou%sc%s", $user['uid'], $cycle->cycleId()+1)
-			,'classe'	=> ''
-			);
-		foreach (array_keys($evenSpec) as $even) {
-			$grille[$compteurLigne][] = array(
-				'nom'		=> empty($evenSpec[$even]['uid'][$user['uid']]['nom']) ? 0 : $evenSpec[$even]['uid'][$user['uid']]['nom']
-				,'id'		=> empty($evenSpec[$even]['uid'][$user['uid']]['id']) ? "" : $evenSpec[$even]['uid'][$user['uid']]['id']
-				,'title'	=> empty($evenSpec[$even]['uid'][$user['uid']]['title']) ? "" : $evenSpec[$even]['uid'][$user['uid']]['title']
-				,'classe'	=> empty($evenSpec[$even]['uid'][$user['uid']]['classe']) ? "" : $evenSpec[$even]['uid'][$user['uid']]['classe']
-				);
-		}
-	}
-	$compteurLigne++;
-}
-
-if ($DEBUG) debug::getInstance()->stopChrono('création de la table'); // Fin chrono
-
-
-/*
- * Assignation des variables Smarty
- */
-
-$smarty->assign('previousCycle', $previousCycle->date());
-$smarty->assign('presentCycle', date("Y-m-d"));
-$smarty->assign('dureeCycle', Cycle::getCycleLengthNoRepos());
-$smarty->assign('anneeCycle', $cycle->dateRef()->annee());
-$smarty->assign('moisCycle', $cycle->dateRef()->mois());
-$smarty->assign('grille', $grille);
-
-/*
- * Fin des assignations de variable Smarty
- */
+$return = utilisateursDeLaGrille::getInstance()->getGrilleActiveUsers($dateDebut, $nbCycle);
 
 /*
  * Début des appels d'affichage Smarty
  */
+foreach ($return as $key => $val) {
+	$smarty->assign($key, $val);
+}
 // Affichage des en-têtes de page
 $smarty->display('header.tpl');
 
@@ -454,11 +162,10 @@ $smarty->display('grille2.tpl');
  */
 include 'debug.inc.php';
 firePhpLog($conf, '$conf');
-firePhpLog($_SESSION, '$_SESSION');
-firePhpLog($_SERVER, '$_SERVER');
-firePhpLog($_SESSION['utilisateur']->db_condition_like_classe('peut poser'), 'condition');
 firePhpLog(debug::getInstance()->format(), 'format debug messages');
 firePhpLog($javascript, '$javascript');
+firePhpLog($stylesheet, '$stylesheet');
+
 // Affichage du bas de page
 $smarty->display('footer.tpl');
 

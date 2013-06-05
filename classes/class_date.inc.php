@@ -22,6 +22,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+set_include_path(implode(PATH_SEPARATOR, array(realpath('.'), realpath('..'), get_include_path())));
+
 require_once('config.inc.php');
 
 /*
