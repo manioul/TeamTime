@@ -40,14 +40,14 @@ $smarty->assign('javascript', $javascript);
 
 // Image `glue`
 // Cette image contient tous les élements graphiques des pages du site rassemblées par glue
-$smarty->assign('image', 'themes/' . $conf['theme']['current'] . '/images/glue.png');
+$smarty->assign('image', 'themes/' . $_COOKIE['theme'] . '/images/glue.png');
 
 
 // Attribution d'un titre à la page
 $smarty->assign('titrePage', htmlentities($conf['page']['titre'], ENT_NOQUOTES, 'utf-8'));
 
 // Définition du thème
-$smarty->assign('theme', $conf['theme']['current']);
+$smarty->assign('theme', $_COOKIE['theme']);
 
 // Définition du langage
 $smarty->assign('language', $GLOBALS['language']);

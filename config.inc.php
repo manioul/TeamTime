@@ -44,6 +44,8 @@ $DEBUG = false;
 			if (!empty($_GET['back'])) {
 				header("Location:$back");
 			}
+		} else {
+			setcookie('theme', $conf['theme']['default'], $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
 		}
 	$conf['theme']['current'] = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : $conf['theme']['default'];
 
