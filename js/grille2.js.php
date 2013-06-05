@@ -276,23 +276,23 @@ function lock(sS)
 		var oObjSep = aObjSep[iCpt].previousSibling;
 		while(!$('#'+oObjSep.id).hasClass('decompte') && !$('#'+oObjSep.id).hasClass('nom'))
 		{
-				// regarde si la case est protégée ou non
-				if ($('#'+oObjSep.id).hasClass('protected'))
-				{ // la case est protégée, on déprotège
-					attribUnprotect(oObjSep);
-					comptePresents(oObjSep.id);
-				}
-				else
-				{ // la case n'est pas protégée, on protège
-					attribProtect(oObjSep);
-					comptePresents(oObjSep.id);
-				}
-				// itération sur les précédents "siblings"
-				oObjSep = oObjSep.previousSibling;
-				if (!oObjSep)
-				{
-					break;
-				}
+			// regarde si la case est protégée ou non
+			if ($('#'+oObjSep.id).hasClass('protected'))
+			{ // la case est protégée, on déprotège
+				attribUnprotect(oObjSep);
+				comptePresents(oObjSep.id);
+			}
+			else
+			{ // la case n'est pas protégée, on protège
+				attribProtect(oObjSep);
+				comptePresents(oObjSep.id);
+			}
+			// itération sur les précédents "siblings"
+			oObjSep = oObjSep.previousSibling;
+			if (!oObjSep)
+			{
+				break;
+			}
 		}
 	}
 	event.preventDefault(); // Le lien ne doit pas être suivi
@@ -334,16 +334,16 @@ function attribUnprotect(oThis)
 			$("td.nom").removeClass("emphasize");
 			$(sVacationId).removeClass("emphasize");
 		});
-		},function() {
-			$(this).removeClass("emphasize");
-			$("#sandbox").hide();
-			$("td.nom").removeClass("emphasize");
-			// Recherche la tête de colonne correspondante
-			var aArray = infosFromId(this.id);
-			var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
-			// mise en évidence de la tête de colonne supprimée
-			$(sVacationId).removeClass("emphasize");
-		});
+	},function() {
+		$(this).removeClass("emphasize");
+		$("#sandbox").hide();
+		$("td.nom").removeClass("emphasize");
+		// Recherche la tête de colonne correspondante
+		var aArray = infosFromId(this.id);
+		var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
+		// mise en évidence de la tête de colonne supprimée
+		$(sVacationId).removeClass("emphasize");
+	});
 }
 // Ajoute un texte pour le verrouillage de la grille
 function definitVerrouillage()
