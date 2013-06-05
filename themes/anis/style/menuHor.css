@@ -138,11 +138,11 @@ ul.menuHor ul a:hover,
 ul.menuHor ul a:focus
 {
 	background: #5a7;
-	background: -moz-linear-gradient(#ccffcc,  #0186ba);	
-	background: -webkit-gradient(linear, left top, left bottom, from(#ccffcc), to(#0186ba));
-	background: -webkit-linear-gradient(#ccffcc,  #0186ba);
-	background: -o-linear-gradient(#ccffcc,  #0186ba);
-	background: -ms-linear-gradient(#ccffcc,  #0186ba);
+	background: -moz-linear-gradient(#ccffcc,  #01ba86);	
+	background: -webkit-gradient(linear, left top, left bottom, from(#ccffcc), to(#01ba86));
+	background: -webkit-linear-gradient(#ccffcc,  #01ba86);
+	background: -o-linear-gradient(#ccffcc,  #01ba86);
+	background: -ms-linear-gradient(#ccffcc,  #01ba86);
 	background: linear-gradient(#ccffcc, #5a7);
 }
 
