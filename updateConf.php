@@ -60,9 +60,20 @@ if ($_POST['conf'] != 'W' && $_POST['conf'] != 'E') {
 if (preg_match('/confa(\d{4})m(\d*)j(\d*)/', $_POST['id'], $array)) {
 	firePhpLog($array, 'arr');
 	$date = new Date(sprintf("%04d-%02d-%02d", $array[1], $array[2], $array[3]));
-	$sql = sprintf("UPDATE `TBL_GRILLE` SET `conf` = '%s' WHERE `readonly` = FALSE AND `date` BETWEEN '%s' AND '%s'", $_POST['conf'], $date->date(), $date->addJours(Cycle::getCycleLength()-1)->date());
+	$sql = sprintf("UPDATE `TBL_GRILLE`
+		SET `conf` = '%s'
+		WHERE `readonly` = FALSE
+		AND `date` BETWEEN '%s' AND '%s'
+		", $_POST['conf']
+		, $date->date()
+		, $date->addJours(Cycle::getCycleLength()-1)->date());
+
 	$_SESSION['db']->db_interroge($sql);
-	$err = mysql_error();
+	if ($_SESSION['db']->db_affected_rows() < Cycle::getCycleLength()) { // Le verrouillage ne verrouille pas les jours de REPOS, d'où un nombre de données affectées même lorsque la grille n'est pas modifiable
+		$err = "Modification impossible....";
+	} else {
+		$err = mysql_error();
+	}
 	firePhpLog($sql, 'SQL');
 } else {
 	$err = "Date inconnue";
