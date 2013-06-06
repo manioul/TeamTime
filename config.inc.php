@@ -28,7 +28,7 @@ $GLOBALS['language'] = 'fr';
 $DEBUG = false;
 
 // Cookie de session
-	$conf['session_cookie']['name'] = 'TeamTime10a';
+	$conf['session_cookie']['name'] = 'TeamTimeMe';
 	$conf['session_cookie']['lifetime'] = 0;
 	$conf['session_cookie']['path'] = '/';
 	$conf['session_cookie']['domain'] = 'dev.web'; // Le domaine hébergeant TeamTime
