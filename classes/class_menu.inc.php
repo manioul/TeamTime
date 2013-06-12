@@ -116,14 +116,48 @@ class elemMenu {
 	}
 // méthodes de bdd
 	public function db_setElem() {
-		$requete = sprintf("SELECT * FROM `TBL_ELEMS_MENUS` WHERE `idx` = %d AND `actif` = TRUE AND (%s)", $this->idx, $_SESSION['utilisateur']->db_condition_like_classe('allowed'));
+		$requete = sprintf("
+			SELECT * FROM `TBL_ELEMS_MENUS`
+			WHERE `idx` = %d
+			AND `actif` = TRUE
+			AND (%s)"
+			, $this->idx
+			, $_SESSION['utilisateur']->db_condition_like_classe('allowed')
+		);
 		$this->_setFromElemMenu($_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($requete)));
 	}
 	private function _db_insertDB() {
-		$requete = sprintf("INSERT INTO `TBL_ELEMS_MENUS` (`idx`, `titre`, `description`, `lien`, `sousmenu`, `creation`, `allowed`, `actif`) VALUES (NULL, '%s', '%s', '%s', %d, NOW(), '%s', %d)", $this->titre, $this->description, $this->lien, $this->sousmenu, $this->allowed, $this->actif);
+		$requete = sprintf("
+			INSERT INTO `TBL_ELEMS_MENUS`
+			(`idx`, `titre`, `description`, `lien`, `sousmenu`, `creation`, `allowed`, `actif`)
+			VALUES (NULL, '%s', '%s', '%s', %d, NOW(), '%s', %d)"
+			, $this->titre
+			, $this->description
+			, $this->lien
+			, $this->sousmenu
+			, $this->allowed
+			, $this->actif
+		);
 	}
 	private function _db_updateDB() {
-		$requete = sprintf("UPDATE `TBL_ELEMS_MENUS` SET `titre` = '%s', `description` = '%s', `lien` = '%s', `sousmenu` = %d, `modification` = NOW(), `allowed` = '%s' `actif` = %d WHERE `idx` = %d", $this->titre, $this->description, $this->lein, $this->sousmenu, $this->allowed, $this->actif, $this->idx);
+		$requete = sprintf("
+			UPDATE `TBL_ELEMS_MENUS`
+			SET `titre` = '%s'
+			, `description` = '%s'
+			, `lien` = '%s'
+			, `sousmenu` = %d
+			, `modification` = NOW()
+			, `allowed` = '%s'
+			, `actif` = %d
+			WHERE `idx` = %d"
+			, $this->titre
+			, $this->description
+			, $this->lien
+			, $this->sousmenu
+			, $this->allowed
+			, $this->actif
+			, $this->idx
+		);
 	}
 // Display
 	public function debug_display() {
@@ -242,7 +276,15 @@ class menu {
 		$array = array();
 		foreach ($this->arbre as $cle => $feuille) {
 			if ($cle != $compteur) { // Si la bdd doit être mise à jour avec les positions des éléments
-				$requete = sprintf("UPDATE `TBL_MENUS_ELEMS_MENUS` SET `position` = %d WHERE `idxm` = %s AND `idxem` = %d", $feuille->position(), $this->idx, $feuille->idx());
+				$requete = sprintf("
+					UPDATE `TBL_MENUS_ELEMS_MENUS`
+					SET `position` = %d
+					WHERE `idxm` = %s
+					AND `idxem` = %d"
+					, $feuille->position()
+					, $this->idx
+					, $feuille->idx()
+				);
 				$_SESSION['db']->db_interroge($requete);
 			}
 			$array[$compteur] = $feuille;
@@ -285,11 +327,25 @@ class menu {
 		return TRUE;
 	}
 	private function _db_setFromDB() {
-		$requete = sprintf("SELECT * FROM `TBL_MENUS` WHERE `idx` = %d AND `actif` = TRUE AND (%s)", $this->idx, $_SESSION['utilisateur']->db_condition_like_classe('allowed'));
+		$requete = sprintf("
+			SELECT * FROM `TBL_MENUS`
+			WHERE `idx` = %d
+			AND `actif` = TRUE
+			AND (%s)"
+			, $this->idx
+			, $_SESSION['utilisateur']->db_condition_like_classe('allowed')
+		);
 		return ($this->_db_setFromRow($_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($requete))));
 	}
 	private function _db_getElems() {
-		$requete = sprintf("SELECT `idxem`, `position` FROM `TBL_MENUS_ELEMS_MENUS` WHERE `idxm` = %d ORDER BY `position` ASC", $this->idx);
+		$requete = sprintf("
+			SELECT `idxem`
+			, `position`
+			FROM `TBL_MENUS_ELEMS_MENUS`
+			WHERE `idxm` = %d
+			ORDER BY `position` ASC"
+			, $this->idx
+		);
 		$result = $_SESSION['db']->db_interroge($requete);
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
 			$elemMenu = new elemMenu($row[0]);
@@ -301,7 +357,17 @@ class menu {
 		mysqli_free_result($result);
 	}
 	private function _db_createMenu() {
-		$requete = sprintf("INSERT INTO `TBL_MENUS` (`idx`, `titre`, `description`, `parent`, `creation`, `modification`, `restricted`, `actif`, `vertical`) VALUES (NULL, '%s', '%s', %d, NOW(), '0000-00-00 00:00:00', %d, %d, %d)", $this->titre, $this->description, $this->parent, $this->restricted, $this->actif, $this->vertical);
+		$requete = sprintf("
+			INSERT INTO `TBL_MENUS`
+			(`idx`, `titre`, `description`, `parent`, `creation`, `modification`, `restricted`, `actif`, `vertical`)
+			VALUES (NULL, '%s', '%s', %d, NOW(), '0000-00-00 00:00:00', %d, %d, %d)"
+			, $this->titre
+			, $this->description
+			, $this->parent
+			, $this->restricted
+			, $this->actif
+			, $this->vertical
+		);
 		$_SESSION['db']->db_interroge($requete);
 	}
 // Display

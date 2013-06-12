@@ -92,15 +92,15 @@ function get_sql_globals_constant($constant_name) {
 
 // Si la page nécessite que l'utilisateur soit logué, et qu'il ne l'est pas, on redirige vers la page de login
 if (!empty($requireAuthenticatedUser) && empty($_SESSION['AUTHENTICATED'])) {
-	header('Location:index.php?norights=1');
+	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
 if (!empty($requireEditeur) && empty($_SESSION['EDITEURS'])) {
-	header('Location:index.php?norights=1');
+	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
 if (!empty($requireAdmin) && empty($_SESSION['ADMIN'])) {
-	header('Location:index.php?norights=1');
+	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
 
