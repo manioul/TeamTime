@@ -111,16 +111,18 @@ require 'required_files.inc.php';
 
 if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) || !isset($_POST['did'])) {
 	// Recherche des utilisateurs
-	$users = array();
-	$sql = "SELECT `uid`, `nom` FROM `TBL_USERS` WHERE `locked` = FALSE AND `actif` = TRUE AND `gid` > 0 ORDER BY `poids` ASC";
-	$result = $_SESSION['db']->db_interroge($sql);
-	while ($row = $_SESSION['db']->db_fetch_array($result)) {
-		$users[$row[0]] = $row[1];
-	}
-	mysqli_free_result($result);
+	$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
 
 	// Recherche des dispos
-	$sql = "SELECT `did`, `dispo` FROM `TBL_DISPO` WHERE `jours possibles` = 'all' AND `actif` = 1 AND `need_compteur` != TRUE ORDER BY `poids` ASC";
+	$sql = "
+		SELECT `did`
+		, `dispo`
+		FROM `TBL_DISPO`
+		WHERE `jours possibles` = 'all'
+		AND `actif` = 1
+		AND `need_compteur` != TRUE
+		ORDER BY `poids` ASC
+	";
 	$result = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_array($result)) {
 		$dispos[$row[0]] = $row[1];

@@ -119,24 +119,21 @@ if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
 // Affichage du menu d'administration
 if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
 
-$champs = array('nom', 'prenom', 'email');
 
-$sql = "SELECT ";
-foreach($champs as $champ) {
-	$sql .= "`$champ`, ";
-}
-$sql = substr($sql, 0, -2);
-$sql .= "FROM `TBL_USERS` WHERE `actif` = TRUE ORDER BY `poids`";
-$result = $_SESSION['db']->db_interroge($sql);
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y-m-d'), date('Y-m-d'), $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
 
-$arr = array();
-$arr[] = $champs;
-while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-	$arr[] = $row;
+$arr = array( array('nom', 'prenom', 'email') );
+$mailto = array_search('email', $arr[0]);
+foreach ($users as $user) {
+	$array = array();
+	foreach ($arr[0] as $champ) {
+		$array[] = $user->$champ();
+	}
+	$arr[] = $array;
 }
-mysqli_free_result($result);
 
 $smarty->assign('entry', $arr);
+$smarty->assign('mailto', $mailto+1);
 
 $smarty->display('annuaire.tpl');
 

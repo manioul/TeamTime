@@ -47,7 +47,7 @@ ob_start();
 /*
  * Configuration de la page
  */
-        $titrePage = "TeamTime"; // Le titre de la page
+        $titrePage = "Gestion des compteurs - TeamTime"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -111,20 +111,17 @@ require 'required_files.inc.php';
 $year = (!empty($_GET['year']) ? sprintf("%04d", $_GET['year']) : date('Y'));
 $titre = "Évènements";
 
-$sql = "SELECT `nom`, `classe`, `uid` FROM `TBL_USERS` WHERE `actif` = TRUE ORDER BY `poids` ASC";
-
-$results = $_SESSION['db']->db_interroge($sql);
-while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$users[] = array('nom'	=> htmlentities($res['nom'])
-		,'classe'	=> sprintf('nom %s', $res['classe'])
-		,'uid'		=> $res['uid']
-	);
-}
-mysqli_free_result($results);
-
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $_SESSION['centre'], $_SESSION['team']);
 
 $tab = array();
-$sql = "SELECT `did`, `nom_long` FROM `TBL_DISPO` WHERE `need_compteur` = TRUE AND `actif` = TRUE AND `type decompte` != 'conges'";
+$sql = "
+	SELECT `did`
+	, `nom_long`
+	FROM `TBL_DISPO`
+	WHERE `need_compteur` = TRUE
+	AND `actif` = TRUE
+	AND `type decompte` != 'conges'
+";
 $results = $_SESSION['db']->db_interroge($sql);
 while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 	$onglets[] = array('nom'	=> htmlspecialchars($res['nom_long'], ENT_COMPAT, 'UTF-8')
@@ -138,7 +135,10 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 		OR YEAR(`date`) = %d)
 		AND `did` = %d
 		ORDER BY `date` ASC",
-		$year, $year-1, $res['did']);
+		$year
+		, $year-1
+		, $res['did']
+	);
 
 	$r = $_SESSION['db']->db_interroge($sql);
 	while ($s = $_SESSION['db']->db_fetch_assoc($r)) {

@@ -42,6 +42,8 @@ class utilisateurGrille extends utilisateur {
 	private $dateCE;
 	private $dateCDS;
 	private $dateVisMed; // Date de la prochaine visite médicale
+	private $centre;
+	private $team;
 	private $poids; // La position d'affichage dans la grille (du plus faible au plus gros)
 	private $showtipoftheday; // L'utilisateur veut-il voir les tips of the day
 	private $dispos; /* un tableau contenant un tableau des dispos indexées par les dates:
@@ -156,7 +158,7 @@ class utilisateurGrille extends utilisateur {
 	}
 	public function addClasse($classe = false) {
 		if (false === $classe) return false;
-		$index = sizeof($this->classe[$classe['classe']]);
+		$index = isset($this->classe[$classe['classe']]) ? sizeof($this->classe[$classe['classe']]) : 0;
 		$this->classe[$classe['classe']][$index]['beginning'] = $classe['beginning'];
 		$this->classe[$classe['classe']][$index]['end'] = $classe['end'];
 	}
@@ -226,6 +228,18 @@ class utilisateurGrille extends utilisateur {
 		} else {
 			return false;
 		}
+	}
+	public function centre ($param = NULL) {
+		if (!is_null($param)) {
+			$this->centre = $param;
+		}
+		return $this->centre;
+	}
+	public function team ($param = NULL) {
+		if (!is_null($param)) {
+			$this->team = $param;
+		}
+		return $this->team;
 	}
 	public function poids($poids=false) {
 		if (false !== $poids) {
@@ -307,8 +321,10 @@ class utilisateursDeLaGrille {
 		$sql = sprintf("SELECT * FROM `TBL_USERS` %s %s", $cond, $order);
 		return $this->retourneUsers($sql);
 	}
-	public function getActiveUsers($condition = NULL, $order = "ORDER BY `poids` ASC") {
+	public function getActiveUsers($centre = 'athis', $team = '9e', $condition = NULL, $order = "ORDER BY `poids` ASC") {
 		$cond = array("`actif` = 1");
+		if (!is_null($centre) && 'all' != $centre) $cond[] = "`centre`= \"$centre\"";
+		if (!is_null($team) && 'all' != $team) $cond[] = "`team` = \"$team\"";
 		if (is_string($condition)) $cond[] = $condition;
 		if (is_array($condition)) $cond = array_merge($cond, $condition);
 		return $this->getUsers($cond, $order);
@@ -320,11 +336,10 @@ class utilisateursDeLaGrille {
 			WHERE `TU`.`uid` = `TA`.`uid`
 			AND `TU`.`actif` = 1
 			AND `TA`.`beginning` <= \"$to\"
-			AND `TA`.`end`  >= \"$from\"
-			AND `TA`.`centre` = \"$centre\"
-			AND `TA`.`team` = \"$team\"
-			ORDER BY `TU`.`poids` ASC
-			";
+			AND `TA`.`end`  >= \"$from\"";
+		if (!is_null($centre) && 'all' != $centre) $sql .= " AND `TA`.`centre`= \"$centre\"";
+		if (!is_null($team) && 'all' != $team) $sql .= " AND `TA`.`team` = \"$team\"";
+		$sql .=	" ORDER BY `TU`.`poids` ASC";
 		return $this->retourneUsers($sql);
 	}
 	// Méthodes utiles pour l'affichage

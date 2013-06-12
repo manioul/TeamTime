@@ -5,8 +5,8 @@
 <tr>
 <td><label for="uid">nom</label></td>
 <td><select name="uid" id='sCcnom' onchange="">
-{foreach from=$users item=user key=i}
-<option value="{$i}">{$user}</option>
+{foreach from=$users item=user}
+<option value="{$user->uid()}">{$user->nom()}</option>
 {/foreach}
 </select>
 </td>

@@ -58,12 +58,20 @@ if (!isset($_POST['dateD']) || !isset($_POST['t']) || !isset($_POST['dateF'])) {
 } else {
 	$dateD = new Date($_POST['dateD']);
 	$dateF = new Date($_POST['dateF']);
+	$tables =  array('TBL_BRIEFING', 'TBL_VACANCES_SCOLAIRES', 'TBL_PERIODE_CHARGE');
 	if (false === $dateD || false === $dateF || $_POST['t'] != (int) $_POST['t']) {
 		$err = "Paramètre incorrect... :o";
-	} else {
+	} elseif ($_POST['t'] <= sizeof($tables)) {
 		$description = $_SESSION['db']->db_real_escape_string($_POST['desc']);
-		$tables =  array('TBL_BRIEFING', 'TBL_VACANCES_SCOLAIRES', 'TBL_PERIODE_CHARGE');
-		$sql = sprintf("INSERT INTO `%s` (`dateD`, `dateF`, `description`) VALUES ('%s', '%s', '%s')", $tables[$_POST['t']], $dateD->date(), $dateF->date(), $description);
+		$sql = sprintf("
+			INSERT INTO `%s`
+			(`dateD`, `dateF`, `description`)
+			VALUES ('%s', '%s', '%s')"
+			, $tables[$_POST['t']]
+			, $dateD->date()
+			, $dateF->date()
+			, $description
+		);
 		$_SESSION['db']->db_interroge($sql);
 		$champs = array(
 			array(
@@ -79,7 +87,15 @@ if (!isset($_POST['dateD']) || !isset($_POST['t']) || !isset($_POST['dateF'])) {
 				,$_SESSION['db']->db_insert_id()
 			)
 		);
-		$sql = sprintf("UPDATE `TBL_GRILLE` SET `%s` = '%s' WHERE `date` BETWEEN '%s' AND '%s'", $champs[$_POST['t']][0], $champs[$_POST['t']][1], $dateD->date(), $dateF->date());
+		$sql = sprintf("
+			UPDATE `TBL_GRILLE`
+			SET `%s` = '%s'
+			WHERE `date` BETWEEN '%s' AND '%s'
+			", $champs[$_POST['t']][0]
+			, $champs[$_POST['t']][1]
+			, $dateD->date()
+			, $dateF->date()
+		);
 		$_SESSION['db']->db_interroge($sql);
 	}
 }

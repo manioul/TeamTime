@@ -115,20 +115,16 @@ require 'required_files.inc.php';
 $year = (!empty($_GET['year']) ? sprintf("%04d", $_GET['year']) : date('Y'));
 $titre = "Congés";
 
-$sql = "SELECT `nom`, `classe`, `uid` FROM `TBL_USERS` WHERE `actif` = TRUE ORDER BY `poids` ASC";
-
-$results = $_SESSION['db']->db_interroge($sql);
-while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$users[] = array('nom'	=> htmlentities($res['nom'])
-		,'classe'	=> sprintf('nom %s', $res['classe'])
-		,'uid'		=> $res['uid']
-	);
-}
-mysqli_free_result($results);
-
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $_SESSION['centre'], $_SESSION['team']);
 
 $tab = array();
-$sql = "SELECT `did`, `nom_long`, `quantity` FROM `TBL_DISPO` WHERE `need_compteur` = TRUE AND `actif` = TRUE AND `type decompte` = 'conges'";
+$sql = "SELECT `did`
+	, `nom_long`
+	, `quantity`
+	FROM `TBL_DISPO`
+	WHERE `need_compteur` = TRUE
+	AND `actif` = TRUE
+	AND `type decompte` = 'conges'";
 $results = $_SESSION['db']->db_interroge($sql);
 while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 	$onglets[] = array('nom'	=> htmlspecialchars($res['nom_long'], ENT_COMPAT, 'UTF-8')
@@ -136,14 +132,20 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 		,'param'		=> $res['did']
 	);
 	// Recherche des congés de l'année en cours
-	$sql = sprintf('SELECT `uid`, `date`, `etat` FROM `TBL_VACANCES` WHERE `year` = %d AND `did` = %d ORDER BY `date` ASC', $year, $res['did']);
-	$r = $_SESSION['db']->db_interroge($sql);
-	while ($s = $_SESSION['db']->db_fetch_assoc($r)) {
+	$sql = sprintf('
+	SELECT `uid`, `date`
+	, `etat`
+	FROM `TBL_VACANCES`
+	WHERE `year` = %d
+	AND `did` = %d
+	ORDER BY `date` ASC', $year, $res['did']);
+	$result = $_SESSION['db']->db_interroge($sql);
+	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 		$class = '';
-		$class .= ($s['etat'] == 1 ? ' filed' : '');
-		$class .= ($s['etat'] == 2 ? ' confirmed' : '');
-		$date = new Date($s['date']);
-		$tab[$res['did']][$s['uid']][] = array(	'date' => $date->formatDate()
+		$class .= ($row['etat'] == 1 ? ' filed' : '');
+		$class .= ($row['etat'] == 2 ? ' confirmed' : '');
+		$date = new Date($row['date']);
+		$tab[$res['did']][$row['uid']][] = array(	'date' => $date->formatDate()
 							,'classe' => $class
 		);
 	}

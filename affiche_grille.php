@@ -56,7 +56,7 @@ $nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 /*
  * Configuration de la page
  */
-        $titrePage = "TeamTime"; // Le titre de la page
+        $titrePage = sprintf("Affichage d%s - TeamTime", $nbCycle == 1 ? "'un cycle" : "e $nbCycle cycles"); // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -124,14 +124,24 @@ $dateDebut = new Date(isset($_GET['dateDebut']) ? $_GET['dateDebut'] : date("Y-m
 if ($dateDebut != DATE_ERR_INVALID_FORMAT) {
 	$nextCycle = clone $dateDebut;
 	$nextCycle->addJours(Cycle::getCycleLength());
-	$sql = sprintf("SELECT `tg`.`date` FROM `TBL_GRILLE` AS `tg`, `TBL_CYCLE` AS `tc` WHERE `date` BETWEEN '%s' AND '%s' AND `tc`.`cid` = `tg`.`cid` AND `tc`.`vacation` != '%s'", $dateDebut->date(), $nextCycle->date(), REPOS);
+	$sql = sprintf("
+		SELECT `tg`.`date`
+		FROM `TBL_GRILLE` AS `tg`
+		, `TBL_CYCLE` AS `tc`
+		WHERE `date` BETWEEN '%s' AND '%s'
+		AND `tc`.`cid` = `tg`.`cid`
+		AND `tc`.`vacation` != '%s'
+		", $dateDebut->date()
+		, $nextCycle->date()
+		, REPOS
+	);
 	$vacation = $_SESSION['db']->db_fetch_row($_SESSION['db']->db_interroge($sql));
 	$dateDebut = $vacation[0];
 } else {
 	$dateDebut = date("Y-m-d");
 }
 
-$return = utilisateursDeLaGrille::getInstance()->getGrilleActiveUsers($dateDebut, $nbCycle);
+$return = utilisateursDeLaGrille::getInstance()->getGrilleActiveUsers($dateDebut, $nbCycle, $_SESSION['centre'], $_SESSION['team']);
 
 /*
  * Début des appels d'affichage Smarty

@@ -42,14 +42,26 @@ $conf['page']['include']['class_cycle'] = NULL; // La classe cycle est nécessai
 
 require 'required_files.inc.php';
 
-$sql = sprintf("SELECT * FROM `TBL_USERS` WHERE `login` = '%s' AND `sha1` = SHA1('%s')", $_SESSION['db']->db_real_escape_string($login), $_SESSION['db']->db_real_escape_string($login . $pwd));
+$sql = sprintf("
+	SELECT * FROM `TBL_USERS` AS `TU`
+	, `TBL_AFFECTATION` AS `TA`
+	, `TBL_CLASSE` AS `TC`
+	WHERE `TA`.`uid` = `TU`.`uid`
+	AND `TC`.`uid` = `TU`.`uid`
+	AND `TU`.`login` = '%s'
+	AND `TU`.`sha1` = SHA1('%s')
+	", $_SESSION['db']->db_real_escape_string($login)
+	, $_SESSION['db']->db_real_escape_string($login . $pwd)
+);
 $result = $_SESSION['db']->db_interroge($sql);
 if (mysqli_num_rows($result) > 0) {
 	session_regenerate_id(); // Éviter les attaques par fixation de session
 	$row = $_SESSION['db']->db_fetch_assoc($result);
-	$row['sha1'] = NULL; // Le sha1 n'a pas vocation à sortir
+	$row['sha1'] = NULL; // Le sha1 n'a pas vocation à apparaître
 	$_SESSION['utilisateur'] = new utilisateurGrille($row);
 	$_SESSION['AUTHENTICATED'] = true;
+	$_SESSION['centre'] = $_SESSION['utilisateur']->centre();
+	$_SESSION['team'] = $_SESSION['utilisateur']->team();
 	// Mise à jour des informations de connexion
 	$upd = sprintf("UPDATE `TBL_USERS` SET `lastlogin` = NOW(), `nblogin` = %s WHERE `login` = '%s'", $row['nblogin'] + 1, $row['login']);
 	$_SESSION['db']->db_interroge($upd);

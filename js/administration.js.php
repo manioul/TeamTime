@@ -30,7 +30,7 @@ $colonnes = array();
 while ($row = $_SESSION['db']->db_fetch_array($result)) {
        $colonnes[] = $row[0];
 }
-$sql = "SELECT `nom`, `prenom`, `classe`, `date arrivee`, `date theorique`, `date pc`, `date ce`, `date cds`, `date vismed`, `login`, `email`, `poids` FROM `TBL_USERS` WHERE `gid` > 0 AND `actif` = TRUE";
+$sql = "SELECT `nom`, `prenom`, `date arrivee`, `date theorique`, `date pc`, `date ce`, `date cds`, `date vismed`, `login`, `email`, `poids` FROM `TBL_USERS` WHERE `gid` > 0 AND `actif` = TRUE";
 $result = $_SESSION['db']->db_interroge($sql);
 // Fonction qui met à jour l'affichage dans le formulaire
 // en fonction du nom choisi
