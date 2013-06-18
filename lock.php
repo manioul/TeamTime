@@ -60,7 +60,7 @@ $err = "";
 $dateOK = FALSE;
 $userOK = FALSE;
 
-if ($cycle = new Cycle($_REQUEST['date'])) {
+if ($cycle = new Cycle($_REQUEST['date'], $_SESSION['centre'], $_SESSION['team'])) {
 	$dateOK = TRUE;
 } else {
 	$err .= "Je ne comprends pas la date de base pour (dé)protéger la grille.\n";
@@ -81,25 +81,6 @@ if ($dateOK) {
 
 
 header("Location:".$_SERVER['HTTP_REFERER']);
-/*
- * Traitement du décompte
- */
-if ($userOK) {
-	$sql = sprintf("SELECT * FROM `TBL_DECOMPTE` WHERE `date` = '%s'", $date->date());
-	$result = $_SESSION['db']->db_interroge($sql);
-	$nbCol = mysqli_num_rows($result);
-	mysqli_free_result($result);
-	$err .= "nbCols = $nbCols\n";
-	$test = FALSE;
-
-	if ($nbCol > 0) {
-		$sqlquery[] = sprintf("UPDATE `TBL_DECOMPTE` SET `uid` = '%s', `decompte` = '%s' WHERE `date` = '%s'", intval($corresp[1]), intval($value), $date->date());
-	} else {
-		$sqlquery[] = sprintf("INSERT INTO `TBL_DECOMPTE` (`date`, `uid`, `decompte`) VALUES ('%s', '%s', '%s')", $date->date(), intval($corresp[1]), intval($value));
-	}
-	$_SESSION['db']->db_interrogeArray($sqlquery);
-}
-
 
 /*
  * Gestion des erreurs

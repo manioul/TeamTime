@@ -427,12 +427,6 @@ class Date {
 	}
 	public function calendrier($recalc = false) { // le paramètre à true force le recalcul du calendrier
 		return self::genCalendrier($this->annee);
-		/*if (!$this->calendrier || $recalc) {
-			$this->calendrier = self::genCalendrier($this->annee);
-			//printf("Recalcul des jours du mois pour %s<br />fev: %s<br />", $this->annee(), $this->calendrier[2]['nbJours']);
-		}
-		return $this->calendrier;
-		 */
 	}
 	public function nbJoursMois() {
 		$cal = $this->calendrier();
