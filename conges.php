@@ -144,7 +144,7 @@ foreach (array_keys($arr) as $uid) {
 			$dateDebut = new Date($date);
 			$nbCong = 0;
 			// On doit vérifier si le jour travaillé suivant est un congé et de même type
-			$prochainJt = new jourTravail($date);
+			$prochainJt = new jourTravail($date, $_SESSION['centre'], $_SESSION['team']);
 			//$dateDepart = $prochainJt->previousWorkingDay()->date(); // La date de départ en congé est la dernière date travaillée
 			do {
 				$nbCong++;

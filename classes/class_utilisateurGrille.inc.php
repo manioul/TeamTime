@@ -318,7 +318,15 @@ class utilisateursDeLaGrille {
 		if (is_array($condition)) {
 			$cond = "WHERE " . implode(' AND ', $condition);
 		}
-		$sql = sprintf("SELECT * FROM `TBL_USERS` %s %s", $cond, $order);
+		$sql = sprintf("
+			SELECT `TBL_USERS`.*
+			FROM `TBL_USERS`,
+			`TBL_AFFECTATION`
+			%s
+		       	%s"
+			, $cond
+			, $order
+		);
 		return $this->retourneUsers($sql);
 	}
 	public function getActiveUsers($centre = 'athis', $team = '9e', $condition = NULL, $order = "ORDER BY `poids` ASC") {
@@ -331,7 +339,7 @@ class utilisateursDeLaGrille {
 	}
 	// Retourne une table d'utilisateurGrille d'utilisateurs actifs pour une affectation précise
 	public function getActiveUsersFromTo($from, $to, $centre = 'athis', $team = '9e') {
-		$sql = "SELECT * FROM `TBL_USERS` AS `TU`
+		$sql = "SELECT `TU`.* FROM `TBL_USERS` AS `TU`
 			, `TBL_AFFECTATION` AS `TA`
 			WHERE `TU`.`uid` = `TA`.`uid`
 			AND `TU`.`actif` = 1
@@ -362,15 +370,15 @@ class utilisateursDeLaGrille {
 		// Recherche des infos de date pour créer un navigateur
 		$nextCycle = new Date($dateDebut);
 		$previousCycle = new Date($dateDebut);
-		$nextCycle->addJours(Cycle::getCycleLength()*$nbCycle);
-		$previousCycle->subJours(Cycle::getCycleLength()*$nbCycle);
+		$nextCycle->addJours(Cycle::getCycleLength($centre, $team)*$nbCycle);
+		$previousCycle->subJours(Cycle::getCycleLength($centre, $team)*$nbCycle);
 
 		// Recherche la date de fin du cycle
 		$dateFin = new Date($dateDebut);
-		$dateFin->addJours(Cycle::getCycleLength() * $nbCycle - 1);
+		$dateFin->addJours(Cycle::getCycleLength($centre, $team) * $nbCycle - 1);
 
 		// Chargement des propriétés des dispos
-		$proprietesDispos = jourTravail::proprietesDispo(1);
+		$proprietesDispos = jourTravail::proprietesDispo(1, $centre, $team);
 
 		// Jours de semaine au format court
 		$jdsc = Date::$jourSemaineCourt;
@@ -405,13 +413,13 @@ class utilisateursDeLaGrille {
 		$dateIni = new Date($dateDebut);
 		if ($DEBUG) debug::getInstance()->startChrono('load_planning_duree_norepos'); // Début chrono
 		for ($i=0; $i<$nbCycle; $i++) {
-			$cycle[$i] = new Cycle(($dateIni));
-			$dateIni->addJours(Cycle::getCycleLength());
+			$cycle[$i] = new Cycle($dateIni, $centre, $team);
+			$dateIni->addJours(Cycle::getCycleLength($centre, $team));
 			$cycle[$i]->cycleId($i);
 		}
 		if ($DEBUG) debug::getInstance()->stopChrono('load_planning_duree_norepos'); // Fin chrono
 
-		// Lorsque l'on affiche qu'un cycle, on ajoute des compteurs en fin de tableau
+		// Lorsque l'on n'affiche qu'un cycle, on ajoute des compteurs en fin de tableau
 		$evenSpec = array();
 		if ($nbCycle == 1) {
 			// Récupération des compteurs

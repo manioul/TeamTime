@@ -30,7 +30,102 @@ $colonnes = array();
 while ($row = $_SESSION['db']->db_fetch_array($result)) {
        $colonnes[] = $row[0];
 }
-$sql = "SELECT `nom`, `prenom`, `date arrivee`, `date theorique`, `date pc`, `date ce`, `date cds`, `date vismed`, `login`, `email`, `poids` FROM `TBL_USERS` WHERE `gid` > 0 AND `actif` = TRUE";
+if ($_SESSION['ADMIN']) {
+	$colonnes[] = 'centre';
+	$colonnes[] = 'team';
+	$sql = sprintf("
+		SELECT
+		`nom`,
+		`prenom`,
+		`date arrivee`,
+		`date theorique`,
+		`date pc`,
+		`date ce`,
+		`date cds`,
+		`date vismed`,
+		`login`,
+		`email`,
+		`poids`,
+		`centre`,
+		`team`
+		FROM `TBL_USERS`,
+		`TBL_AFFECTATION`
+		WHERE `gid` > 0
+		AND `actif` = TRUE
+		AND `TBL_USERS`.`uid` = `TBL_AFFECTATION`.`uid`
+		AND `beginning` <= '%s'
+		AND `end` >= '%s'
+		", date('Y-m-d')
+		, date('Y-m-d')
+	);
+	// Création des champs pour l'affectation
+?>
+$(function() {
+	var objLabelCentre = document.createElement('label');
+	objLabelCentre.setAttribute('for', 'Centre');
+	objLabelCentre.appendChild(document.createTextNode('Centre'));
+	var objTdLabelCentre = document.createElement('td');
+	objTdLabelCentre.appendChild(objLabelCentre);
+
+	var objInputCentre = document.createElement('input');
+	objInputCentre.setAttribute('type', 'text');
+	objInputCentre.setAttribute('name', 'centre');
+	objInputCentre.setAttribute('id', 'iCccentre');
+	var objTdInputCentre = document.createElement('td');
+	objTdInputCentre.appendChild(objInputCentre);
+	var objFirstRow = document.createElement('tr');
+	objFirstRow.appendChild(objTdLabelCentre);
+	objFirstRow.appendChild(objTdInputCentre);
+
+	var objLabelTeam = document.createElement('label');
+	objLabelTeam.setAttribute('for', 'Team');
+	objLabelTeam.appendChild(document.createTextNode('Team'));
+	var objTdLabelTeam = document.createElement('td');
+	objTdLabelTeam.appendChild(objLabelTeam);
+
+	var objInputTeam = document.createElement('input');
+	objInputTeam.setAttribute('type', 'text');
+	objInputTeam.setAttribute('name', 'team');
+	objInputTeam.setAttribute('id', 'iCcteam');
+	var objTdInputTeam = document.createElement('td');
+	objTdInputTeam.appendChild(objInputTeam);
+	var objSecondRow = document.createElement('tr');
+	objSecondRow.appendChild(objTdLabelTeam);
+	objSecondRow.appendChild(objTdInputTeam);
+
+	$('#iCcemail').parent().parent().after(objSecondRow);
+	$('#iCcemail').parent().parent().after(objFirstRow);
+});
+<?	
+} else {
+	$sql = sprintf("
+		SELECT
+		`nom`,
+		`prenom`,
+		`date arrivee`,
+		`date theorique`,
+		`date pc`,
+		`date ce`,
+		`date cds`,
+		`date vismed`,
+		`login`,
+		`email`,
+		`poids`,
+		FROM `TBL_USERS`,
+		`TBL_AFFECTATION`
+		WHERE `gid` > 0
+		AND `actif` = TRUE
+		AND `TBL_USERS`.`uid` = `TBL_AFFECTATION`.`uid`
+		AND `beginning` <= '%s'
+		AND `end` >= '%s'
+		AND (`centre` = '%s' OR `centre` = 'all')
+		AND (`team` = '%s' OR `team` = 'all');
+		", date('Y-m-d')
+		, date('Y-m-d')
+		, $_SESSION['centre']
+		, $_SESSION['team']
+	);
+}
 $result = $_SESSION['db']->db_interroge($sql);
 // Fonction qui met à jour l'affichage dans le formulaire
 // en fonction du nom choisi
@@ -39,9 +134,6 @@ function updDispFormCc()
 {
 	var aUsers = new Array();
 	var aColonnes = new Array();
-	<?
-foreach ($colonnes as $col) { ?>
-	aColonnes[aColonnes.length] = '<?=str_replace(' ', '_', $col)?>';
 	<?
 while ($row = $_SESSION['db']->db_fetch_assoc($result)) { ?>
 	aUsers['<?=$row['nom']?>'] = new Object();
@@ -53,9 +145,10 @@ while ($row = $_SESSION['db']->db_fetch_assoc($result)) { ?>
 <? 		}
 	}
 } ?>
-<? } ?>
 	$("#iCclogin").val(aUsers[$('#sCcnom').val()].login);
 	$("#iCcemail").val(aUsers[$('#sCcnom').val()].email);
+	$("#iCccentre").val(aUsers[$('#sCcnom').val()].centre);
+	$("#iCcteam").val(aUsers[$('#sCcnom').val()].team);
 }
 function subCc()
 {
