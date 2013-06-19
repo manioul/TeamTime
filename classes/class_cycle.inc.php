@@ -34,7 +34,11 @@ class Cycle {
 	private $decompte; // Un tableau contenant le décompte pour chaque utilisateur
 	private $compteTypeUser = array(); // Un tableau des décomptes par type (cf `type decompte` dans la bdd) et par utilisateur
 	private $compteTypeUserFin = array(); // Un tableau des décomptes par type (cf `type decompte` dans la bdd) et par utilisateur pour la fin du cycle
-	public function __construct($date=false) {
+	private $centre = NULL;
+	private $team = NULL;
+	public function __construct($date=false, $centre = 'athis', $team = '9e') {
+		$this->centre($centre);
+		$this->team($team);
 		return $this->loadCycle($date);
 	}
 	public function __destruct() { // TODO Supprimer l'objet de la liste $_definedCycles
@@ -44,18 +48,36 @@ class Cycle {
 	 */
 
 	// Recherche la longueur du cycle
-	public static function getCycleLength() {
+	public static function getCycleLength($centre = 'athis', $team = '9e') {
 		if (is_null(self::$_cycleLength)) {
-			$requete = "SELECT COUNT(*) FROM `TBL_CYCLE`";
+			$requete = sprintf("
+				SELECT COUNT(*)
+				FROM `TBL_CYCLE`
+				WHERE (`centre` = '%s' OR `centre` = 'all')
+				AND (`team` = '%s' OR `team` = 'all')
+				"
+				, $centre
+				, $team
+			);
 			$out = $_SESSION['db']->db_fetch_row($_SESSION['db']->db_interroge($requete));
 			self::$_cycleLength = $out[0];
 		}
 		return self::$_cycleLength;
 	}
 	// Recherche la longueur du cycle sans compter les jours de repos
-	public static function getCycleLengthNoRepos() {
+	public static function getCycleLengthNoRepos($centre = 'athis', $team = '9e') {
 		if (is_null(self::$_cycleLengthNoRepos)) {
-			$requete = sprintf("SELECT COUNT(*) FROM `TBL_CYCLE` WHERE `vacation` != '%s'", REPOS);
+			$requete = sprintf("
+				SELECT COUNT(*)
+				FROM `TBL_CYCLE`
+				WHERE `vacation` != '%s'
+				AND (`centre` = '%s' OR `centre` = 'all')
+				AND (`team` = '%s' OR `team` = 'all')
+				"
+				, REPOS
+				, $centre
+				, $team
+			);
 			$out = $_SESSION['db']->db_fetch_row($_SESSION['db']->db_interroge($requete));
 			self::$_cycleLengthNoRepos = $out[0];
 		}
@@ -79,6 +101,14 @@ class Cycle {
 		}
 		return $this->conf;
 	}
+	public function centre($centre = NULL) {
+		if (is_null($centre)) return $this->centre;
+		return $this->centre = $centre;
+	}
+	public function team($team = NULL) {
+		if (is_null($team)) return $this->team;
+		return $this->team = $team;
+	}
 	//-----------------------------------------------------------
 	// Retourne les joursTravail du tableau $dispos
 	// Avec le décompte de début de cycle en première colonne
@@ -97,25 +127,52 @@ class Cycle {
 	// Pour cela, on recherche si la table TBL_GRILLE a des données
 	// correspondant au 31 décembre de l'année passée en paramètre
 	//--------------------------------------------------------------
-	private static function grilleExists($annee) {
-		$requete = sprintf("SELECT * FROM `TBL_GRILLE` WHERE `date` = '%4d-12-31'", $annee);
+	private static function grilleExists($annee, $centre = 'athis', $team = '9e') {
+		$requete = sprintf("
+			SELECT *
+			FROM `TBL_GRILLE`
+			WHERE `date` = '%4d-12-31'
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')"
+			, $annee
+			, $centre
+			, $team
+		);
 		$result = $_SESSION['db']->db_interroge($requete);
 		$row = $_SESSION['db']->db_fetch_assoc($result);
 		mysqli_free_result($result);
 		if (!is_array($row) && $annee >= date('Y')) { // On a les conditions remplies pour générer une nouvelle grille
-			$requete = sprintf("SELECT * FROM `TBL_GRILLE` WHERE `date` = '%4d-12-31'", $annee-1);
+			$requete = sprintf("
+				SELECT *
+				FROM `TBL_GRILLE`
+				WHERE `date` = '%4d-12-31'
+				AND (`centre` = '%s' OR `centre` = 'all')
+				AND (`team` = '%s' OR `team` = 'all')"
+				, $annee-1
+				, $centre
+				, $team
+			);
 			$result = $_SESSION['db']->db_interroge($requete);
 			$row = $_SESSION['db']->db_fetch_assoc($result);
 			mysqli_free_result($result);
 			if (!is_array($row)) {
-				self::grilleExists($annee-1);
-				$requete = sprintf("SELECT * FROM `TBL_GRILLE` WHERE `date` = '%4d-12-31'", $annee-1);
+				self::grilleExists($annee-1, $centre, $team);
+				$requete = sprintf("
+					SELECT *
+					FROM `TBL_GRILLE`
+					WHERE `date` = '%4d-12-31'
+					AND (`centre` = '%s' OR `centre` = 'all')
+					AND (`team` = '%s' OR `team` = 'all'"
+					, $annee-1
+					, $centre
+					, $team
+				);
 				$result = $_SESSION['db']->db_interroge($requete);
 				$row = $_SESSION['db']->db_fetch_assoc($result);
 				mysqli_free_result($result);
 			}
 			//echo "Génère la grille pour $annee";
-			$jourTravail = new jourTravail($row);
+			$jourTravail = new jourTravail($row, $centre, $team);
 			self::genere_grille($jourTravail);
 			return true;
 		} else if (is_array($row)) {
@@ -147,13 +204,22 @@ class Cycle {
 	//-------------------------------
 	// Charge le planning d'une année
 	//-------------------------------
-	public static function load_planning($annee) { // Retourne un tableau de la forme $planning[mois][jourDuMois] = jourDuCycle
+	public static function load_planning($annee, $centre = 'athis', $team = '9e') { // Retourne un tableau de la forme $planning[mois][jourDuMois] = jourDuCycle
 		// On doit d'abord créer la grille de l'année si elle n'existe pas
-		self::grilleExists($annee);
-		$sql = sprintf("SELECT * FROM `TBL_GRILLE` WHERE YEAR(`date`) = '%s'", $annee);
+		self::grilleExists($annee, $centre, $team);
+		$sql = sprintf("
+			SELECT *
+			FROM `TBL_GRILLE`
+			WHERE YEAR(`date`) = '%s'
+			AND (`centre` = '%s' OR `centre` ='all')
+			AND (`team` = '%s' OR `team` = 'all')"
+			, $annee
+			, $centre
+			, $team
+		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$planning[] = new jourTravail($row);
+			$planning[] = new jourTravail($row, $centre, $team);
 		}
 		mysqli_free_result($result);
 		return $planning;
@@ -162,6 +228,108 @@ class Cycle {
 	 * Fin des fonctions statiques
 	 */
 
+	//----------------------------------
+	// Vérifie que le cycle
+	// débutant à $dateDebut
+	// est défini dans TBL_GRILLE de la bdd 
+	//
+	//  FIXME INUTILISÉ et NON TESTÉ
+	//----------------------------------
+	private function cycleExistsInDb($dateDebut) {
+		if (!is_a($dateDebut, 'Date')) { // On teste si le paramètre est un objet de la classe Date
+			$dateDebut = new Date($dateDebut);
+			if (!$dateDebut) return false;
+		}
+		$sql = sprintf("
+			SELECT COUNT(`date`)
+			FROM `TBL_GRILLE`
+			WHERE `date` BETWEEN '%s' AND '%s'
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $dateDebut->date()
+			, $dateDebut->addJours(self::getCycleLength($this->centre, $this->team)-1)->date()
+			, $this->centre
+			, $this->team
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		if (mysqli_num_rows($result) != self::getCycleLength($this->centre, $this->team)) genCycleIntoDb($dateDebut);
+		mysqli_free_result($result);
+		return true;
+	}
+	//----------------------------------
+	// Génère les cycles dans TBL_GRILLE
+	// jusqu'au cycle contenant $dateDebut
+	//----------------------------------
+	private function genCycleIntoDb($dateDebut) {
+		if (!is_a($dateDebut, 'Date')) { // On teste si le paramètre est un objet de la classe Date
+			$dateDebut = new Date($dateDebut);
+			if (!$dateDebut) return false;
+		}
+		$confTab = array('E' => 'W', 'W' => 'E');
+		$dateDebut->addJours(self::getCycleLength($this->centre, $this->team)); // On veut s'assurer que le cycle complet contenant la date est généré
+		// Recherche la dernière entrée de cycle dans la base
+		$sql = sprintf("
+			SELECT `date`,
+				`cid`,
+				`conf`
+			FROM `TBL_GRILLE`
+			WHERE `date` = (SELECT MAX(`date`)
+				FROM `TBL_GRILLE`
+				WHERE (`centre` = '%s' OR `centre` = 'all')
+				AND (`team` = '%s' OR `team` = 'all')
+			)
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $this->centre
+			, $this->team
+			, $this->centre
+			, $this->team
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		$row = $_SESSION['db']->db_fetch_row($result);
+		mysqli_free_result($result);
+		$startDate = new Date($row[0]);
+		$cid = $row[1];
+		$conf = $row[2];
+
+		if ($dateDebut->compareDate($row[0]) < 0) return true;
+
+		$sql = "";
+		$intro = "INSERT INTO `TBL_GRILLE`
+			( `grid`,
+			`date`,
+			`cid`,
+			`grilleId`,
+			`conf`,
+			`pcid`,
+			`vsid`,
+			`briefing`,
+			`readOnly`,
+			`ferie`,
+			`centre`,
+			`team` )
+			VALUES ";
+		while ($startDate->compareDate($dateDebut) < 0) {
+			$startDate->incDate();
+			$nCid = ($cid % self::getCycleLength($this->centre, $this->team)) + 1;
+			if ($nCid < $cid) $conf = $confTab[$conf];
+			$cid = $nCid;
+			$sql .= sprintf("
+				('', '%s', %d, '', '%s', '', '', '', '', '', '%s', '%s'),"
+				, $startDate->date()
+				, $cid
+				, $conf
+				, $this->centre
+				, $this->team
+			);
+		}
+		if ($sql != "") {
+			$sql = $intro . substr($sql, 0, -1);
+			$_SESSION['db']->db_interroge($sql);
+		}
+	}
 	//-------------------------------------------------
 	// Charge le cycle
 	//
@@ -173,17 +341,16 @@ class Cycle {
 			$dateDebut = new Date($dateDebut);
 			if (!$dateDebut) return false;
 		}
-		// D'abord s'assurer que la grille existe pour l'année
-		if (!self::grilleExists($dateDebut->annee())) { // Something went wrong...
-			return false; // lastError est déjà remplie
-		}
 		// On va chercher le cycle qui contient la date $dateDebut
 		$dateMin = clone $dateDebut;
-		$dateMin->subJours(self::getCycleLength()-1);
+		$dateMin->subJours(self::getCycleLength($this->centre, $this->team)-1);
 		$dateMaxS = clone $dateDebut;
-		$dateMaxS->addJours(self::getCycleLength()-1);
+		$dateMaxS->addJours(self::getCycleLength($this->centre, $this->team)-1);
+		// D'abord s'assurer que la grille existe pour le cycle demandé
+		$this->genCycleIntoDb($dateMaxS);
 		$sql = sprintf("
-			SELECT `date`, `TBL_GRILLE`.`cid`,
+			SELECT `date`,
+			`TBL_GRILLE`.`cid`,
 			`TBL_GRILLE`.`vsid`,
 			`TBL_GRILLE`.`pcid`,
 			`TBL_GRILLE`.`briefing`,
@@ -196,19 +363,49 @@ class Cycle {
 			WHERE `TBL_CYCLE`.`cid` = `TBL_GRILLE`.`cid`
 			AND `TBL_CYCLE`.`vacation` <> 'Repos'
 			AND `date` BETWEEN
-		       		(SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = 1 AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
-				AND (SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = '%s' AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
-				ORDER BY date ASC"
-				, $dateMin->date()
-				, $dateDebut->date()
-				, self::getCycleLength()
-				, $dateDebut->date()
-				, $dateMaxS->date());
+				(SELECT `date`
+				FROM `TBL_GRILLE`
+				WHERE `cid` =
+					(SELECT `cid`
+						FROM `TBL_CYCLE`
+						WHERE `rang` = 1
+						AND (`centre` = '%s' OR `centre` = 'all')
+						AND (`team` = '%s' OR `team` = 'all')
+					)
+				AND `date` BETWEEN '%s' AND '%s'
+				LIMIT 0,1
+				)
+			AND
+			       	(SELECT `date`
+				FROM `TBL_GRILLE`
+				WHERE `cid` =
+					(SELECT MAX(`cid`)
+						FROM `TBL_CYCLE`
+						WHERE (`centre` = '%s' OR `centre` = 'all')
+						AND (`team` = '%s' OR `team` = 'all')
+					)
+				AND `date` BETWEEN '%s' AND '%s'
+				LIMIT 0,1
+				)
+			AND (`TBL_CYCLE`.`centre` = '%s' OR `TBL_CYCLE`.`centre` = 'all')
+			AND (`TBL_CYCLE`.`team` = '%s' OR `TBL_CYCLE`.`team` = 'all')
+			ORDER BY `date` ASC"
+			, $this->centre
+			, $this->team
+			, $dateMin->date()
+			, $dateDebut->date()
+			, $this->centre // On suppose ici que les `cid` d'une même entité croissent avec le `rang`
+			, $this->team	// Ce qui est logique sauf si le cycle est ultérieurement modifié
+			, $dateDebut->date()
+			, $dateMaxS->date()
+			, $this->centre
+			, $this->team
+		);
 		//debug::getInstance()->postMessage($sql);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$check = true;
 		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$this->dispos[$row['date']]['jourTravail'] = new jourTravail($row); // $dispo[date]['jourTravail'] = jourTravail
+			$this->dispos[$row['date']]['jourTravail'] = new jourTravail($row, $this->centre, $this->team); // $dispo[date]['jourTravail'] = jourTravail
 			if ($check) { // la date de référence est la première date du cycle
 				$this->dateRef = new Date($row['date']);
 				$this->moisAsHTML = $this->dispos[$row['date']]['jourTravail']->moisAsHTML();
@@ -218,8 +415,10 @@ class Cycle {
 		}
 		mysqli_free_result($result);
 		$sql =  sprintf("
-			SELECT `TL`.`uid`, `TL`.`date`,
-			`dispo` FROM `TBL_L_SHIFT_DISPO` AS `TL`,
+			SELECT `TL`.`uid`,
+			`TL`.`date`,
+			`dispo`
+		       	FROM `TBL_L_SHIFT_DISPO` AS `TL`,
 			`TBL_DISPO` AS `TD`,
 			`TBL_USERS` AS `TU`,
 			`TBL_GRILLE` AS `TG`
@@ -227,13 +426,38 @@ class Cycle {
 			AND `TU`.`uid` = `TL`.`uid`
 			AND `TU`.`actif` = '1'
 			AND `TL`.`date` BETWEEN
-		       		(SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = 1 AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
-				AND (SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = '%s' AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
+				(SELECT `date`
+		       			FROM `TBL_GRILLE`
+					WHERE `cid` =
+					(SELECT `cid`
+						FROM `TBL_CYCLE`
+						WHERE `rang` = 1
+						AND (`centre` = '%s' OR `centre` = 'all')
+						AND (`team` = '%s' OR `team` = 'all')
+					)
+					AND `date` BETWEEN '%s' AND '%s'
+				      	LIMIT 0,1
+				)
+				AND
+			       	(SELECT `date`
+			       		FROM `TBL_GRILLE`
+					WHERE `cid` =
+					(SELECT MAX(`cid`)
+						FROM `TBL_CYCLE`
+						WHERE (`centre` = '%s' OR `centre` = 'all')
+						AND (`team` = '%s' OR `team` = 'all')
+					)
+					AND `date` BETWEEN '%s' AND '%s'
+					LIMIT 0,1
+				)
 			AND `TD`.`did` = `TL`.`did`
 			ORDER BY date ASC"
+			, $this->centre
+			, $this->team
 			, $dateMin->date()
 			, $dateDebut->date()
-			, self::getCycleLength()
+			, $this->centre // On suppose ici que les `cid` d'une même entité croissent avec le `rang`
+			, $this->team	// Ce qui est logique sauf si le cycle est ultérieurement modifié
 			, $dateDebut->date()
 			, $dateMaxS->date());
 		//debug::getInstance()->postMessage($sql);
@@ -251,7 +475,24 @@ class Cycle {
 	public function compteType($type = 'dispo') {
 		$date = clone $this->dateRef();
 		$date->decDate();
-		$sql = sprintf("SELECT `uid`, MOD(COUNT(`tl`.`sdid`), 10) FROM `TBL_L_SHIFT_DISPO` AS `tl`, `TBL_DISPO` AS `td` WHERE `tl`.`did` = `td`.`did` AND `td`.`type decompte` = '%s' AND `tl`.`date` < '%s' GROUP BY `uid`", $type, $date->date());
+		$sql = sprintf("
+			SELECT `tl`.`uid`,
+			MOD(COUNT(`tl`.`sdid`), 10)
+			FROM `TBL_L_SHIFT_DISPO` AS `tl`,
+			`TBL_AFFECTATION` AS `ta`,
+			`TBL_DISPO` AS `td`
+			WHERE `tl`.`did` = `td`.`did`
+			AND `tl`.`uid` = `ta`.`uid`
+			AND (`ta`.`centre` = '%s' OR `ta`.`centre` = 'all')
+			AND (`ta`.`team` = '%s' OR `ta`.`team` = 'all')
+			AND `td`.`type decompte` = '%s'
+			AND `tl`.`date` < '%s'
+			GROUP BY `uid`"
+			, $this->centre
+			, $this->team
+			, $type
+			, $date->date()
+		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
 			$this->compteTypeUser[$type][$row[0]] = $row[1];
@@ -273,7 +514,24 @@ class Cycle {
 	public function compteTypeFin($type = 'dispo') {
 		$date = clone $this->dateRef();
 		$date->addJours(self::getCycleLength()-1);
-		$sql = sprintf("SELECT `uid`, MOD(COUNT(`tl`.`sdid`), 10) FROM `TBL_L_SHIFT_DISPO` AS `tl`, `TBL_DISPO` AS `td` WHERE `tl`.`did` = `td`.`did` AND `td`.`type decompte` = '%s' AND `tl`.`date` < '%s' GROUP BY `uid`", $type, $date->date());
+		$sql = sprintf("
+			SELECT `tl`.`uid`,
+			MOD(COUNT(`tl`.`sdid`), 10)
+			FROM `TBL_L_SHIFT_DISPO` AS `tl`,
+			`TBL_AFFECTATION` AS `ta`,
+			`TBL_DISPO` AS `td`
+			WHERE `tl`.`did` = `td`.`did`
+			AND `tl`.`uid` = `ta`.`uid`
+			AND (`ta`.`centre` = '%s' OR `ta`.`centre` = 'all')
+			AND (`ta`.`team` = '%s' OR `ta`.`team` = 'all')
+			AND `td`.`type decompte` = '%s'
+			AND `tl`.`date` < '%s'
+			GROUP BY `uid`"
+			, $this->centre
+			, $this->team
+			, $type
+			, $date->date()
+		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
 			$this->compteTypeUserFin[$type][$row[0]] = $row[1];
