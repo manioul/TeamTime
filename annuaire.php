@@ -103,23 +103,6 @@ $requireAuthenticatedUser = true; // L'utilisateur doit être authentifié pour 
 
 require 'required_files.inc.php';
 
-
-// Affichage des en-têtes de page
-$smarty->display('header.tpl');
-
-// Ajout du menu horizontal
-if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
-
-// Ajout des messages
-if ($conf['page']['elements']['messages']) include('messages.inc.php');
-
-// Ajout du choix du thème
-if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
-
-// Affichage du menu d'administration
-if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
-
-
 $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y-m-d'), date('Y-m-d'), $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
 
 $arr = array( array('nom', 'prenom', 'email') );

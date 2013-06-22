@@ -158,17 +158,6 @@ if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) 
 	}
 }
 
-// Affichage des en-têtes de page
-$smarty->display('header.tpl');
-
-// Ajout du menu horizontal
-if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
-
-// Ajout du choix du thème
-if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
-
-// Affichage du menu d'administration
-if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
 $smarty->display('addMultipleDispoUser.tpl');
 
 

@@ -149,21 +149,6 @@ $return = utilisateursDeLaGrille::getInstance()->getGrilleActiveUsers($dateDebut
 foreach ($return as $key => $val) {
 	$smarty->assign($key, $val);
 }
-// Affichage des en-têtes de page
-$smarty->display('header.tpl');
-
-// Ajout du menu horizontal
-if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
-
-// Ajout des messages
-if ($conf['page']['elements']['messages']) include('messages.inc.php');
-
-// Ajout du choix du thème
-if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
-
-// Affichage du menu d'administration
-if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
-
 
 $smarty->display('grille2.tpl');
 
