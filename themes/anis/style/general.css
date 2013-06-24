@@ -193,6 +193,16 @@ div#info {
 }
 
 /*
+ * classe pour marquer les erreurs
+ */
+.erreur {
+	font-weight:bold;
+	font-style:italic;
+	color:#00f;
+	background-color:#f00;
+}
+
+/*
  * notes de version
  */
 div#notesversion {

@@ -606,6 +606,24 @@ class utilisateursDeLaGrille {
 						if ($vacation['jourTravail']->readOnly()) $classe .= " protected";
 						if (!empty($vacation[$user['uid']]) && !empty($proprietesDispos[$vacation[$user['uid']]]) && 1 == $proprietesDispos[$vacation[$user['uid']]]['absence']) {
 							$classe .= " absent";
+							// Ajout d'une classe particulière pour les congés validés
+							if ('conges' == $proprietesDispos[$vacation[$user['uid']]]['type decompte']) {
+								$result = $_SESSION['db']->db_interroge(sprintf("
+											SELECT `etat`
+											FROM `TBL_VACANCES`
+											WHERE `date` = '%s'
+											AND `uid` = %d
+											", $dateVacation
+											, $user['uid']
+											));     
+								if (mysqli_num_rows($result) < 1) {
+									$classe .= " erreur";
+								} else {
+									$row = $_SESSION['db']->db_fetch_row($result);
+									if (2 == $row[0]) $classe .= " valide";
+								}
+								mysqli_free_result($result);
+							}
 						} else {
 							$classe .= " present";
 						}

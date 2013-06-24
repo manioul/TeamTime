@@ -87,7 +87,6 @@ td.presence:hover {
 }
 /* Protection de la grille */
 td.protected {
-	color: #300;
 	cursor: default;
 }
 td.present {
@@ -219,4 +218,7 @@ div#dFormRemplacement table td {
 .emphasize {
 	background-color: #fdd;
 	color: #f00;
+}
+.valide {
+	color:red;
 }
