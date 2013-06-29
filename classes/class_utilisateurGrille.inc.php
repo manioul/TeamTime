@@ -314,14 +314,14 @@ class utilisateursDeLaGrille {
 	// Les conditions sont liées par AND
 	public function getUsers($condition = NULL, $order = "ORDER BY `poids` ASC") {
 		// Ajoute la condition
+		$cond = "";
 		if (is_string($condition)) $cond = "WHERE " . $condition;
 		if (is_array($condition)) {
 			$cond = "WHERE " . implode(' AND ', $condition);
 		}
 		$sql = sprintf("
 			SELECT `TBL_USERS`.*
-			FROM `TBL_USERS`,
-			`TBL_AFFECTATION`
+			FROM `TBL_USERS`
 			%s
 		       	%s"
 			, $cond
@@ -609,13 +609,13 @@ class utilisateursDeLaGrille {
 							// Ajout d'une classe particulière pour les congés validés
 							if ('conges' == $proprietesDispos[$vacation[$user['uid']]]['type decompte']) {
 								$result = $_SESSION['db']->db_interroge(sprintf("
-											SELECT `etat`
-											FROM `TBL_VACANCES`
-											WHERE `date` = '%s'
-											AND `uid` = %d
-											", $dateVacation
-											, $user['uid']
-											));     
+									SELECT `etat`
+									FROM `TBL_VACANCES`
+									WHERE `date` = '%s'
+									AND `uid` = %d
+									", $dateVacation
+									, $user['uid']
+								));
 								if (mysqli_num_rows($result) < 1) {
 									$classe .= " erreur";
 								} else {
