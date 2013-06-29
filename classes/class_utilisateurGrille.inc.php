@@ -42,8 +42,9 @@ class utilisateurGrille extends utilisateur {
 	private $dateCE;
 	private $dateCDS;
 	private $dateVisMed; // Date de la prochaine visite médicale
-	private $centre;
-	private $team;
+	private $affectations = array();
+	private $centre = array();
+	private $team = array();
 	private $poids; // La position d'affichage dans la grille (du plus faible au plus gros)
 	private $showtipoftheday; // L'utilisateur veut-il voir les tips of the day
 	private $dispos; /* un tableau contenant un tableau des dispos indexées par les dates:
@@ -57,30 +58,9 @@ class utilisateurGrille extends utilisateur {
 				if (method_exists($this, $cle)) {
 					$this->$cle($valeur);
 				} else {
-					switch($cle) { // les espaces sont mal supportés dans les noms de champ ! :/
-					case 'date arrivee':
-						$this->dateArrivee($valeur);
-						break;
-					case 'date theorique':
-						$this->dateTheorique($valeur);
-						break;
-					case 'date pc':
-						$this->datePC($valeur);
-						break;
-					case 'date ce':
-						$this->dateCE($valeur);
-						break;
-					case 'date cds':
-						$this->dateCDS($valeur);
-						break;
-					case 'date vismed':
-						$this->dateVisMed($valeur);
-						break;
-					default:
-						debug::getInstance()->triggerError('Valeur inconnue' . $cle . " => " . $valeur);
-						debug::getInstance()->lastError(ERR_BAD_PARAM);
-						$valid = false;
-					}
+					debug::getInstance()->triggerError('Valeur inconnue' . $cle . " => " . $valeur);
+					debug::getInstance()->lastError(ERR_BAD_PARAM);
+					$valid = false;
 				}
 			}
 			return $valid; // Retourne true si l'affectation s'est bien passée, false sinon
@@ -169,77 +149,113 @@ class utilisateurGrille extends utilisateur {
 		}
 		return substr($condition, 0, -4);
 	}
-	public function dateArrivee($dateArrivee=false) {
-		if (false !== $dateArrivee) {
-			$this->dateArrivee = (string) $dateArrivee;
+	public function arrivee($arrivee=false) {
+		if (false !== $arrivee) {
+			$this->arrivee = (string) $arrivee;
 		}
-		if (isset($this->dateArrivee)) {
-			return $this->dateArrivee;
+		if (isset($this->arrivee)) {
+			return $this->arrivee;
 		} else {
 			return false;
 		}
 	}
-	public function dateTheorique($dateTheorique=false) {
-		if (false !== $dateTheorique) {
-			$this->dateTheorique = (string) $dateTheorique;
+	public function theorique($theorique=false) {
+		if (false !== $theorique) {
+			$this->theorique = (string) $theorique;
 		}
-		if (isset($this->dateTheorique)) {
-			return $this->dateTheorique;
+		if (isset($this->theorique)) {
+			return $this->theorique;
 		} else {
 			return false;
 		}
 	}
-	public function datePC($datePC=false) {
-		if (false !== $datePC) {
-			$this->datePC = (string) $datePC;
+	public function pc($pc=false) {
+		if (false !== $pc) {
+			$this->pc = (string) $pc;
 		}
-		if (isset($this->datePC)) {
-			return $this->datePC;
+		if (isset($this->pc)) {
+			return $this->pc;
 		} else {
 			return false;
 		}
 	}
-	public function dateCE($dateCE=false) {
-		if (false !== $dateCE) {
-			$this->dateCE = (string) $dateCE;
+	public function ce($ce=false) {
+		if (false !== $ce) {
+			$this->ce = (string) $ce;
 		}
-		if (isset($this->dateCE)) {
-			return $this->dateCE;
+		if (isset($this->ce)) {
+			return $this->ce;
 		} else {
 			return false;
 		}
 	}
-	public function dateCDS($dateCDS=false) {
-		if (false !== $dateCDS) {
-			$this->dateCDS = (string) $dateCDS;
+	public function cds($cds=false) {
+		if (false !== $cds) {
+			$this->cds = (string) $cds;
 		}
-		if (isset($this->dateCDS)) {
-			return $this->dateCDS;
+		if (isset($this->cds)) {
+			return $this->cds;
 		} else {
 			return false;
 		}
 	}
-	public function dateVisMed($dateVisMed=false) {
-		if (false !== $dateVisMed) {
-			$this->dateVisMed = (string) $dateVisMed;
+	public function vismed($vismed=false) {
+		if (false !== $vismed) {
+			$this->vismed = (string) $vismed;
 		}
-		if (isset($this->dateVisMed)) {
-			return $this->dateVisMed;
+		if (isset($this->vismed)) {
+			return $this->vismed;
 		} else {
 			return false;
 		}
 	}
-	public function centre ($param = NULL) {
-		if (!is_null($param)) {
-			$this->centre = $param;
+	public function getAffectationFromDb() {
+		$result = $_SESSION['db']->db_interroge(sprintf("
+			SELECT * FROM `TBL_AFFECTATION`
+			WHERE `uid` = '%s'
+			", $this->uid()
+		));
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$this->addAffectation($row);
 		}
-		return $this->centre;
+		mysqli_free_result($result);
 	}
-	public function team ($param = NULL) {
-		if (!is_null($param)) {
-			$this->team = $param;
+	protected function addAffectation($row = false) {
+		if (!is_array($row)) return false;
+		$index = isset($this->centre[$row['centre']]) ? sizeof($this->centre[$row['centre']]) : 0;
+		$this->centre[$row['centre']][$index]['beginning'] = $row['beginning'];
+		$this->centre[$row['centre']][$index]['end'] = $row['end'];
+		$this->team[$row['team']][$index]['beginning'] = $row['beginning'];
+		$this->team[$row['team']][$index]['end'] = $row['end'];
+		$this->affectations[] = array('beginning' => $row['beginning']
+					, 'end'		=> $row['end']
+					, 'centre'	=> $row['centre']
+					, 'team'	=> $row['team']
+		);
+	}
+	public function centre ($date = false) {
+		if (sizeof($this->centre) < 1) $this->getAffectationFromDb();
+		if (false === $date) $date = date('Y-m-d');
+		if (!is_object($date)) $date = new Date($date);
+		foreach ($this->centre as $centre => $array) {
+			foreach ($array as $index => $value) {
+				if ($date->compareDate($value['beginning']) >= 0 && $date->compareDate($value['end']) <= 0) return $centre;
+			}
 		}
-		return $this->team;
+	}
+	public function team ($date = false) {
+		if (sizeof($this->team) < 1) $this->getAffectationFromDb();
+		if (false === $date) $date = date('Y-m-d');
+		if (!is_object($date)) $date = new Date($date);
+		foreach ($this->team as $team => $array) {
+			foreach ($array as $index => $value) {
+				if ($date->compareDate($value['beginning']) >= 0 && $date->compareDate($value['end']) <= 0) return $team;
+			}
+		}
+	}
+	public function affectations() {
+		if (sizeof($this->affectations) < 1) $this->getAffectationFromDb();
+		return $this->affectations;
 	}
 	public function poids($poids=false) {
 		if (false !== $poids) {
@@ -278,6 +294,10 @@ class utilisateurGrille extends utilisateur {
 			,'id'		=> "u". $this->uid()
 			,'uid'		=> $this->uid()
 		);
+	}
+	// Prépare l'affichage des informations de l'utilisateur
+	// Si $myself est positionné, on peut modifier le mot de passe
+	public function displayUserInfos($myself = false) {
 	}
 }
 
