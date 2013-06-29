@@ -351,23 +351,61 @@ class utilisateursDeLaGrille {
 	}
 	public function getActiveUsers($centre = 'athis', $team = '9e', $condition = NULL, $order = "ORDER BY `poids` ASC") {
 		$cond = array("`actif` = 1");
-		if (!is_null($centre) && 'all' != $centre) $cond[] = "`centre`= \"$centre\"";
-		if (!is_null($team) && 'all' != $team) $cond[] = "`team` = \"$team\"";
-		if (is_string($condition)) $cond[] = $condition;
 		if (is_array($condition)) $cond = array_merge($cond, $condition);
 		return $this->getUsers($cond, $order);
 	}
 	// Retourne une table d'utilisateurGrille d'utilisateurs actifs pour une affectation précise
-	public function getActiveUsersFromTo($from, $to, $centre = 'athis', $team = '9e') {
-		$sql = "SELECT `TU`.* FROM `TBL_USERS` AS `TU`
-			, `TBL_AFFECTATION` AS `TA`
-			WHERE `TU`.`uid` = `TA`.`uid`
-			AND `TU`.`actif` = 1
-			AND `TA`.`beginning` <= \"$to\"
-			AND `TA`.`end`  >= \"$from\"";
-		if (!is_null($centre) && 'all' != $centre) $sql .= " AND `TA`.`centre`= \"$centre\"";
-		if (!is_null($team) && 'all' != $team) $sql .= " AND `TA`.`team` = \"$team\"";
-		$sql .=	" ORDER BY `TU`.`poids` ASC";
+	public function getActiveUsersFromTo($from = NULL, $to = NULL, $centre = NULL, $team = NULL) {
+		return $this->getUsersFromTo($from, $to, $centre, $team, 1);
+	}
+	public function getUsersFromTo($from = NULL, $to = NULL, $centre = NULL, $team = NULL, $active = 1) {
+		if (is_null($from)) $from = date('Y-m-d');
+		if (is_null($to)) $to = date('Y-m-d');
+		if (is_null($centre)) $centre = 'athis';
+		if (is_null($team)) $team = '9e';
+		if ('all' == $centre && 'all' == $team) {
+			$sql = "SELECT `TU`.*,
+				`TA`.`centre`,
+				`TA`.`team`
+				FROM `TBL_USERS` AS `TU`
+				, `TBL_AFFECTATION` AS `TA`
+				WHERE `TU`.`uid` = `TA`.`uid`";
+			if (-1 != $from && -1 != $to) $sql .= "
+				AND `TA`.`beginning` <= \"$to\"
+				AND `TA`.`end`  >= \"$from\"";
+			if (1 == $active) $sql .= "
+			       	AND `TU`.`actif` = 1 ";
+			$sql .= "ORDER BY `TU`.`poids` ASC";
+		} elseif ('all' == $team) {
+			$sql = "SELECT `TU`.*,
+				`TA`.`centre`,
+				`TA`.`team`
+				FROM `TBL_USERS` AS `TU`
+				, `TBL_AFFECTATION` AS `TA`
+				WHERE `TU`.`uid` = `TA`.`uid`
+				AND `TA`.`centre`= \"$centre\"";
+			if (-1 != $from && -1 != $to) $sql .= "
+				AND `TA`.`beginning` <= \"$to\"
+				AND `TA`.`end`  >= \"$from\"";
+			if (1 == $active) $sql .= "
+			       	AND `TU`.`actif` = 1 ";
+			$sql .= "ORDER BY `TU`.`poids` ASC";
+		} else {
+			$sql = "SELECT `TU`.*,
+				`TA`.`centre`,
+				`TA`.`team`
+				FROM `TBL_USERS` AS `TU`
+				, `TBL_AFFECTATION` AS `TA`
+				WHERE `TU`.`uid` = `TA`.`uid`
+				AND `TA`.`centre`= \"$centre\"
+				AND `TA`.`team` = \"$team\"";
+			if (-1 != $from && -1 != $to) $sql .= "
+				AND `TA`.`beginning` <= \"$to\"
+				AND `TA`.`end`  >= \"$from\"";
+			if (1 == $active) $sql .= "
+			       	AND `TU`.`actif` = 1 ";
+			$sql .= "ORDER BY `TU`.`poids` ASC";
+		}
 		return $this->retourneUsers($sql);
 	}
 	// Méthodes utiles pour l'affichage

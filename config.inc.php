@@ -161,6 +161,7 @@ $DEBUG = false;
 	if (true === $conf['page']['javascript']['ajax']) $javascript[] = 'ajax.js';
 	if (true === $conf['page']['javascript']['grille2']) $javascript[] = 'grille2.js.php';
 	if (true === $conf['page']['javascript']['administration']) $javascript[] = 'administration.js.php';
+	if (true === $conf['page']['javascript']['gestionUtilisateurs']) $javascript[] = 'gestionUtilisateurs.js.php';
 	if (true === $conf['page']['javascript']['conG']) $javascript[] = 'tableauxCong.js.php'; // Gestion des tableaux de congés
 	if (true === $conf['page']['javascript']['online']) $javascript[] = 'online.js.php';
 	if (true === $conf['page']['elements']['tipoftheday']) $javascript[] = 'tipoftheday.js';
