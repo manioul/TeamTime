@@ -30,6 +30,12 @@ if (!empty($_SESSION['ADMIN']) && !get_sql_globals_constant('online')) {
 	$messages[$index]['classe'] = "warn";
 	$index++;
 }
+if (!empty($_SESSION['iAmVirtual'])) {// && empty($_SESSION['ADMIN'])) {
+	$messages[$index]['message'] = sprintf("Vous vous faites passer pour %s %s. Cliquez ici pour retrouver votre vraie personnalité...", $_SESSION['utilisateur']->prenom(), $_SESSION['utilisateur']->nom());
+	$messages[$index]['lien'] = "impersonate.php?iWantMyselfBack=1";
+	$messages[$index]['classe'] = "warn";
+	$index++;
+}
 
 $smarty->assign('messages', $messages);
 $smarty->display('messages.tpl');

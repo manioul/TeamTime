@@ -99,6 +99,10 @@ if (!empty($requireEditeur) && empty($_SESSION['EDITEURS'])) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
+if (!empty($requireVirtualAdmin) && empty($_SESSION['iAmVirtual']) && empty($_SESSION['ADMIN'])) {
+	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
+	exit;
+}
 if (!empty($requireAdmin) && empty($_SESSION['ADMIN'])) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
