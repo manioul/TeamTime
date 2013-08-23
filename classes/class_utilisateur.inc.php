@@ -181,6 +181,11 @@ class utilisateur {
 		}
 		return $this->sha1;
 	}
+	public function password($param = NULL) {
+		if (is_null($param)) return false;
+		$this->sha1(sha1($this->login . $param));
+		return true;
+	}
 	public function email ($param = NULL) {
 		if (!is_null($param)) {
 			$this->email = $param;
