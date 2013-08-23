@@ -28,7 +28,9 @@ class elemMenu {
 			}
 	       	}
 	}
-	function __destruct() {}
+	function __destruct() {
+		unset($this);
+	}
 // Accesseurs et attribution des valeurs
 	public function idx($param = NULL) {
 		if (! is_null($param)) { $this->idx = $param; }
@@ -190,7 +192,9 @@ class menu {
 			$this->_build_menu();
 		}
 	}
-	function __destruct() {}
+	function __destruct() {
+		unset($this);
+	}
 // Accesseurs et attribution des valeurs
 	function idx($param = NULL) {
 		if (! is_null($param)) { $this->idx = $param; }
