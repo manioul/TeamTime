@@ -49,6 +49,61 @@ class utilisateurGrille extends utilisateur {
 	private $showtipoftheday; // L'utilisateur veut-il voir les tips of the day
 	private $dispos; /* un tableau contenant un tableau des dispos indexées par les dates:
 			* $dispos[date] = array('dispo1', 'dispo2',... 'dispoN'); */
+	private static $label = array();
+	protected static function _label($index) {
+		if (isset(self::$label[$index])) {
+			return self::$label[$index];
+		} else {
+			return false;
+		}
+	}
+	protected static function _localFieldsDefinition($regen = NULL) {
+		foreach ($_SESSION['db']->db_getColumnsTable("TBL_AFFECTATION") as $row) {
+			$fieldsDefinition[$row['Field']]['Field'] = isset($label[$row['Field']]) ? $label[$row['Field']] : $row['Field'];
+			if ($row['Extra'] == 'auto_increment' || $row['Field'] == 'nblogin' || $row['Field'] == 'lastlogin') {
+				// Ce champ ne sera pas saisi par l'utilisateur
+			} else {
+				$fieldsDefinition[$row['Field']]['width'] = -1;
+				if (preg_match('/\((\d*)\)/', $row['Type'], $match) == 1) {
+					if ($match[1] > 1) {
+						$fieldsDefinition[$row['Field']]['width'] = ($match[1] < 10) ? $match[1] : 10;
+						$fieldsDefinition[$row['Field']]['maxlength'] = $match[1];
+					}
+				}
+				if (preg_match('/int\((\d*)\)/', $row['Type'], $match)) {
+					if ($match[1] == 1) {
+						$fieldsDefinition[$row['Field']]['type'] = "checkbox";
+						$fieldsDefinition[$row['Field']]['value'] = 1;
+					} else {
+						$fieldsDefinition[$row['Field']]['type'] = "text";
+					}
+				} elseif ($row['Field'] == 'email') {
+					$fieldsDefinition[$row['Field']]['type'] = 'email';
+				} elseif ($row['Field'] == 'password') {
+					$fieldsDefinition[$row['Field']]['type'] = 'password';
+				} elseif ($row['Type'] == 'date') {
+					$fieldsDefinition[$row['Field']]['type'] = 'date';
+					$fieldsDefinition[$row['Field']]['maxlength'] = 10;
+					$fieldsDefinition[$row['Field']]['width'] = 6;
+				} else {
+					$fieldsDefinition[$row['Field']]['type'] = 'text';
+				}
+			}
+		}
+	}
+	public static function _fieldsDefinition($regen = NULL) {
+		$correspondances = array(
+			'sha1'		=> htmlspecialchars("Mot de passe", ENT_COMPAT)
+			, 'arrivee'	=> htmlspecialchars("Date d'arrivée", ENT_COMPAT)
+			, 'theorique'	=> htmlspecialchars("Date du théorique", ENT_COMPAT)
+			, 'pc'		=> htmlspecialchars("Date du pc", ENT_COMPAT)
+			, 'ce'		=> htmlspecialchars("Date ce", ENT_COMPAT)
+			, 'cds'		=> htmlspecialchars("Date cds", ENT_COMPAT)
+			, 'vismed'	=> htmlspecialchars("Date visite médicale", ENT_COMPAT)
+			, 'lastlogin'	=> htmlspecialchars("Date de dernière connexion", ENT_COMPAT)
+		);
+		parent::_fieldsDefinition($correspondances, $regen);
+	}
 // Constructeur
 	public function __construct ($row = NULL) {
 		if (NULL !== $row) {
