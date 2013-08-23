@@ -568,7 +568,7 @@ class utilisateursDeLaGrille {
 			$cond = "WHERE " . implode(' AND ', $condition);
 		}
 		$sql = sprintf("
-			SELECT `TBL_USERS`.*
+			SELECT *
 			FROM `TBL_USERS`
 			%s
 		       	%s"
@@ -926,7 +926,7 @@ class utilisateursDeLaGrille {
 							'nom'		=> isset($vacation[$user['uid']]) ? htmlentities($vacation[$user['uid']], ENT_NOQUOTES, 'utf-8') : " "
 							,'id'		=> sprintf("u%s%ss%sc%s", $user['uid'], $vacation['jourTravail']->dateAsId(), $vacation['jourTravail']->vacation(), $cycle[$i]->cycleId())
 							,'classe'	=> $classe
-							,'title'	=> isset($proprietesDispos[$vacation[$user['uid']]]['nom_long']) ? $proprietesDispos[$vacation[$user['uid']]]['nom_long'] : ''
+							,'title'	=> !empty($vacation[$user['uid']]) && isset($proprietesDispos[$vacation[$user['uid']]]['nom_long']) ? $proprietesDispos[$vacation[$user['uid']]]['nom_long'] : ''
 						);
 					}
 					// La dernière colonne contient les décomptes horizontaux calculés
