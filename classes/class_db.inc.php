@@ -156,7 +156,7 @@ class database {
 		$result = $_SESSION['db']->db_interroge($query);
 		$fields = array();
 		while ($row = mysqli_fetch_assoc($result)) {
-			$fields[] = $row;
+			$fields[$row['Field']] = $row;
 		}
 		mysqli_free_result($result);
 		//print (nl2br(print_r ($fields, TRUE)));
@@ -164,12 +164,16 @@ class database {
 	}
 	// Retourne un tableau exploitable pour créer un formulaire
 	// à partir des caractéristiques d'une table dont le nom est passé en paramètre
-	public function db_columnToForm($table) {
+	// $correspondances est un tableau contenant des correspondances
+	// entre les champs de la table et une étiquette à afficher dans le tableau html
+	public function db_columnToForm($table, $correspondance = array()) {
 		$fields = $this->db_getColumnsTable($table);
 		$fieldtype = array( 0 => 
 			array('name'		=> 'boolean'
 			,'pattern'	=> '/^tinyint\(1\)$/i'
-			,'formtype'	=> 'checkbox')
+			,'formtype'	=> 'checkbox'
+			,'value'	=> 1
+			)
 			,1 =>
 			array('name'		=> 'integer'
 			,'pattern'	=> '/^(tiny|small|medium|big)*int(\(([^1]|[1-9][0-9][0-9]*)\))$/i'
@@ -181,7 +185,7 @@ class database {
 			,3 =>
 			array('name'		=> 'date'
 			,'pattern'	=> '/date/i'
-			,'formtype'	=> 'text')
+			,'formtype'	=> 'date')
 			,4 =>
 			array('name'		=> 'liste'
 			,'pattern'	=> "/^enum(\(.+\))$/i"
@@ -191,21 +195,23 @@ class database {
 			,'pattern'	=> "/^set(\(.+\))$/i"
 			,'formtype'	=> 'select')
 		);
-		for ($i=0; $i < count($fields); $i++) {
+		foreach ($fields as $Field => $row) {
 			// Détection du type d'élément INPUT à attribuer
 			foreach ($fieldtype as $ft) {
-				if (preg_match($ft['pattern'], $fields[$i]['Type'], $matches)) {
-					$fields[$i]['Input'] = $ft['formtype'];
-					if ($ft['formtype'] === 'text') {
-						if ($ft['name'] === 'date') {
-							$fields[$i]['Length'] = 10;
-						} else {
-							$fields[$i]['Length'] = $matches[count($matches)-1];
-						}
+				if (preg_match($ft['pattern'], $fields[$Field]['Type'], $matches)) {
+					$fields[$Field]['Input'] = $ft['formtype'];
+					if (isset($correspondances[$Field])) {
+						$fields[$Field]['label'] = $correspondances[$Field];
+					} else {
+						$fields[$Field]['label'] = $Field;
 					}
-					if ($ft['formtype'] === 'select') {
+					if (isset($ft['value'])) $fields[$Field]['value'] = $ft['value'];
+					if ($ft['formtype'] === 'text' && isset($matches[1])) {
+						$fields[$Field]['maxlength'] = $matches[1];
+						$fields[$Field]['width'] = $matches[1];
+					} elseif ($ft['formtype'] === 'select') {
 						if (preg_match_all("/'([^()']+)'/Ui", $matches[1], $moui)) {
-							$fields[$i]['Select'] = $moui[1];
+							$fields[$Field]['Select'] = $moui[1];
 						}
 					}
 					break;
