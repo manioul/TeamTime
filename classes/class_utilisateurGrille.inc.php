@@ -109,6 +109,7 @@ class utilisateurGrille extends utilisateur {
 	public function __construct ($row = NULL) {
 		if (NULL !== $row) {
 			parent::__construct($row);
+			$this->gid = 2; // Par défaut, on fixe le gid à la valeur la plus élevée
 			$valid = true;
 			foreach ($row as $cle => $valeur) {
 				if (method_exists($this, $cle)) {
