@@ -273,12 +273,31 @@ class utilisateurGrille extends utilisateur {
 			", $this->uid()
 		));
 		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$this->addAffectation($row);
+			$this->_addAffectation($row);
 		}
+		$nbAffectations = mysqli_num_rows($result);
 		mysqli_free_result($result);
+		return $nbAffectations;
 	}
-	protected function addAffectation($row = false) {
+	protected function _addAffectation($row) {
 		if (!is_array($row)) return false;
+		// Validation des valeurs dans le tableau raw
+		if (false == new Date($row['beginning'])) {
+			firePhpError($row['beginning'], 'Date beginning');
+			return false;
+		}
+		if (false == new Date($row['end'])) {
+			firePhpError($row['end'], 'Date end');
+			return false;
+		}
+		if (!preg_match('/^[0-9a-z_-]*$/i', $row['centre'])) {
+			firePhpError($row['centre'], 'centre');
+			return false;
+		}
+		if (!preg_match('/^[0-9a-z_-]*$/i', $row['team'])) {
+			firePhpError($row['team'], 'team');
+			return false;
+		}
 		$index = isset($this->centre[$row['centre']]) ? sizeof($this->centre[$row['centre']]) : 0;
 		$this->centre[$row['centre']][$index]['beginning'] = $row['beginning'];
 		$this->centre[$row['centre']][$index]['end'] = $row['end'];
@@ -289,10 +308,62 @@ class utilisateurGrille extends utilisateur {
 					, 'centre'	=> $row['centre']
 					, 'team'	=> $row['team']
 		);
+		return true;
 	}
-	public function centre ($date = false) {
+	public function addAffectation($row) {
+		if (!is_array($row)) {
+			firePhpError($row, 'Devrait être un tableau');
+			return false;
+		}
+		$nbAffectations = 0;
+		if (sizeof($this->centre) < 1) $nbAffectations = $this->getAffectationFromDb();
+		// Par défaut l'affectation débute le jour suivant la fin de la précédente affectation
+		// ou le jour de la création de l'utilisateur et se termine 10 ans plus tard
+		if (!isset($row['beginning'])) {
+			$from = new Date(date('Y-m-d'));
+			$row['beginning'] = $from->date();
+			// On corrige la précédente affectation
+			if ($nbAffectations > 0) {
+				$this->affectations[$nbAffectations-1]['end'] = $from->decDate()->date();
+				// Mise à jour dans la bdd
+				$_SESSION['db']->db_interroge( sprintf("
+					UPDATE `TBL_AFFECTATION`
+					SET `end` = '%s'
+					WHERE `uid` = %d
+					AND `centre` = '%s'
+					AND `team` = '%s'
+					AND `beginning` = '%s'
+					", $_SESSION['db']->db_real_escape_string($this->affectations[$nbAffectations-1]['end'])
+					, $_SESSION['db']->db_real_escape_string($this->uid())
+					, $_SESSION['db']->db_real_escape_string($this->affectations[$nbAffectations-1]['centre'])
+					, $_SESSION['db']->db_real_escape_string($this->affectations[$nbAffectations-1]['team'])
+					, $_SESSION['db']->db_real_escape_string($this->affectations[$nbAffectations-1]['beginning'])
+				)
+				);
+			}
+		}
+		if (!isset($row['end'])) $row['end'] = date('Y') + 10 . date('-m-d');
+		if ($this->_addAffectation($row)){
+			$_SESSION['db']->db_interroge(sprintf("
+				INSERT INTO `TBL_AFFECTATION`
+				(`aid`, `uid`, `centre`, `team`, `beginning`, `end`)
+				VALUES
+				(NULL, %d, '%s', '%s', '%s', '%s')
+				", $this->uid()
+				, $_SESSION['db']->db_real_escape_string($row['centre'])
+				, $_SESSION['db']->db_real_escape_string($row['team'])
+				, $_SESSION['db']->db_real_escape_string($row['beginning'])
+				, $_SESSION['db']->db_real_escape_string($row['end'])
+				)
+			);
+			return true;
+		} else {
+			return false;
+		}
+	}
+	public function centre ($date = NULL) {
 		if (sizeof($this->centre) < 1) $this->getAffectationFromDb();
-		if (false === $date) $date = date('Y-m-d');
+		if (is_null($date)) $date = date('Y-m-d');
 		if (!is_object($date)) $date = new Date($date);
 		foreach ($this->centre as $centre => $array) {
 			foreach ($array as $index => $value) {
