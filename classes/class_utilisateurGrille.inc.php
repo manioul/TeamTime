@@ -47,6 +47,7 @@ class utilisateurGrille extends utilisateur {
 	private $team = array();
 	private $poids; // La position d'affichage dans la grille (du plus faible au plus gros)
 	private $showtipoftheday; // L'utilisateur veut-il voir les tips of the day
+	private $page = "affiche_grille.php";
 	private $dispos; /* un tableau contenant un tableau des dispos indexées par les dates:
 			* $dispos[date] = array('dispo1', 'dispo2',... 'dispoN'); */
 	private static $label = array();
