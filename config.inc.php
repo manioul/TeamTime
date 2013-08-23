@@ -98,6 +98,8 @@ $DEBUG = false;
 	if (empty($conf['page']['javascript']['online'])) $conf['page']['javascript']['online'] = false;
 	// chargement du script de gestion index
 	if (empty($conf['page']['javascript']['index'])) $conf['page']['javascript']['index'] = false;
+	// Chargemenet du script pour la gestion des utilisateurs
+	if (empty($conf['page']['javascript']['gestionUtilisateurs'])) $conf['page']['javascript']['gestionUtilisateurs'] = false;
 	// chargement du script de gestion tipoftheday
 	if (empty($conf['page']['elements']['tipoftheday'])) $conf['page']['javascript']['tipoftheday'] = false;
 	// Chargemenet du script pour les formulaires de saisie de briefing
