@@ -53,7 +53,7 @@ div.nobrief {
 /*
  * Affichage des utilisateurs dans la grille
 */
-td.nom {
+#grille td.nom {
 	font-weight: bold;
 	font-size: 12px;
 	padding: 1px;
@@ -61,38 +61,38 @@ td.nom {
 	height: 22px;
 	cursor: pointer;
 }
-td.cds {
+#grille td.cds {
 	background-color: #50d053;
 }
-td.ce {
+#grille td.ce {
 	background-color: #72f676;
 }
-td.pc {
+#grille td.pc {
 	background-color: #93fda9;
 }
-td.c {
+#grille td.c {
 	background-color: #b7f9bf;
 }
-td.dtch {
+#grille td.dtch {
 	color: #900;
 }
-td.presence {
+#grille td.presence {
 	text-align: center;
 	font-size: 9pt;
 	font-weight: normal;
 	width: 2.5em;
 	cursor: pointer;
 }
-td.presence:hover {
+#grille td.presence:hover {
 }
 /* Protection de la grille */
-td.protected {
+#grille td.protected {
 	cursor: default;
 }
-td.present {
+#grille td.present {
 	background-color: #ccffcc;
 }
-td.absent {
+#grille td.absent {
 	background-color: #99cc99;
 }
 .pointer {
