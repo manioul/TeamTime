@@ -129,18 +129,18 @@ class utilisateurGrille extends utilisateur {
 		parent::__destruct();
 	}
 // Accesseurs
-	public function uid($uid=false) {
-		if (false !== $uid) {
+	public function uid($uid = NULL) {
+		if (!is_null($uid)) {
 			$this->uid = (int) $uid;
 		}
 		if (isset($this->uid)) {
 			return $this->uid;
 		} else {
-			return false;
+			return NULL;
 		}
 	}
-	public function gid($gid=false) {
-		if (false !== $gid) {
+	public function gid($gid = NULL) {
+		if (!is_null($gid)) {
 			$this->gid = (int) $gid;
 		}
 		if (isset($this->gid)) {
@@ -149,8 +149,8 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	public function nom($nom=false) {
-		if (false !== $nom) {
+	public function nom($nom = NULL) {
+		if (!is_null($nom)) {
 			$this->nom = (string) $nom;
 		}
 		if (isset($this->nom)) {
@@ -159,8 +159,8 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	public function prenom($prenom=false) {
-		if (false !== $prenom) {
+	public function prenom($prenom = NULL) {
+		if (!is_null($prenom)) {
 			$this->prenom = (string) $prenom;
 		}
 		if (isset($this->prenom)) {
@@ -170,9 +170,9 @@ class utilisateurGrille extends utilisateur {
 		}
 	}
 	// $date est la date pour laquelle on veut obtenir les classes de l'utilisateur
-	public function classe($date = false) {
-		if (sizeof($this->classe) < 1) $this->getClassesFromDb();
-		if (false === $date) return $this->classe;
+	public function classe($date = NULL) {
+		if (sizeof($this->classe) < 1) $this->_getClassesFromDb();
+		if (is_null($date)) return $this->classe;
 		if (!is_object($date)) $date = new Date($date);
 		$classes = array();
 		foreach ($this->classe as $classe => $array) {
@@ -206,8 +206,8 @@ class utilisateurGrille extends utilisateur {
 		}
 		return substr($condition, 0, -4);
 	}
-	public function arrivee($arrivee=false) {
-		if (false !== $arrivee) {
+	public function arrivee($arrivee = NULL) {
+		if (!is_null($arrivee)) {
 			$this->arrivee = (string) $arrivee;
 		}
 		if (isset($this->arrivee)) {
@@ -216,8 +216,8 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	public function theorique($theorique=false) {
-		if (false !== $theorique) {
+	public function theorique($theorique = NULL) {
+		if (!is_null($theorique)) {
 			$this->theorique = (string) $theorique;
 		}
 		if (isset($this->theorique)) {
@@ -226,8 +226,8 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	public function pc($pc=false) {
-		if (false !== $pc) {
+	public function pc($pc = NULL) {
+		if (!is_null($pc)) {
 			$this->pc = (string) $pc;
 		}
 		if (isset($this->pc)) {
@@ -236,8 +236,8 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	public function ce($ce=false) {
-		if (false !== $ce) {
+	public function ce($ce = NULL) {
+		if (!is_null($ce)) {
 			$this->ce = (string) $ce;
 		}
 		if (isset($this->ce)) {
@@ -246,8 +246,8 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	public function cds($cds=false) {
-		if (false !== $cds) {
+	public function cds($cds = NULL) {
+		if (!is_null($cds)) {
 			$this->cds = (string) $cds;
 		}
 		if (isset($this->cds)) {
@@ -256,8 +256,8 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	public function vismed($vismed=false) {
-		if (false !== $vismed) {
+	public function vismed($vismed = NULL) {
+		if (!is_null($vismed)) {
 			$this->vismed = (string) $vismed;
 		}
 		if (isset($this->vismed)) {
@@ -300,9 +300,9 @@ class utilisateurGrille extends utilisateur {
 			}
 		}
 	}
-	public function team ($date = false) {
+	public function team ($date = NULL) {
 		if (sizeof($this->team) < 1) $this->getAffectationFromDb();
-		if (false === $date) $date = date('Y-m-d');
+		if (is_null($date)) $date = date('Y-m-d');
 		if (!is_object($date)) $date = new Date($date);
 		foreach ($this->team as $team => $array) {
 			foreach ($array as $index => $value) {
@@ -314,19 +314,19 @@ class utilisateurGrille extends utilisateur {
 		if (sizeof($this->affectations) < 1) $this->getAffectationFromDb();
 		return $this->affectations;
 	}
-	public function poids($poids=false) {
-		if (false !== $poids) {
+	public function poids($poids = NULL) {
+		if (!is_null($poids)) {
 			$this->poids = (int) $poids;
 		}
 		if (isset($this->poids)) {
 			return $this->poids;
 		} else {
-			return false;
+			return -1;
 		}
 	}
-	public function showtipoftheday($showtipoftheday=false) {
-		if (false !== $showtipoftheday) {
-			$this->showtipoftheday = (int) $showtipoftheday;
+	public function showtipoftheday($showtipoftheday = NULL) {
+		if (!is_null($showtipoftheday)) {
+			$this->showtipoftheday = ($showtipoftheday == 1 ? 1 : 0);
 		}
 		if (isset($this->showtipoftheday)) {
 			return $this->showtipoftheday;
@@ -334,7 +334,7 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	public function dispos($dispos=false) {
+	public function dispos($dispos = NULL) {
 		if (is_array($dispos)) {
 			$this->dispos = $dispos;
 		}
