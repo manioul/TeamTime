@@ -7,16 +7,16 @@
 	<tbody>{/if}
 	<tr id="line{$lineNb}">
 {foreach from=$lines item=value}
-	{if $lineNb < 2}<th{else}<td{/if}{if $value.id} id="{$value.id}"{/if}{if $value.classe} class="{$value.classe}"{/if}{if $value.title} title="{$value.title|escape:html}"{/if}{if $value.colspan} colspan="{$value.colspan}"{/if}>{if $value.navigateur}{* Construction d'un navigateur entre les cycles pour la case contenant l'année *}
+	{if $lineNb < 2}<th{else}<td{/if}{if !empty($value.id)} id="{$value.id}"{/if}{if !empty($value.classe)} class="{$value.classe}"{/if}{if !empty($value.title)} title="{$value.title|escape:html}"{/if}{if !empty($value.colspan)} colspan="{$value.colspan}"{/if}>{if !empty($value.navigateur)}{* Construction d'un navigateur entre les cycles pour la case contenant l'année *}
 	<div class="nav-prev"><a href="?dateDebut={$previousCycle}&amp;nbCycle={$nbCycle}" title="Reculer d'un cycle"><img src="{$image}" class="nav-prev" alt="&lt;" /></a></div>
-	<div class="nav-present"><a href="?dateDebut={$presentCycle}&amp;nbCycle={$nbCycle}">{$value.nom}</a></div>
-	<div class="nav-next"><a href="?dateDebut={$nextCycle}&amp;nbCycle={$nbCycle}" title="Avancer d'un cycle"><img src="{$image}" class="nav-next" alt="&lt;" /></a></div>{elseif $value.vacation}
+	<div class="nav-present"><a href="?dateDebut={$presentCycle}&amp;nbCycle={$nbCycle}">{if !empty($value.nom)}{$value.nom}{/if}</a></div>
+	<div class="nav-next"><a href="?dateDebut={$nextCycle}&amp;nbCycle={$nbCycle}" title="Avancer d'un cycle"><img src="{$image}" class="nav-next" alt="&lt;" /></a></div>{elseif !empty($value.vacation)}
 	<div class="{$value.vacances}"></div>
 	<div class="{$value.periodeCharge}"></div>
-	<div class="{if !$value.briefing}no{/if}brief"{if $value.briefing} title="{$value.briefing}"{/if}></div>
+	<div class="{if !$value.briefing}no{/if}brief"{if !empty($value.briefing)} title="{$value.briefing}"{/if}></div>
 	<div class="dateGrille">{$value.jds}</div>
 	<div class="dateGrille">{$value.jdm}</div>
-	<div class="shift">{$value.vacation}</div>{else}{$value.nom}{/if}{if $lineNb < 2}</th>{else}</td>{/if}{/foreach}
+	<div class="shift">{$value.vacation}</div>{elseif !empty($value.nom)}{$value.nom}{/if}{if $lineNb < 2}</th>{else}</td>{/if}{/foreach}
 </tr>
 {if $smarty.foreach.lineBoucle.last}</tbody>{/if}{/foreach}
 	</table>
