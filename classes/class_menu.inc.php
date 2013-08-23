@@ -115,6 +115,7 @@ class elemMenu {
 		$this->modification($param['modification']);
 		$this->allowed($param['allowed']);
 		$this->actif($param['actif']);
+		return true;
 	}
 // méthodes de bdd
 	public function db_setElem() {
@@ -256,7 +257,7 @@ class menu {
 	}
 // gestion de l'objet
 	private function _addElem($param) { // ajoute un élément de menu au menu. $param est un objet elemMenu
-		if (! is_object($param)) { return ERR_BADPARAM; } // $param est bien un objet?
+		if (! is_a($param, 'elemMenu')) return ERR_BAD_PARAM; // $param est bien un objet?
 		if (isset($this->arbre[$param->position()]) && $this->arbre[$param->position()] != $param) { // Si la place de l'élément de menu est déjà occupée, on tente d'ajouter l'élément à position+1
 			firePHPInfo($this->arbre, 'position doublement occupée');
 			$param->position($param->position()+1);
@@ -302,6 +303,7 @@ class menu {
 	function descendElem($param) { // $param est l'index dans arbre de l'élément à déplacer
 	}
 	function s_addElem($param) { // $param est un objet elemMenu
+		if (! is_a($param, 'elemMenu')) { return ERR_BAD_PARAM; } // $param est bien un objet?
 		if (is_null($this->_addElem($param))) {
 			$this->_reOrderArbre(); // Redéfinit la position des éléments de menus lorsque deux entrées se chevauchent
 		}
@@ -353,10 +355,10 @@ class menu {
 		$result = $_SESSION['db']->db_interroge($requete);
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
 			$elemMenu = new elemMenu($row[0]);
-			if (is_null($elemMenu)) continue;
+			if (!is_a($elemMenu, 'elemMenu')) continue;
 			$elemMenu->position($row[1]);
 			$elemMenu->profondeur($this->profondeur + 1);
-			$this->s_addElem($elemMenu);
+			if (ERR_BAD_PARAM === $this->s_addElem($elemMenu)) $elemMenu->__destruct();
 		}
 		mysqli_free_result($result);
 	}
