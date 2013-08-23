@@ -206,7 +206,7 @@ class utilisateur {
 	}
 	public function actif ($param = NULL) {
 		if (!is_null($param)) {
-			$this->actif = $param;
+			$this->actif = ($param == 1 ? 1 : 0);
 		}
 		return $this->actif;
 	}
@@ -224,7 +224,7 @@ class utilisateur {
 	}
 	public function locked($param = NULL) {
 		if (!is_null($param)) {
-			$this->locked = $param;
+			$this->locked = ($param == 1 ? 1 : 0);
 		}
 		return $this->locked;
 	}
