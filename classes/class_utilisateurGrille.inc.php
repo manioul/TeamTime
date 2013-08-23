@@ -182,7 +182,7 @@ class utilisateurGrille extends utilisateur {
 		}
 		return $classes;
 	}
-	public function getClassesFromDb() {
+	protected function _getClassesFromDb() {
 		$result = $_SESSION['db']->db_interroge(sprintf("
 			SELECT * FROM `TBL_CLASSE`
 			WHERE `uid` = '%s'
