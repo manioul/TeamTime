@@ -33,7 +33,7 @@ class elemMenu {
 	}
 // Accesseurs et attribution des valeurs
 	public function idx($param = NULL) {
-		if (! is_null($param)) { $this->idx = $param; }
+		if (! is_null($param)) { $this->idx = (int) $param; }
 		return $this->idx;
 	}
 	public function titre($param = NULL) {
@@ -197,7 +197,7 @@ class menu {
 	}
 // Accesseurs et attribution des valeurs
 	function idx($param = NULL) {
-		if (! is_null($param)) { $this->idx = $param; }
+		if (! is_null($param)) { $this->idx = (int) $param; }
 		return $this->idx;
 	}
 	function titre($param = NULL) {
