@@ -21,7 +21,7 @@ class elemMenu {
 // Constructeur
 	function __construct($param = NULL) { // $idx en param
 		if (! is_null($param)) {
-			$this->idx = $param;
+			$this->idx($param);
 			if (is_null($this->db_setElem())) {
 				$this->__destruct();
 				return NULL;
@@ -188,7 +188,7 @@ class menu {
 // Constructeur
 	function __construct($param = NULL) { // $param est l'idx du menu
 		if (! is_null($param)) {
-			$this->idx = $param;
+			$this->idx($param);
 			$this->_build_menu();
 		}
 	}
