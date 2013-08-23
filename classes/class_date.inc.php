@@ -474,20 +474,20 @@ class Date {
 		if (!is_int($nbJours)) { $nbJours = (int) $nbJours; }
 			//printf("addJours %s + %s<br />", $this->date(), $nbJours);
 			if ($nbJours == 0) { return new Date($this->date); } // Si l'incrément est nul, l'objet date est cloné
-				if ($nbJours < 0) { return $this->subJours(-$nbJours); }
-					if ($this->nbJoursMois() < $this->jour + $nbJours) { // On doit changer de mois
-						//printf("chgt mois: %s < %s + %s<br />", $this->nbJoursMois(), $this->jour, $nbJours);
-						$tempoNbJoursMois = $this->nbJoursMois();
-						if ($this->mois == 12) { // On doit changer d'année et revenir au mois de janvier
-							$this->mois(1);
-							$this->annee($this->annee()+1);
-						} else { $this->mois++; }
-							$newNbJours = $nbJours - ($tempoNbJoursMois - $this->jour) - 1;
-						$this->jour = 1;
-						if ($newNbJours > 0) { return $this->addJours($newNbJours); }
-					} else {
-						$this->jour += $nbJours;
-					}
+			if ($nbJours < 0) { return $this->subJours(-$nbJours); }
+			if ($this->nbJoursMois() < $this->jour + $nbJours) { // On doit changer de mois
+				//printf("chgt mois: %s < %s + %s<br />", $this->nbJoursMois(), $this->jour, $nbJours);
+				$tempoNbJoursMois = $this->nbJoursMois();
+				if ($this->mois == 12) { // On doit changer d'année et revenir au mois de janvier
+					$this->mois(1);
+					$this->annee($this->annee()+1);
+				} else { $this->mois++; }
+					$newNbJours = $nbJours - ($tempoNbJoursMois - $this->jour) - 1;
+				$this->jour = 1;
+				if ($newNbJours > 0) { return $this->addJours($newNbJours); }
+			} else {
+				$this->jour += $nbJours;
+			}
 		$this->date = false; // on force la date à être redéfinie
 		$this->date();
 		return $this;
