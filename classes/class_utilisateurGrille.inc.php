@@ -417,7 +417,92 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	// Méthodes utiles pour l'affichage
+	public function page($page = NULL) {
+		if (!is_null($page) && preg_match('/^[a-z][a-z_]*\.php\?*[[a-z_]*=*[a-z]*\&*]*/i', $page)) {
+			$this->page = $_SESSION['db']->db_real_escape_string($page);
+		}
+		return $this->page;
+	}
+// Méthodes relatives à la base de données
+	// Liste des champs de la table dans la bdd
+	protected function _getFields() {
+		$fields = array();
+		$result = $_SESSION['db']->db_interroge("SHOW COLUMNS FROM `TBL_USERS`");
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$fields[] = $row['Field'];
+		}
+		return $fields;
+	}
+	// Met en forme les champs pour préparer une requête d'insertion
+	protected function _formatFieldsForQuery() {
+		$format[0] = "(";
+		$i = 1;
+		foreach ($this->_getFields() as $field) {
+			$format[0] .= "`$field`, ";
+			$format[$i++] = $field;
+		}
+		$format[0] = substr($format[0], 0, -2) . ")";
+		return $format;
+	}
+	// Création de la requête d'insertion de l'utilisateur dans la base
+	protected function _saveIntoDbQuery() {
+		// Le gid d'un utilisateur créé est forcément inférieur ou égal à celui de l'utilisateur qui créé
+		if ($this->gid() > $_SESSION['utilisateur']->gid()) $this->gid($_SESSION['utilisateur']->gid());
+		$format = $this->_formatFieldsForQuery();
+		$sql = sprintf("INSERT INTO `TBL_USERS`
+			%s
+			VALUES
+			", $format[0]
+		);
+		$sql .= "(";
+		for ($i = 1; $i < sizeof($format); $i++) {
+			$sql .= sprintf("'%s', ", $this->$format[$i]());
+		}
+		return substr($sql, 0, -2) . ")";
+	}
+	public function _saveIntoDb() {
+		$_SESSION['db']->db_interroge($this->_saveIntoDbQuery());
+		$this->uid($_SESSION['db']->db_insert_id());
+		var_dump($_SESSION['db']->db_insert_id());
+		var_dump($this);
+	}
+	// Vérifie si l'utilisateur existe déjà dans la base de données
+	// Pour cela, on vérifie si l'email est déjà présent dans la bdd
+	public function emailAlreadyExistsInDb() {
+		$result = $_SESSION['db']->db_interroge(sprintf("
+			SELECT `nom`
+			, `prenom`
+			, `login`
+			FROM `TBL_USERS`
+			WHERE `email` = '%s'
+			", $_SESSION['db']->db_real_escape_string($this->email())
+		));
+		$return = false;
+		if (mysqli_num_rows($result) > 0) $return = true;
+		mysqli_free_result($result);
+		return $return;
+	}
+	// Vérifie si le login est déjà utilisé
+	// Retourne true si un utilisateur existant utilise déjà le login
+	public function loginAlreadyExistsInDb() {
+		$result = $_SESSION['db']->db_interroge(sprintf("
+			SELECT `nom`
+			FROM `TBL_USERS`
+			WHERE `login` = '%s'
+			AND `nom` != '%s'
+			AND `prenom` != '%s'
+			AND `email` != '%s'
+			", $_SESSION['db']->db_real_escape_string($this->login())
+			, $_SESSION['db']->db_real_escape_string($this->nom())
+			, $_SESSION['db']->db_real_escape_string($this->prenom())
+			, $_SESSION['db']->db_real_escape_string($this->email())
+		));
+		$return = false;
+		if (mysqli_num_rows($result) > 0) $return = true;
+		mysqli_free_result($result);
+		return $return;
+	}
+// Méthodes utiles pour l'affichage
 	public function userCell($dateDebut) {
 		return array('nom'	=> htmlentities($this->nom())
 			,'classe'	=> 'nom ' . implode(' ', $this->classe($dateDebut))
@@ -426,8 +511,21 @@ class utilisateurGrille extends utilisateur {
 		);
 	}
 	// Prépare l'affichage des informations de l'utilisateur
-	// Si $myself est positionné, on peut modifier le mot de passe
-	public function displayUserInfos($myself = false) {
+	// Retourne un tableau dont la première ligne contient les noms des champs
+	// et la seconde un tableau avec le contenu des champs accompagnés
+	// d'informations nécesasires pour l'affichage html (id...)
+	// $champs est un tableau contenant les champs à retourner
+	public function displayUserInfos($champs) {
+		$table = array();
+		$index = 0;
+		foreach ($champs as $champ) {
+			$table[$champ] = array('Field'	=> $champ
+				, 'content'		=> method_exists($champs, 'utilisateurGrille') ? $this->$champ() : 'unknown'
+				, 'id'			=> $champ . $this->uid()
+				, 'label'		=> _label($champ)
+			);
+		}
+		return $table;
 	}
 }
 
