@@ -40,7 +40,7 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
-	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
+	$conf['page']['include']['smarty'] = (empty($_POST['nom']) ? 1 : 0); // Smarty sera utilisé sur cette page
 
 
 /*
@@ -110,13 +110,116 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 
 require 'required_files.inc.php';
 
+if (empty($_POST['nom'])) { // On vérifie que des données de formulaire n'ont pas été envoyées
+	if (isset($_SESSION['ADMIN'])) {
+		$centre = 'all';
+		$team = 'all';
+	} else {
+		$centre = $_SESSION['utilisateur']->centre();
+		$team = $_SESSION['utilisateur']->team();
+	}
+	$from = date('Y-m-d');
+	$to = (isset($_GET['all'])) ? -1 : $from;
+	$users = utilisateursDeLaGrille::getInstance()->getUsersFromTo($from, $to, $centre, $team, (int) $active);
+	$usersInfos = array();
+	$form = array();
+	$header = array();
+}
+
+// Recherche les champs de la table des utilisateurs
+$j = 0;
+$result = $_SESSION['db']->db_interroge("SHOW COLUMNS FROM `TBL_USERS`");
+while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+	if ($row['Field'] == 'sha1') $row['Field'] = 'password';
+	$usersInfos[0][$row['Field']] = $row['Field'];
+	if ($row['Extra'] == 'auto_increment' || $row['Field'] == 'nblogin' || $row['Field'] == 'lastlogin') {
+		// Ce champ ne sera pas saisi par l'utilisateur
+	} else {
+		$row['width'] = -1;
+		if (preg_match('/\((\d*)\)/', $row['Type'], $match) == 1) {
+			if ($match[1] > 1) {
+				$row['width'] = ($match[1] < 10) ? $match[1] : 10;
+				$row['maxlength'] = $match[1];
+			}
+		}
+		if (preg_match('/int\((\d*)\)/', $row['Type'], $match)) {
+			if ($match[1] == 1) {
+				$row['type'] = "checkbox";
+				$row['value'] = 1;
+			} else {
+				$row['type'] = "text";
+			}
+		} elseif ($row['Field'] == 'email') {
+			$row['type'] = 'email';
+		} elseif ($row['Field'] == 'password') {
+			$row['type'] = 'password';
+		} elseif ($row['Type'] == 'date') {
+			$row['type'] = 'date';
+			$row['maxlength'] = 10;
+			$row['width'] = 6;
+		} else {
+			$row['type'] = 'text';
+		}
+		$header[$j] = $row['Field'];
+		$form[$j++] = $row;
+	}
+	if (empty($_POST['nom'])) {
+		// Construit les données pour le tableau des utilisateurs
+		$i = 1;
+		foreach ($users as $user) {
+			if ('password' == $row['Field']) { // Remplis le mot de passe avec des *
+				$usersInfos[$i][$row['Field']] = "*****";
+			} elseif (method_exists('utilisateurGrille', $row['Field'])) {
+				$usersInfos[$i][$row['Field']] = $user->$row['Field']();
+			} else {
+				$usersInfos[$i][$row['Field']] = 'Unknown';
+			}
+			$i++;
+		}
+	}
+}
+mysqli_free_result($result);
+
+// Traitement des données du formulaire
+if (!empty($_POST['nom'])) {
+	$user = new utilisateurGrille($_POST);
+	if ($user->emailAlreadyExistsInDb()) print "Utilisateur déjà existant avec cet email.";
+	if ($user->loginAlreadyExistsInDb()) print "Login indisponible...";
+	// On peut rentrer les données dans la bdd
+	$affectation = array('centre'	=> (!empty($_SESSION['ADMIN']) ? $_POST['Centre'] : $_SESSION['utilisateur']->centre())
+		, 'team'	=> (!empty($_SESSION['ADMIN']) ? $_POST['Équipe'] : $_SESSION['utilisateur']->team())
+	);
+	$user->_saveIntoDb();
+	$user->addAffectation($affectation);
+	//header('Location:' . $_SERVER['REQUEST_URI']);
+	mysqli_free_result($result);
+	exit;
+}
+
+if ($_SESSION['ADMIN']) {
+	$usersInfos[0]['centre'] = "Centre";
+	$usersInfos[0]['team'] = htmlspecialchars("Équipe", ENT_COMPAT, 'utf-8');;
+	$header[$j] = $usersInfos[0]['centre'];
+	$form[$j] = array('Field'	=> "Centre"
+		, 'width'		=> 5
+		, 'maxlength'		=> 50
+	);
+	$header[++$j] = $usersInfos[0]['team'];
+	$form[$j] = array('Field'	=> htmlspecialchars("Équipe", ENT_COMPAT, 'utf-8')
+		, 'width'		=> 3
+		, 'maxlength'		=> 10
+	);
+	$i = 1;
+	foreach ($users as $user) {
+		$usersInfos[$i]['centre'] = $user->centre();
+		$usersInfos[$i]['team'] = $user->team();
+		$i++;
+	}
+}
+
+// Ajoute un filtre sur les centres et les équipes pour les administrateurs
 $active = 1;
 $affectations = array();
-$centre = $_SESSION['utilisateur']->centre();
-$team = $_SESSION['utilisateur']->team();
-$from = date('Y-m-d');
-$to = (isset($_GET['all'])) ? -1 : $from;
-
 if ($_SESSION['ADMIN']) {
 	$affectations['all']['all'] = 1; // Permet de sélectionner tous les utilisateurs
 	$result = $_SESSION['db']->db_interroge("
@@ -139,43 +242,12 @@ if ($_SESSION['ADMIN']) {
 	if (isset($_GET['team'])) $team = $_SESSION['db']->db_real_escape_string($_GET['team']);
 	$active = (isset($_GET['active'])) ? (int) $_GET['active'] : NULL;
 }
-
-$users = utilisateursDeLaGrille::getInstance()->getUsersFromTo($from, $to, $centre, $team, (int) $active);
-$usersInfos = array();
-
-$result = $_SESSION['db']->db_interroge("SHOW COLUMNS FROM `TBL_USERS`");
-while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-	if ($row['Field'] == 'sha1') $row['Field'] = 'password';
-	$usersInfos[0][$row['Field']] = $row['Field'];
-	$i = 1;
-	foreach ($users as $user) {
-		if ('uid' == $row['Field']) { // Ajoute des liens dans la colonne uid
-			$usersInfos[$i][$row['Field']] = $user->$row['Field']() . '&nbsp;<a href="">+</a>&nbsp;<a href="">-</a>';
-		} elseif ('password' == $row['Field']) { // Remplis le mot de passe avec des *
-			$usersInfos[$i][$row['Field']] = "*****";
-		} elseif (method_exists('utilisateurGrille', $row['Field'])) {
-			$usersInfos[$i][$row['Field']] = $user->$row['Field']();
-		} else {
-			$usersInfos[$i][$row['Field']] = 'Unknown';
-		}
-		$i++;
-	}
-}
-mysqli_free_result($result);
-
-if ($_SESSION['ADMIN']) {
-	$usersInfos[0]['centre'] = "Centre";
-	$usersInfos[0]['team'] = htmlspecialchars("Équipe", ENT_COMPAT, 'utf-8');;
-	$i = 1;
-	foreach ($users as $user) {
-		$usersInfos[$i]['centre'] = $user->centre();
-		$usersInfos[$i]['team'] = $user->team();
-		$i++;
-	}
-}
 $smarty->assign('affectations', $affectations);
 
 $smarty->assign('usersInfos', $usersInfos);
+
+$smarty->assign('form', $form);
+$smarty->assign('header', $header);
 
 $smarty->display('gestionUtilisateurs.tpl');
 /*
