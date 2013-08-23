@@ -268,8 +268,10 @@ class utilisateurGrille extends utilisateur {
 	}
 	public function getAffectationFromDb() {
 		$result = $_SESSION['db']->db_interroge(sprintf("
-			SELECT * FROM `TBL_AFFECTATION`
+			SELECT *
+		       	FROM `TBL_AFFECTATION`
 			WHERE `uid` = '%s'
+			ORDER BY `end` ASC
 			", $this->uid()
 		));
 		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
