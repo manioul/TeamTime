@@ -883,7 +883,7 @@ class utilisateursDeLaGrille {
 						$grille[$compteurLigne][] = array(
 							'nom'		=> 0+$cycle[$i]->compteTypeUser($user['uid'], 'dispo')
 							,'id'		=> sprintf("decDispou%sc%s", $user['uid'], $cycle[$i]->cycleId())
-							,'classe'	=> ''
+							,'classe'	=> 'decompte'
 						);
 					}
 					// On itère sur les vacations du cycle
@@ -936,7 +936,7 @@ class utilisateursDeLaGrille {
 					$grille[$compteurLigne][] = array(
 						'nom'		=> 0+$cycle[$i]->compteTypeUserFin($user['uid'], 'dispo')
 						,'id'		=> sprintf("decDispou%sc%s", $user['uid'], $cycle[$i]->cycleId()+1)
-						,'classe'	=> ''
+						,'classe'	=> 'decompte'
 					);
 					if ($nbCycle == 1) {
 						foreach (array_keys($evenSpec) as $even) {

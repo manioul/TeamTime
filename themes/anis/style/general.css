@@ -164,18 +164,12 @@ table.altern-row {
 table {
 	margin: 0 0 30px 0;
 	border-spacing: 2px;
-	/*border-top: 5px solid #9b9;*/
-	border-right: 5px solid #9b9;
+	border-top:1px solid #3f7f00;                                                                                                        
+	border-right: 1px solid #3f7f00;
 	border-bottom: 5px solid #beb;
 	border-left: 5px solid #beb;
-	border-radius: 8px;
-	-moz-border-radius: 8px;
-	-ms-border-radius: 8px;
-	-o-border-radius: 8px;
-	-webkit-border-radius: 8px;
 
 	box-shadow: 10px 10px 5px #888888;                                                                                               
-	border:1px solid #3f7f00;                                                                                                        
 
 	-moz-border-radius-bottomleft:5px;                                                                                               
 	-webkit-border-bottom-left-radius:5px;                                                                                           
@@ -198,9 +192,6 @@ th {
 	font-weight: bold;
 	font-size: 9pt;
 	background-color: #dfd;
-}
-#grille td {
-	background-color: #faffcc;
 }
 td {
 	padding: 5px;
