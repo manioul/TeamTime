@@ -220,5 +220,8 @@ div#dFormRemplacement table td {
 	color: #f00;
 }
 .valide {
-	color:red;
+	color:#070;
+}
+.filed {
+	color:#f00;
 }

@@ -906,6 +906,7 @@ class utilisateursDeLaGrille {
 									$classe .= " erreur";
 								} else {
 									$row = $_SESSION['db']->db_fetch_row($result);
+									if (1 == $row[0]) $classe .= " filed";
 									if (2 == $row[0]) $classe .= " valide";
 								}
 								mysqli_free_result($result);
