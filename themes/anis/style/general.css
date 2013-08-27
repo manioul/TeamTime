@@ -7,6 +7,14 @@ body {
 	font-family: "Times New Roman", Times, "Liberation Serif", FreeSerif, serif;
 	font-size: 8pt;
 	background-color: #efe;
+	background: #ffffff; /* Old browsers */
+	background: -moz-linear-gradient(-45deg, #ffffff 0%, #eaffea 17%, #eeffee 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,#ffffff), color-stop(17%,#eaffea), color-stop(100%,#eeffee)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(-45deg, #ffffff 0%,#eaffea 17%,#eeffee 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(-45deg, #ffffff 0%,#eaffea 17%,#eeffee 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(-45deg, #ffffff 0%,#eaffea 17%,#eeffee 100%); /* IE10+ */
+	background: linear-gradient(135deg, #ffffff 0%,#eaffea 17%,#eeffee 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#eeffee',GradientType=1 ); /* IE6-9 fallback on horizontal gradient */
 	margin: 0;
 	padding: 0;
 }
@@ -238,7 +246,7 @@ div#notesversion {
 	font-size: 9pt;
 	text-align: center;
 	color: #575;
-	background-color: #fff;
+	background-color: #eaffea;
 }
 
 /*
