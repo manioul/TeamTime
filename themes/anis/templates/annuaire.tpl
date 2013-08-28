@@ -1,6 +1,6 @@
 {* Smarty *}
 <div id="annuaire">
-<table>
+<table class="altern-row">
 {foreach from=$entry key=lineNb item=id name=foo}
 {if $smarty.foreach.foo.first}<thead>{elseif $smarty.foreach.foo.iteration == 2}<tbody>{/if}
 <tr>
