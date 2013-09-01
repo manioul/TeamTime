@@ -108,7 +108,7 @@ ob_start();
 require 'required_files.inc.php';
 
 // Année du tableau de congés (année courante par défaut)
-$year = (!empty($_GET['year']) ? sprintf("%04d", $_GET['year']) : date('Y'));
+$year = date('Y');
 $titre = "Évènements";
 
 $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $_SESSION['centre'], $_SESSION['team']);
@@ -121,34 +121,75 @@ $sql = "
 	WHERE `need_compteur` = TRUE
 	AND `actif` = TRUE
 	AND `type decompte` != 'conges'
+	AND `centre` = 'athis'
+       	AND `team` = '9e'
 ";
 $results = $_SESSION['db']->db_interroge($sql);
+$index = 0;
 while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$onglets[] = array('nom'	=> htmlspecialchars($res['nom_long'], ENT_COMPAT, 'UTF-8')
+	$onglets[$index] = array('nom'	=> htmlspecialchars($res['nom_long'], ENT_COMPAT, 'UTF-8')
 		,'quantity'		=> 10
 		,'param'		=> $res['did']
 	);
-	// Recherche des congés de l'année en cours
-	$sql = sprintf("SELECT `uid`, `did`, `date`
-		FROM `TBL_L_SHIFT_DISPO`
-		WHERE (YEAR(`date`) = %d
-		OR YEAR(`date`) = %d)
-		AND `did` = %d
-		ORDER BY `date` ASC",
-		$year
-		, $year-1
-		, $res['did']
+	$uids = array(); // Un tableau des uid des utilisateurs
+	// Recherche des évènements
+	// Les évènements ne sont pas groupés par année
+	// On recherche le nombre minimal de chaque évènement
+	// ainsi que le maximum (pour définir le nombre de colonnes nécessaires)
+	$sql = sprintf("
+		SELECT `ts`.`uid`, COUNT(`ts`.`uid`) AS `compte`
+		FROM `TBL_L_SHIFT_DISPO` AS `ts`,
+		`TBL_AFFECTATION` AS `ta`
+		WHERE `did` = %d
+		AND `ts`.`uid` = `ta`.`uid`
+		AND `ta`.`centre` = 'athis'
+		AND `ta`.`team` = '9e'
+		GROUP BY `ts`.`uid`
+		ORDER BY `compte` ASC
+		", $res['did']
 	);
+	$result = $_SESSION['db']->db_interroge($sql);
+	// Seul le minimum nous intéresse,
+	// soit donc le premier résultat retourné
+	$row = $_SESSION['db']->db_fetch_row($result);
+	$min = $row[1] - 1; // On souhaite avoir au moins une date pour l'utilisateur ayant le moins d'entrées
+	while ($row= $_SESSION['db']->db_fetch_row($result)) {
+		$uids[$row[0]] = $row[0];
+		$onglets[$index]['quantity'] = $row[1] - $min;
+	}
+	// Le nombre de colonnes à afficher est défini
+	// par le max - min + 1
+	// TODO prévoir une alerte pour vérifier la nécessité de péréquations
+	// lorsque la différence (min, max) est importante
+	mysqli_free_result($result);
 
-	$r = $_SESSION['db']->db_interroge($sql);
-	while ($s = $_SESSION['db']->db_fetch_assoc($r)) {
-		$class = '';
-		$date = new Date($s['date']);
-		$tab[$res['did']][$s['uid']][] = array(	'date' => $date->formatDate()
-							,'classe' => $class
+	// et on limite l'affichage des évènement à partir de ce nombre minimal
+	// pour chaque utilisateur
+	foreach ($uids as $uid) {
+		$sql = sprintf("
+			SELECT `uid`, `did`, `date`
+			FROM `TBL_L_SHIFT_DISPO`
+			WHERE `did` = %d
+			AND `uid` = %d
+			ORDER BY `date` ASC
+			LIMIT %d, %d
+			", $res['did']
+			, $uid
+			, $min
+			, $onglets[$index]['quantity']
 		);
+
+		$r = $_SESSION['db']->db_interroge($sql);
+		while ($s = $_SESSION['db']->db_fetch_assoc($r)) {
+			$class = '';
+			$date = new Date($s['date']);
+			$tab[$res['did']][$s['uid']][] = array(	'date' => $date->formatDate()
+				,'classe' => $class
+			);
+		}
 	}
 	mysqli_free_result($r);
+	$index++;
 }
 mysqli_free_result($results);
 
