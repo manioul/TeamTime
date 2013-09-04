@@ -169,7 +169,7 @@ class Date {
 			debug::getInstance()->postMessage($string);
 		}
 	}
-	// Méthodes d'attribution et d'accès à l'objet
+// Méthodes d'attribution et d'accès à l'objet
 	public function date($date=NULL) {
 		if (!is_null($date)) {
 			if (is_string($date)) {
@@ -195,6 +195,13 @@ class Date {
 		return $this->date;
 	}
 	private function _initiateDateFromString($date) {
+		// La bdd attribue '0000-00-00' aux dates vides
+		// On attribue, quand même, la valeur à date, mais l'on retourne false
+		// et on ne remplit aucun attribut supplémentaire
+		if ('0000-00-00' == $date) {
+			$this->date = "0000-00-00";
+			return false;
+		}
 		// vérification du format de la date et remplissage des champs
 		if (preg_match('/^([12][0-9]{3,3})[-\/]' . // YYYY[-/]   Les années sont comprises entre 1000 et 2999
 			'(0?[1-9]|1[0-2])[-\/]' . 	       // m[-/]
@@ -295,7 +302,8 @@ class Date {
 		switch ($format) {
 		case 'fr':
 			if ($this->annee && $this->mois && $this->jour) return sprintf("%02d-%02d-%04d", $this->jour, $this->mois, $this->annee);
-			break;
+			// On ne break pas pour continuer sur la valeur défaut
+			// afin de prendre en compte les dates 0000-00-00
 		default:
 			return $this->date;
 		}
