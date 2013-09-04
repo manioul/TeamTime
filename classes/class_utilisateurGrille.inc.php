@@ -125,8 +125,8 @@ class utilisateurGrille extends utilisateur {
 		return true;
 	}
 	public function __destruct() {
-		unset($this);
 		parent::__destruct();
+		unset($this);
 	}
 // Accesseurs
 	public function uid($uid = NULL) {
