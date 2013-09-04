@@ -161,6 +161,65 @@ class database {
 		//print (nl2br(print_r ($fields, TRUE)));
 		return $fields;
 	}
+	// Retourne les champs d'une table
+	// sous forme de tableau si le deuxième paramètre est 'array'
+	// sinon sous forme de chaîne pour préparer une insertion si le deuxième paramètre est 'insert'
+	public function db_getFields($table, $param = 'array') {
+		$result = $this->db_interroge("SHOW COLUMNS FROM `$table`");
+		if ($param == 'array') {
+			$return = array();
+			while ($row = $this->db_fetch_assoc($result)) {
+				$return[] = $row['Field'];
+			}
+		} elseif ($param == 'insert') {
+			$return = "";
+			while ($row = $this->db_fetch_assoc($result)) {
+				$return .= "`" . $row['Field'] . "`, ";
+			}
+			$return = substr($return, 0, -2);
+		}
+		mysqli_free_result($result);
+		return $fields;
+	}
+	// Effectue une requête d'insertion des champs $values dans la table $table
+	// et retourne la valeur de l'id inséré
+	// $values = array('Field' => "value"...)
+	public function db_insert($table, $values) {
+		$sql = "INSERT INTO `$table` (";
+		$val = " VALUES (";
+		foreach ($this->db_getColumnsTable($table) as $row) {
+			$sql .= "`" . $row['Field'] . "`, ";
+			if ($row['Key'] == 'PRI') {
+				$val .= "NULL, ";
+			} else {
+				$val .= "'" . $this->db_real_escape_string($values[$row['Field']]) . "', ";
+			}
+		}
+		$sql = substr($sql, 0, -2) . ")";
+		$val = substr($val, 0, -2) . ")";
+		firePhpLog($sql . $val, 'insert request');
+		$this->db_interroge($sql . $val);
+		return $this->db_insert_id();
+	}
+	// Effectue une requête UPDATE de la table $table avec les valeurs $values
+	// la référence est la clé primaire
+	public function db_update($table, $values) {
+		$sql = "UPDATE `$table` SET ";
+		$where = " WHERE ";
+		$flag = false;
+		foreach ($this->db_getColumnsTable($table) as $row) {
+			if (!isset($values[$row['Field']])) continue;
+			if ($row['Key'] == 'PRI') {
+				if ($flag) $where .= " AND ";
+				$where .= "`" . $row['Field'] . "` = '" . $this->db_real_escape_string($values[$row['Field']]) . "'";
+			} else {
+				$sql .= "`" . $row['Field'] . "` = '" . $this->db_real_escape_string($values[$row['Field']]) . "', ";
+			}
+		}
+		$sql = substr($sql, 0, -2);
+		firePhpLog($sql . $where, 'update request');
+		return $this->db_interroge($sql . $where);
+	}
 	// Retourne un tableau exploitable pour créer un formulaire
 	// à partir des caractéristiques d'une table dont le nom est passé en paramètre
 	// $correspondances est un tableau contenant des correspondances
