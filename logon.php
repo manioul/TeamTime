@@ -57,7 +57,6 @@ $result = $_SESSION['db']->db_interroge($sql);
 if (mysqli_num_rows($result) > 0) {
 	session_regenerate_id(); // Éviter les attaques par fixation de session
 	$row = $_SESSION['db']->db_fetch_assoc($result);
-	$row['sha1'] = NULL; // Le sha1 n'a pas vocation à apparaître
 	$_SESSION['utilisateur'] = new utilisateurGrille($row);
 	$_SESSION['AUTHENTICATED'] = true;
 	$_SESSION['centre'] = $_SESSION['utilisateur']->centre();
