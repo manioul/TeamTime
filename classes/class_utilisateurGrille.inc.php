@@ -28,6 +28,8 @@ require_once 'class_debug.inc.php';
 require_once 'class_utilisateur.inc.php';
 require_once 'class_jourTravail.inc.php';
 require_once 'config.inc.php';
+require_once 'class_contacts.inc.php';
+require_once 'class_affectations.inc.php';
 
 
 class utilisateurGrille extends utilisateur {
@@ -36,15 +38,13 @@ class utilisateurGrille extends utilisateur {
 	private $gid;
 	private $prenom;
 	private $classe = array(); // array('c', 'pc', 'ce', 'cds', 'dtch')
-	private $dateArrivee;
-	private $dateTheorique;
-	private $datePC;
-	private $dateCE;
-	private $dateCDS;
-	private $dateVisMed; // Date de la prochaine visite médicale
-	private $affectations = array();
-	private $centre = array();
-	private $team = array();
+	private $vismed; // Date de la prochaine visite médicale
+	private $phone = array(); // Numéro de téléphone
+	private $adresse; // adresse
+	private $affectations = array(); // tableau des affectations
+	private $centre = NULL; // centre actuel
+	private $team = NULL; // team actuelle
+	private $grade = NULL; // grade actuel
 	private $poids; // La position d'affichage dans la grille (du plus faible au plus gros)
 	private $showtipoftheday; // L'utilisateur veut-il voir les tips of the day
 	private $page = "affiche_grille.php";
@@ -108,19 +108,14 @@ class utilisateurGrille extends utilisateur {
 // Constructeur
 	public function __construct ($row = NULL) {
 		if (NULL !== $row) {
+			if (is_array($row)) {
+			parent::page('affiche_grille.php'); // La page par défaut des utilisateurs
 			parent::__construct($row);
-			$this->gid = 2; // Par défaut, on fixe le gid à la valeur la plus élevée
-			$valid = true;
-			foreach ($row as $cle => $valeur) {
-				if (method_exists($this, $cle)) {
-					$this->$cle($valeur);
-				} else {
-					debug::getInstance()->triggerError('Valeur inconnue' . $cle . " => " . $valeur);
-					debug::getInstance()->lastError(ERR_BAD_PARAM);
-					$valid = false;
-				}
+			$this->gid = 255; // Par défaut, on fixe le gid à la valeur la plus élevée
+			return $this->setFromRow($row); // Retourne true si l'affectation s'est bien passée, false sinon
+			} elseif (is_int($row)) {
+				$this->setFromDb($row);
 			}
-			return $valid; // Retourne true si l'affectation s'est bien passée, false sinon
 		}
 		return true;
 	}
@@ -129,6 +124,34 @@ class utilisateurGrille extends utilisateur {
 		unset($this);
 	}
 // Accesseurs
+	public function userAsArray() {
+		return array_merge(
+			parent::asArray()
+		       	, array(
+			'uid'			=> $this->uid
+			, 'nom'			=> $this->nom
+			, 'gid'			=> $this->gid
+			, 'prenom'		=> $this->prenom
+			, 'vismed'		=> $this->vismed
+			, 'poids'		=> $this->poids
+			, 'showtipoftheday'	=> $this->showtipoftheday
+		));
+	}
+	public function setFromRow($row) {
+		$valid = true;
+		foreach ($row as $key => $value) {
+			if (method_exists($this, $key)) {
+				$this->$key($value);
+			} else {
+				$this->key = $value;
+				firePhpError($cle . " => " . $valeur, 'Valeur inconnue');
+				debug::getInstance()->triggerError('Valeur inconnue' . $cle . " => " . $valeur);
+				debug::getInstance()->lastError(ERR_BAD_PARAM);
+				$valid = false;
+			}
+		}
+		return $valid;
+	}
 	public function uid($uid = NULL) {
 		if (!is_null($uid)) {
 			$this->uid = (int) $uid;
@@ -169,6 +192,105 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
+	/*
+	 * Ajoute un téléphone unique
+	 */
+	public function addPhone($row) {
+		$row['uid'] = $this->uid();
+		$phone = new Phone($row);
+		$phoneid = $phone->insert();
+		firePhpLog($phoneid, 'phoneid');
+		$this->phone[$phoneid] = $phone;
+		return $phoneid;
+	}
+	/*
+	 * Ajoute les téléphones venant d'un tableau
+	 * $array = ( 0 => ('numéro' => '1010101010'
+	 * 		'description'	=> 'maison'
+	 * 		'principal'	=> 'on'
+	 * 		)
+	 * 	      1 => (...)
+	 * 	      )
+	 */
+	public function addPhoneTableau($array) {
+		$valid = true;
+		firePhpLog($array, 'addPhoneTableau(array)');
+		foreach ($array as $arr) {
+			if (is_array($arr)) {
+				$this->addPhone($arr);
+			} else {
+				$valid = false;
+				break;
+			}
+		}
+		firePhpLog($valid, 'valid');
+		if (!$valid) $this->addPhone($array);
+		return sizeof($this->phone);
+	}
+	public function deletePhone($phoneid) {
+		$this->phone[$phoneid]->delete();
+		unset($this->phone[$phoneid]);
+	}
+	// Retourne la table des objets Phone
+	// Si $index est passé, retourné l'objet Phone indexé par $index
+	public function phone($param = NULL) {
+		if (is_int($param)) { // Si $param est l'index d'un téléphone, on retourne l'objet correspondant
+			firePhpLog($param, 'is_int');
+			return $this->phone[$param];
+		}
+		if (sizeof($this->phone) == 0) { // Si on n'a pas encore récupéré les téléphones dans la bdd
+			$this->_retrievePhone($param);
+		}
+		if (is_array($param)) { // Si $param est un tableau, il contient les infos d'un(e) nouveau(x) téléphone(s)
+			firePhpLog($param, 'is_array');
+			$this->addPhoneTableau($param);
+		}
+		return $this->phone;
+	}
+	/*
+	 * Ajoute une adresse unique
+	 */
+	public function addAdresse($row) {
+		$row['uid'] = $this->uid();
+		$adresse = new Adresse($row);
+		$adresseid = $adresse->insert();
+		$this->adresse[$adresseid] = $adresse;
+		return $adresseid;
+	}
+	/*
+	 * Ajoute les adresses venant d'un tableau
+	 * $array = ( 0 => ('adresse' => '10 rue des alouettes'
+	 * 		'cp'	=> '70000'
+	 * 		'ville'	=> 'ville de lumière'
+	 * 		)
+	 * 	      1 => (...)
+	 * 	      )
+	 */
+	public function addAdresseTableau($array) {
+		$valid = true;
+		foreach ($array as $arr) {
+			if (is_array($arr)) {
+				$this->addAdresse($arr);
+			} else {
+				$valid = false;
+				break;
+			}
+		}
+		if (!$valid) $this->addAdresse($array);
+		return sizeof($this->adresse);
+	}
+	public function deleteAdresse($adresseid) {
+		$this->adresse[$adresseid]->delete();
+		unset($this->adresse[$adresseid]);
+	}
+	public function adresse($param = NULL) {
+		if (is_int($param)) return $this->adresse[$param]; // Si $param est l'index d'une adresse, on retourne l'objet correspondant
+		if (sizeof($this->adresse) == 0) $this->_retrieveAdresse($param);
+		if (is_array($param)) { // Si $param est un tableau, il contient les infos d'une(e) nouvelle(s) adresse(s)
+			$this->addAdresseTableau($param);
+		}
+		return $this->adresse;
+	}
 	// $date est la date pour laquelle on veut obtenir les classes de l'utilisateur
 	public function classe($date = NULL) {
 		if (sizeof($this->classe) < 1) $this->_getClassesFromDb();
@@ -205,56 +327,6 @@ class utilisateurGrille extends utilisateur {
 			$condition .= sprintf("`%s` LIKE '%%%s%%' OR ", $champ, $classe);
 		}
 		return substr($condition, 0, -4);
-	}
-	public function arrivee($arrivee = NULL) {
-		if (!is_null($arrivee)) {
-			$this->arrivee = (string) $arrivee;
-		}
-		if (isset($this->arrivee)) {
-			return $this->arrivee;
-		} else {
-			return false;
-		}
-	}
-	public function theorique($theorique = NULL) {
-		if (!is_null($theorique)) {
-			$this->theorique = (string) $theorique;
-		}
-		if (isset($this->theorique)) {
-			return $this->theorique;
-		} else {
-			return false;
-		}
-	}
-	public function pc($pc = NULL) {
-		if (!is_null($pc)) {
-			$this->pc = (string) $pc;
-		}
-		if (isset($this->pc)) {
-			return $this->pc;
-		} else {
-			return false;
-		}
-	}
-	public function ce($ce = NULL) {
-		if (!is_null($ce)) {
-			$this->ce = (string) $ce;
-		}
-		if (isset($this->ce)) {
-			return $this->ce;
-		} else {
-			return false;
-		}
-	}
-	public function cds($cds = NULL) {
-		if (!is_null($cds)) {
-			$this->cds = (string) $cds;
-		}
-		if (isset($this->cds)) {
-			return $this->cds;
-		} else {
-			return false;
-		}
 	}
 	public function vismed($vismed = NULL) {
 		if (!is_null($vismed)) {
@@ -424,6 +496,16 @@ class utilisateurGrille extends utilisateur {
 		return $this->page;
 	}
 // Méthodes relatives à la base de données
+	public function setFromDb($uid) {
+		$sql = "SELECT * FROM `TBL_USERS`
+			WHERE `uid` = $uid";
+		$result = $_SESSION['db']->db_interroge($sql);
+		$row = $_SESSION['db']->db_fetch_assoc($result);
+		parent::__construct($row);
+		$this->setFromRow($row);
+		$this->_retrieveContact();
+		$this->getAffectationFromDb();
+	}
 	// Liste des champs de la table dans la bdd
 	protected function _getFields() {
 		$fields = array();
@@ -501,6 +583,110 @@ class utilisateurGrille extends utilisateur {
 		if (mysqli_num_rows($result) > 0) $return = true;
 		mysqli_free_result($result);
 		return $return;
+	}
+	protected function _retrieveAdresse($index = NULL) {
+		$sql = sprintf("
+			SELECT *
+			FROM `TBL_ADRESSES`
+			WHERE `uid` = %d"
+			, $this->uid
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$this->adresse[$row['adresseid']] = new Adresse($row);
+		}
+		mysqli_free_result($result);
+		if (is_null($index)) return $this->adresse;
+		if (isset($this->adresse[$index])) return $this->adresse[$index];
+		return NULL;
+	}
+	protected function _retrievePhone($index = NULL) {
+		firePhpLog($index, '_retrievePhone');
+		$sql = sprintf("
+			SELECT *
+			FROM `TBL_PHONE`
+			WHERE `uid` = %d"
+			, $this->uid
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$this->phone[$row['phoneid']] = new Phone($row);
+		}
+		mysqli_free_result($result);
+		if (is_null($index)) return $this->phone;
+		if (isset($this->phone[$index])) return $this->phone[$index];
+		return NULL;
+	}
+	protected function _retrieveContact() {
+		$this->_retrieveAdresse();
+		$this->_retrievePhone();
+	}
+	// Remplit les champs centre, team et grade avec les valeurs actuelles
+	public function getPresentAffectationFromDb() {
+		if (is_null($this->centre) || is_null($this->team) || is_null($this->grade)) {
+			$result = $_SESSION['db']->db_interroge(sprintf("
+				SELECT *
+				FROM `TBL_AFFECTATION`
+				WHERE `uid` = %d
+				AND `beginning` < '%s'
+				AND `end` > '%s'"
+				, $this->uid()
+				, date('Y-m-d')
+				, date('Y-m-d')
+			));
+			if (mysqli_num_rows($result) != 1) return false;
+			$row = $_SESSION['db']->db_fetch_assoc($result);
+			$this->centre = $row['centre'];
+			$this->team = $row['team'];
+			$this->grade = $row['grade'];
+			return true;
+		}
+	}
+	// Recherche l'historique des affectations
+	public function getAffectationFromDb() {
+		$result = $_SESSION['db']->db_interroge(sprintf("
+			SELECT *
+		       	FROM `TBL_AFFECTATION`
+			WHERE `uid` = %d
+			ORDER BY `end` ASC
+			", $this->uid()
+		));
+		$today = new Date('Y-m-d'); // La date du jour pour définir le centre et la team actuels
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$this->affectations[$row['aid']] = new Affectation($row);
+			// Rempli l'affectation du jour
+			if ($this->affectations[$row['aid']]->beginning()->compareDate($today) > 0 && $this->affectations[$row['aid']]->end()->compareDate($today) < 0) {
+				$this->centre($this->affectations[$row['aid']]->centre());
+				$this->team($this->affectations[$row['aid']]->team());
+				$this->grade($this->affectations[$row['aid']]->grade());
+			}
+		}
+		$nbAffectations = mysqli_num_rows($result);
+		mysqli_free_result($result);
+		return $nbAffectations;
+	}
+	protected function _updateUser() {
+		return $_SESSION['db']->db_update('TBL_USERS', $this->userAsArray());
+	}
+	protected function _updatePhone() {
+		foreach ($this->phone() as $phone) {
+			$phone->update();
+		}
+	}
+	protected function _updateAdresse() {
+		foreach ($this->adresse() as $adresse) {
+			$adresse->update();
+		}
+	}
+	public function updateContact() {
+		$this->_updatePhone();
+		$this->_updateAdresse();
+	}
+	public function fullUpdateDB() {
+		$this->_updateUser();
+		$this->_updateAffectations();
+		$this->updateContact();
+		$this->_updateClasse();
 	}
 // Méthodes utiles pour l'affichage
 	public function userCell($dateDebut) {
