@@ -158,6 +158,7 @@ class utilisateur {
 	}
 	function __destruct() {
 		$this->logout();
+		unset($this);
 	}
 	// Accesseurs
 	private function _setFromRow($row) {
