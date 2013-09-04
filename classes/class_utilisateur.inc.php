@@ -161,6 +161,19 @@ class utilisateur {
 		unset($this);
 	}
 	// Accesseurs
+	public function asArray() {
+		return array(
+			'login'			=> $this->login
+			, 'email'		=> $this->email
+			, 'sha1'		=> $this->sha1
+			, 'lastlogin'		=> $this->lastlogin
+			, 'nblogin'		=> $this->nblogin
+			, 'locked'		=> $this->locked
+			, 'creation'		=> $this->creation
+			, 'modification'	=> $this->modification
+			, 'actif'		=> $this->actif
+		);
+	}
 	private function _setFromRow($row) {
 		foreach ($row as $cle => $valeur) {
 			if (method_exists($this, $cle)) {
