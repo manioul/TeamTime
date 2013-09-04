@@ -152,8 +152,7 @@ class database {
 	// colonne 2  ..      ..    ..    ..     ..     ..
 	// ...
 	public function db_getColumnsTable($table) {
-		$query = "SHOW COLUMNS FROM `$table`";
-		$result = $_SESSION['db']->db_interroge($query);
+		$result = $this->db_interroge("SHOW COLUMNS FROM `$table`");
 		$fields = array();
 		while ($row = mysqli_fetch_assoc($result)) {
 			$fields[$row['Field']] = $row;
@@ -169,29 +168,29 @@ class database {
 	public function db_columnToForm($table, $correspondance = array()) {
 		$fields = $this->db_getColumnsTable($table);
 		$fieldtype = array( 0 => 
-			array('name'		=> 'boolean'
+			array('name'	=> 'boolean'
 			,'pattern'	=> '/^tinyint\(1\)$/i'
 			,'formtype'	=> 'checkbox'
 			,'value'	=> 1
 			)
 			,1 =>
-			array('name'		=> 'integer'
+			array('name'	=> 'integer'
 			,'pattern'	=> '/^(tiny|small|medium|big)*int(\(([^1]|[1-9][0-9][0-9]*)\))$/i'
 			,'formtype'	=> 'text')
 			,2 =>
-			array('name'		=> 'text'
+			array('name'	=> 'text'
 			,'pattern'	=> '/^((var)*char|(tiny|medium|long)*text)\(([0-9]+)\)$/i'
 			,'formtype'	=> 'text')
 			,3 =>
-			array('name'		=> 'date'
+			array('name'	=> 'date'
 			,'pattern'	=> '/date/i'
 			,'formtype'	=> 'date')
 			,4 =>
-			array('name'		=> 'liste'
+			array('name'	=> 'liste'
 			,'pattern'	=> "/^enum(\(.+\))$/i"
 			,'formtype'	=> 'select')
 			,5 =>
-			array('name'		=> 'multiple'
+			array('name'	=> 'multiple'
 			,'pattern'	=> "/^set(\(.+\))$/i"
 			,'formtype'	=> 'select')
 		);
