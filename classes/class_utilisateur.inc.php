@@ -232,7 +232,7 @@ class utilisateur {
 	}
 	public function lastlogin ($param = NULL) {
 		if (!is_null($param)) {
-			$this->lastlogin = $param;
+			$this->lastlogin = new Date($param);
 		}
 		return $this->lastlogin;
 	}
