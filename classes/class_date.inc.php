@@ -263,6 +263,7 @@ class Date {
 					debug::getInstance()->lastError(DATE_ERR_INVALID_FORMAT);
 				}
 				$this->__destruct();
+				unset($this);
 				return false;
 			}
 	}
