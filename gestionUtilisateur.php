@@ -169,6 +169,8 @@ while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 		foreach ($users as $user) {
 			if ('password' == $row['Field']) { // Remplis le mot de passe avec des *
 				$usersInfos[$i][$row['Field']] = "*****";
+			} elseif (is_a($user->$row['Field'](), 'Date')) {
+				$usersInfos[$i][$row['Field']] = $user->$row['Field']()->formatDate('fr');
 			} elseif (method_exists('utilisateurGrille', $row['Field'])) {
 				$usersInfos[$i][$row['Field']] = $user->$row['Field']();
 			} else {
@@ -196,6 +198,7 @@ if (!empty($_POST['nom'])) {
 	exit;
 }
 
+// Ajout des colonnes centre et team pour les admin
 if ($_SESSION['ADMIN']) {
 	$usersInfos[0]['centre'] = "Centre";
 	$usersInfos[0]['team'] = htmlspecialchars("Équipe", ENT_COMPAT, 'utf-8');;

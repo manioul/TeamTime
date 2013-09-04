@@ -47,10 +47,24 @@ class utilisateurGrille extends utilisateur {
 	private $grade = NULL; // grade actuel
 	private $poids; // La position d'affichage dans la grille (du plus faible au plus gros)
 	private $showtipoftheday; // L'utilisateur veut-il voir les tips of the day
-	private $page = "affiche_grille.php";
+	private $indexPage; // L'index de la page favorite (ouverte après la connexion) dans le tableaux $availablePages
 	private $dispos; /* un tableau contenant un tableau des dispos indexées par les dates:
 			* $dispos[date] = array('dispo1', 'dispo2',... 'dispoN'); */
 	private static $label = array();
+	private static $availablePages = array(
+		1	=> array ('titre'	=> 'Cycle unique'
+				  , 'uri'	=> 'affiche_grille.php'
+				  , 'gid'	=> 255)
+		, 2	=> array('titre'	=> 'Trois cycles'
+				  , 'uri'	=> 'affiche_grille.php?nbCycle=3'
+				  , 'gid'	=> 255)
+		, 3  	=> array('titre'	=> "Gestion d'un utilisateur"
+				 , 'uri'	=> 'utilisateur.php'
+				  , 'gid'	=> 255)
+		, 4  	=> array('titre'	=> "Gestion des utilisateurs"
+				 , 'uri'	=> 'utilisateur.php'
+				 , 'gid'	=> 128)
+	);
 	protected static function _label($index) {
 		if (isset(self::$label[$index])) {
 			return self::$label[$index];
@@ -106,15 +120,16 @@ class utilisateurGrille extends utilisateur {
 		parent::_fieldsDefinition($correspondances, $regen);
 	}
 // Constructeur
-	public function __construct ($row = NULL) {
-		if (NULL !== $row) {
-			if (is_array($row)) {
-			parent::page('affiche_grille.php'); // La page par défaut des utilisateurs
-			parent::__construct($row);
-			$this->gid = 255; // Par défaut, on fixe le gid à la valeur la plus élevée
-			return $this->setFromRow($row); // Retourne true si l'affectation s'est bien passée, false sinon
-			} elseif (is_int($row)) {
-				$this->setFromDb($row);
+	public function __construct ($param = NULL) {
+		firePhpLog($param, "Création d'un nouvel objet utilisateurGrille");
+		if (NULL !== $param) {
+			if (is_array($param)) {
+				parent::page('affiche_grille.php'); // La page par défaut des utilisateurs
+				parent::__construct($param);
+				$this->gid = 255; // Par défaut, on fixe le gid à la valeur la plus élevée
+				return $this->setFromRow($param); // Retourne true si l'affectation s'est bien passée, false sinon
+			} elseif (is_int($param)) {
+				$this->setFromDb($param);
 			}
 		}
 		return true;
@@ -234,12 +249,12 @@ class utilisateurGrille extends utilisateur {
 	// Retourne la table des objets Phone
 	// Si $index est passé, retourné l'objet Phone indexé par $index
 	public function phone($param = NULL) {
+		if (sizeof($this->phone) == 0) { // Si on n'a pas encore récupéré les téléphones dans la bdd
+			$this->_retrievePhone($param);
+		}
 		if (is_int($param)) { // Si $param est l'index d'un téléphone, on retourne l'objet correspondant
 			firePhpLog($param, 'is_int');
 			return $this->phone[$param];
-		}
-		if (sizeof($this->phone) == 0) { // Si on n'a pas encore récupéré les téléphones dans la bdd
-			$this->_retrievePhone($param);
 		}
 		if (is_array($param)) { // Si $param est un tableau, il contient les infos d'un(e) nouveau(x) téléphone(s)
 			firePhpLog($param, 'is_array');
@@ -284,8 +299,8 @@ class utilisateurGrille extends utilisateur {
 		unset($this->adresse[$adresseid]);
 	}
 	public function adresse($param = NULL) {
-		if (is_int($param)) return $this->adresse[$param]; // Si $param est l'index d'une adresse, on retourne l'objet correspondant
 		if (sizeof($this->adresse) == 0) $this->_retrieveAdresse($param);
+		if (is_int($param)) return $this->adresse[$param]; // Si $param est l'index d'une adresse, on retourne l'objet correspondant
 		if (is_array($param)) { // Si $param est un tableau, il contient les infos d'une(e) nouvelle(s) adresse(s)
 			$this->addAdresseTableau($param);
 		}
@@ -330,134 +345,68 @@ class utilisateurGrille extends utilisateur {
 	}
 	public function vismed($vismed = NULL) {
 		if (!is_null($vismed)) {
-			$this->vismed = (string) $vismed;
+			$this->vismed = new Date($vismed);
 		}
-		if (isset($this->vismed)) {
-			return $this->vismed;
-		} else {
-			return false;
-		}
+		return $this->vismed;
 	}
-	public function getAffectationFromDb() {
-		$result = $_SESSION['db']->db_interroge(sprintf("
-			SELECT *
-		       	FROM `TBL_AFFECTATION`
-			WHERE `uid` = '%s'
-			ORDER BY `end` ASC
-			", $this->uid()
-		));
-		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$this->_addAffectation($row);
-		}
-		$nbAffectations = mysqli_num_rows($result);
-		mysqli_free_result($result);
-		return $nbAffectations;
-	}
-	protected function _addAffectation($row) {
+	// Ajoute une affectation à l'utilisateur
+	// à partir de $row = array('centre' => , 'team' => , 'beginning' => , 'end' => , 'grade' => );
+	// la bdd est mise à jour
+	public function addAffectation($row) {
 		if (!is_array($row)) return false;
-		// Validation des valeurs dans le tableau raw
-		if (false == new Date($row['beginning'])) {
-			firePhpError($row['beginning'], 'Date beginning');
-			return false;
-		}
-		if (false == new Date($row['end'])) {
-			firePhpError($row['end'], 'Date end');
-			return false;
-		}
-		if (!preg_match('/^[0-9a-z_-]*$/i', $row['centre'])) {
-			firePhpError($row['centre'], 'centre');
-			return false;
-		}
-		if (!preg_match('/^[0-9a-z_-]*$/i', $row['team'])) {
-			firePhpError($row['team'], 'team');
-			return false;
-		}
-		$index = isset($this->centre[$row['centre']]) ? sizeof($this->centre[$row['centre']]) : 0;
-		$this->centre[$row['centre']][$index]['beginning'] = $row['beginning'];
-		$this->centre[$row['centre']][$index]['end'] = $row['end'];
-		$this->team[$row['team']][$index]['beginning'] = $row['beginning'];
-		$this->team[$row['team']][$index]['end'] = $row['end'];
-		$this->affectations[] = array('beginning' => $row['beginning']
-					, 'end'		=> $row['end']
-					, 'centre'	=> $row['centre']
-					, 'team'	=> $row['team']
-		);
+		$row['uid'] = $this->uid();
+		$affectation = new Affectation($row);
+		$aid = $affectation->insert();
+		$this->affectations[$aid] = $affectation;
 		return true;
 	}
-	public function addAffectation($row) {
-		if (!is_array($row)) {
-			firePhpError($row, 'Devrait être un tableau');
-			return false;
-		}
-		$nbAffectations = 0;
-		if (sizeof($this->centre) < 1) $nbAffectations = $this->getAffectationFromDb();
-		// Par défaut l'affectation débute le jour suivant la fin de la précédente affectation
-		// ou le jour de la création de l'utilisateur et se termine 10 ans plus tard
-		if (!isset($row['beginning'])) {
-			$from = new Date(date('Y-m-d'));
-			$row['beginning'] = $from->date();
-			// On corrige la précédente affectation
-			if ($nbAffectations > 0) {
-				$this->affectations[$nbAffectations-1]['end'] = $from->decDate()->date();
-				// Mise à jour dans la bdd
-				$_SESSION['db']->db_interroge( sprintf("
-					UPDATE `TBL_AFFECTATION`
-					SET `end` = '%s'
-					WHERE `uid` = %d
-					AND `centre` = '%s'
-					AND `team` = '%s'
-					AND `beginning` = '%s'
-					", $_SESSION['db']->db_real_escape_string($this->affectations[$nbAffectations-1]['end'])
-					, $_SESSION['db']->db_real_escape_string($this->uid())
-					, $_SESSION['db']->db_real_escape_string($this->affectations[$nbAffectations-1]['centre'])
-					, $_SESSION['db']->db_real_escape_string($this->affectations[$nbAffectations-1]['team'])
-					, $_SESSION['db']->db_real_escape_string($this->affectations[$nbAffectations-1]['beginning'])
-				)
-				);
+	/*
+	 * Ajoute les affectations venant d'un tableau
+	 * $array = ( 0 => ('aid' => 5
+	 * 		'centre'	=> 'athis'
+	 * 		'team'	=> '9e'
+	 * 		'beginning'	=> '1990-01-01'
+	 * 		'end'	=> '2000-01-01'
+	 * 		)
+	 * 	      1 => (...)
+	 * 	      )
+	 */
+	public function addAffectationsTableau($array) {
+		$valid = true;
+		foreach ($array as $arr) {
+			if (is_array($arr)) {
+				$this->addAffectation($arr);
+			} else {
+				$valid = false;
+				break;
 			}
 		}
-		if (!isset($row['end'])) $row['end'] = date('Y') + 10 . date('-m-d');
-		if ($this->_addAffectation($row)){
-			$_SESSION['db']->db_interroge(sprintf("
-				INSERT INTO `TBL_AFFECTATION`
-				(`aid`, `uid`, `centre`, `team`, `beginning`, `end`)
-				VALUES
-				(NULL, %d, '%s', '%s', '%s', '%s')
-				", $this->uid()
-				, $_SESSION['db']->db_real_escape_string($row['centre'])
-				, $_SESSION['db']->db_real_escape_string($row['team'])
-				, $_SESSION['db']->db_real_escape_string($row['beginning'])
-				, $_SESSION['db']->db_real_escape_string($row['end'])
-				)
-			);
-			return true;
-		} else {
-			return false;
-		}
+		if (!$valid) $this->addAffectation($array);
+		return sizeof($this->affectations);
 	}
-	public function centre ($date = NULL) {
-		if (sizeof($this->centre) < 1) $this->getAffectationFromDb();
-		if (is_null($date)) $date = date('Y-m-d');
-		if (!is_object($date)) $date = new Date($date);
-		foreach ($this->centre as $centre => $array) {
-			foreach ($array as $index => $value) {
-				if ($date->compareDate($value['beginning']) >= 0 && $date->compareDate($value['end']) <= 0) return $centre;
-			}
-		}
+	public function deleteAffectation($aid) {
+		$this->affectations[$aid]->delete();
+		unset($this->affectations[$aid]);
 	}
-	public function team ($date = NULL) {
-		if (sizeof($this->team) < 1) $this->getAffectationFromDb();
-		if (is_null($date)) $date = date('Y-m-d');
-		if (!is_object($date)) $date = new Date($date);
-		foreach ($this->team as $team => $array) {
-			foreach ($array as $index => $value) {
-				if ($date->compareDate($value['beginning']) >= 0 && $date->compareDate($value['end']) <= 0) return $team;
-			}
+	public function affectations($param = NULL) {
+		if (sizeof($this->affectations) < 1) $this->retrieveAffectations();
+		if (is_int($param)) return $this->affectations[$param];
+		if (is_array($param)) { // Si $param est un tableau, il contient les infos d'une(e) nouvelle(s) affectation(s)
+			$this->addAffectationsTableau($param);
 		}
-	}
-	public function affectations() {
-		if (sizeof($this->affectations) < 1) $this->getAffectationFromDb();
 		return $this->affectations;
+	}
+	public function centre () {
+		if (is_null($this->centre)) $this->getPresentAffectationFromDb();
+		return $this->centre;
+	}
+	public function team () {
+		if (is_null($this->team)) $this->getPresentAffectationFromDb();
+		return $this->team;
+	}
+	public function grade() {
+		if (is_null($this->grade)) $this->getPresentAffectationFromDb();
+		return $this->grade;
 	}
 	public function poids($poids = NULL) {
 		if (!is_null($poids)) {
@@ -489,64 +438,56 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	public function page($page = NULL) {
-		if (!is_null($page) && preg_match('/^[a-z][a-z_]*\.php\?*[[a-z_]*=*[a-z]*\&*]*/i', $page)) {
-			$this->page = $_SESSION['db']->db_real_escape_string($page);
+	/*
+	 * Retourne les pages disponibles après la connexion pour l'utilisateur
+	 */
+	public function availablePages($type = 'titre', $index = NULL) {
+		if ($type !== 'titre' || $type !== 'uri' || $type !== 'index') $type = 'titre';
+		if (!is_null($index)) {
+			$index = (int) $index;
+			if (empty(self::$availablePages[$index][$type]) || self::$availablePages[$index]['gid'] < $this->gid()) $index = 1;
+			return self::$availablePages[$index][$type];
 		}
-		return $this->page;
+		$pages = array();
+		foreach (self::$availablePages as $index => $array) {
+			if ($array['gid'] >= $this->gid()) {
+				if ($type === 'titre') {
+					$pages[$index] = $array['titre'];
+				} else {
+					$pages[$index] = $array['uri'];
+				}
+			}
+		}
+		return $pages;
+	}
+	public function indexPage($index = NULL) {
+		if (!is_null($index)) {
+			$this->index = (int) $index;
+
+		}
+		if (empty($this->indexPage)) {
+			foreach (self::$availablePages as $index => $array) {
+				if ($this->page() == $array['uri']) {
+					$this->indexPage = $index;
+					break;
+				}
+			}
+		}
+		return $this->indexPage;
 	}
 // Méthodes relatives à la base de données
 	public function setFromDb($uid) {
-		$sql = "SELECT * FROM `TBL_USERS`
-			WHERE `uid` = $uid";
+		$sql = sprintf("
+			SELECT *
+		       	FROM `TBL_USERS`
+			WHERE `uid` = %d"
+			, $uid);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$row = $_SESSION['db']->db_fetch_assoc($result);
 		parent::__construct($row);
 		$this->setFromRow($row);
 		$this->_retrieveContact();
-		$this->getAffectationFromDb();
-	}
-	// Liste des champs de la table dans la bdd
-	protected function _getFields() {
-		$fields = array();
-		$result = $_SESSION['db']->db_interroge("SHOW COLUMNS FROM `TBL_USERS`");
-		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$fields[] = $row['Field'];
-		}
-		return $fields;
-	}
-	// Met en forme les champs pour préparer une requête d'insertion
-	protected function _formatFieldsForQuery() {
-		$format[0] = "(";
-		$i = 1;
-		foreach ($this->_getFields() as $field) {
-			$format[0] .= "`$field`, ";
-			$format[$i++] = $field;
-		}
-		$format[0] = substr($format[0], 0, -2) . ")";
-		return $format;
-	}
-	// Création de la requête d'insertion de l'utilisateur dans la base
-	protected function _saveIntoDbQuery() {
-		// Le gid d'un utilisateur créé est forcément inférieur ou égal à celui de l'utilisateur qui créé
-		if ($this->gid() > $_SESSION['utilisateur']->gid()) $this->gid($_SESSION['utilisateur']->gid());
-		$format = $this->_formatFieldsForQuery();
-		$sql = sprintf("INSERT INTO `TBL_USERS`
-			%s
-			VALUES
-			", $format[0]
-		);
-		$sql .= "(";
-		for ($i = 1; $i < sizeof($format); $i++) {
-			$sql .= sprintf("'%s', ", $this->$format[$i]());
-		}
-		return substr($sql, 0, -2) . ")";
-	}
-	public function _saveIntoDb() {
-		$_SESSION['db']->db_interroge($this->_saveIntoDbQuery());
-		$this->uid($_SESSION['db']->db_insert_id());
-		var_dump($_SESSION['db']->db_insert_id());
-		var_dump($this);
+		$this->retrieveAffectations();
 	}
 	// Vérifie si l'utilisateur existe déjà dans la base de données
 	// Pour cela, on vérifie si l'email est déjà présent dans la bdd
@@ -560,7 +501,7 @@ class utilisateurGrille extends utilisateur {
 			", $_SESSION['db']->db_real_escape_string($this->email())
 		));
 		$return = false;
-		if (mysqli_num_rows($result) > 0) $return = true;
+		if (mysqli_num_rows($result) > 0) $return = $_SESSION['db']->db_fetch_assoc($result);
 		mysqli_free_result($result);
 		return $return;
 	}
@@ -580,11 +521,62 @@ class utilisateurGrille extends utilisateur {
 			, $_SESSION['db']->db_real_escape_string($this->email())
 		));
 		$return = false;
-		if (mysqli_num_rows($result) > 0) $return = true;
+		if (mysqli_num_rows($result) > 0) $return = $_SESSION['db']->db_fetch_assoc($result);
 		mysqli_free_result($result);
 		return $return;
 	}
+	// Remplit les champs centre, team et grade avec les valeurs actuelles
+	public function getPresentAffectationFromDb() {
+		if (is_null($this->centre) || is_null($this->team) || is_null($this->grade)) {
+			$result = $_SESSION['db']->db_interroge(sprintf("
+				SELECT *
+				FROM `TBL_AFFECTATION`
+				WHERE `uid` = %d
+				AND `beginning` < '%s'
+				AND `end` > '%s'"
+				, $this->uid()
+				, date('Y-m-d')
+				, date('Y-m-d')
+			));
+			if (mysqli_num_rows($result) != 1) return false;
+			$row = $_SESSION['db']->db_fetch_assoc($result);
+			$this->centre = $row['centre'];
+			$this->team = $row['team'];
+			$this->grade = $row['grade'];
+			$this->affectations[$row['aid']] = new Affectation($row);
+			mysqli_free_result($result);
+			return $this->affectations[$row['aid']];
+		}
+	}
+	// Recherche l'historique des affectations
+	public function retrieveAffectations($index = NULL) {
+		$result = $_SESSION['db']->db_interroge(sprintf("
+			SELECT *
+		       	FROM `TBL_AFFECTATION`
+			WHERE `uid` = %d
+			ORDER BY `end` ASC
+			", $this->uid()
+		));
+		$today = new Date('Y-m-d'); // La date du jour pour définir le centre et la team actuels
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$this->affectations[$row['aid']] = new Affectation($row);
+			// Rempli l'affectation du jour
+			if ($this->affectations[$row['aid']]->beginning()->compareDate($today) > 0 && $this->affectations[$row['aid']]->end()->compareDate($today) < 0) {
+				$this->centre($this->affectations[$row['aid']]->centre());
+				$this->team($this->affectations[$row['aid']]->team());
+				$this->grade($this->affectations[$row['aid']]->grade());
+			}
+		}
+		mysqli_free_result($result);
+		if (is_null($index)) return $this->affectations;
+		if (isset($this->affectations[$index])) return $this->affectations[$index];
+		return NULL;
+	}
+	/************************
+	 * Gestion des contacts *
+	 ************************/
 	protected function _retrieveAdresse($index = NULL) {
+		firePhpLog($index, '_retrieveAdresse');
 		$sql = sprintf("
 			SELECT *
 			FROM `TBL_ADRESSES`
@@ -621,50 +613,9 @@ class utilisateurGrille extends utilisateur {
 		$this->_retrieveAdresse();
 		$this->_retrievePhone();
 	}
-	// Remplit les champs centre, team et grade avec les valeurs actuelles
-	public function getPresentAffectationFromDb() {
-		if (is_null($this->centre) || is_null($this->team) || is_null($this->grade)) {
-			$result = $_SESSION['db']->db_interroge(sprintf("
-				SELECT *
-				FROM `TBL_AFFECTATION`
-				WHERE `uid` = %d
-				AND `beginning` < '%s'
-				AND `end` > '%s'"
-				, $this->uid()
-				, date('Y-m-d')
-				, date('Y-m-d')
-			));
-			if (mysqli_num_rows($result) != 1) return false;
-			$row = $_SESSION['db']->db_fetch_assoc($result);
-			$this->centre = $row['centre'];
-			$this->team = $row['team'];
-			$this->grade = $row['grade'];
-			return true;
-		}
-	}
-	// Recherche l'historique des affectations
-	public function getAffectationFromDb() {
-		$result = $_SESSION['db']->db_interroge(sprintf("
-			SELECT *
-		       	FROM `TBL_AFFECTATION`
-			WHERE `uid` = %d
-			ORDER BY `end` ASC
-			", $this->uid()
-		));
-		$today = new Date('Y-m-d'); // La date du jour pour définir le centre et la team actuels
-		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$this->affectations[$row['aid']] = new Affectation($row);
-			// Rempli l'affectation du jour
-			if ($this->affectations[$row['aid']]->beginning()->compareDate($today) > 0 && $this->affectations[$row['aid']]->end()->compareDate($today) < 0) {
-				$this->centre($this->affectations[$row['aid']]->centre());
-				$this->team($this->affectations[$row['aid']]->team());
-				$this->grade($this->affectations[$row['aid']]->grade());
-			}
-		}
-		$nbAffectations = mysqli_num_rows($result);
-		mysqli_free_result($result);
-		return $nbAffectations;
-	}
+	/*
+	 * Mise à jour des informations
+	 */
 	protected function _updateUser() {
 		return $_SESSION['db']->db_update('TBL_USERS', $this->userAsArray());
 	}
@@ -678,6 +629,11 @@ class utilisateurGrille extends utilisateur {
 			$adresse->update();
 		}
 	}
+	protected function _updateAffectations() {
+		foreach ($this->affectations() as $affectation) {
+			$affectation->update();
+		}
+	}
 	public function updateContact() {
 		$this->_updatePhone();
 		$this->_updateAdresse();
@@ -686,7 +642,7 @@ class utilisateurGrille extends utilisateur {
 		$this->_updateUser();
 		$this->_updateAffectations();
 		$this->updateContact();
-		$this->_updateClasse();
+		//$this->_updateClasse();
 	}
 // Méthodes utiles pour l'affichage
 	public function userCell($dateDebut) {

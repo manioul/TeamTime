@@ -197,7 +197,7 @@ class database {
 		}
 		$sql = substr($sql, 0, -2) . ")";
 		$val = substr($val, 0, -2) . ")";
-		firePhpLog($sql . $val, 'insert request');
+		firePhpLog($sql . $val, 'insert request from class db');
 		$this->db_interroge($sql . $val);
 		return $this->db_insert_id();
 	}
@@ -217,7 +217,7 @@ class database {
 			}
 		}
 		$sql = substr($sql, 0, -2);
-		firePhpLog($sql . $where, 'update request');
+		firePhpLog($sql . $where, 'update request from class db');
 		return $this->db_interroge($sql . $where);
 	}
 	// Retourne un tableau exploitable pour créer un formulaire

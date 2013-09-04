@@ -275,6 +275,7 @@ class Adresse {
 			$this->update();
 			return $this->adresseid;
 		} else {
+			firePhpLog($this, 'Insertion de adresse dans la base');
 			$this->adresseid = NULL;
 			return $this->adresseid($_SESSION['db']->db_insert($this->table, $this->asArray()));
 		}
@@ -286,7 +287,6 @@ class Adresse {
 			, $this->table
 			, $this->adresseid()
 		);
-		var_dump($sql);
 		$_SESSION['db']->db_interroge($sql);
 		$this->__destruct();
 		unset($this);

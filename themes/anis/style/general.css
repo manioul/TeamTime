@@ -41,9 +41,6 @@ div#dBriefing table {
 	margin: 10px;
 	margin-left:5em;
 }
-.genElem {
-	margin:auto;
-}
 /*
  * fin page gestion.php
  */
@@ -122,13 +119,80 @@ img.cadenasF {
 	clip:rect(48px, 87px, 60px, 75px);
 }
 /*
+ * Classe pour les formulaires ou autre en superposition
+ */
+.superpose {
+	position: absolute;
+	font-size: 2em;
+	display: none;
+	background-color: rgba(255,255,255,.9);
+	padding: 10px;
+	left:auto;
+	top:auto;
+	z-index:9999;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	border-radius: 3px;
+}
+.superpose input {
+	background-color:#e7ffe7;
+}
+/*
+ * Mise en forme comme un tableau
+ */
+.table {
+	display:table;
+}
+.row {
+	display:table-row;
+}
+.cell {
+	display:table-cell;
+	margin:3px;
+}
+.thead {
+	display:table-header-group;
+}
+.tbody {
+	display:table-row-group;
+}
+.tfoot {
+	display:table-footer-group;
+}
+.middle {
+	vertical-align:middle;
+}
+/*
  * Éléments de formulaire
  */
-input, textarea {
+form, input, textarea, select {
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
-	font-size: 7pt;
-	background-color: #cfc;
+	font-size: 9pt;
 	color: #060;
+}
+fieldset {
+	display:table;
+	padding:5px;
+	border:1px solid #060;
+	border-right:3px solid #060;
+	border-bottom:3px solid #060;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	border-radius: 3px;
+}
+legend {
+	padding:5px;
+	font-size:180%;
+}
+fieldset fieldset legend {
+	font-size:120%;
+}
+input, textarea, select {
+	background-color: #cfc;
 	border: 1px solid #060;
 	-moz-border-radius: 3px;
 	-webkit-border-radius: 3px;
@@ -136,15 +200,10 @@ input, textarea {
 	-o-border-radius: 3px;
 	border-radius: 3px;
 }
-label {
-	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
-	font-size: 9pt;
-	color: #060;
-	vertical-align: middle;
-	padding: 5px;
+:disabled {
+	border:0;
 }
-select {
-	background-color: #cfc;
+label, .label {
 }
 div#dConnexion {
 	width: 70px;
@@ -155,6 +214,37 @@ div#dConnexion input {
 	width: 70px;
 	height: 1.5em;
 	font-size: 7pt;
+}
+.bouton {
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	font-size: 9pt;
+	text-align:center;
+	color: #060;
+	border: 1px solid #060;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	border-radius: 3px;
+
+	background: #ccffcc; /* Old browsers */
+	background: -moz-linear-gradient(top, #e7ffe7 0%, #c7ffc7 50%, #c0f9c0 51%, #e7ffe7 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#e7ffe7), color-stop(50%,#c7ffc7), color-stop(51%,#c0f9c0), color-stop(100%,#e7ffe7)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e7ffe7', endColorstr='#e7ffe7',GradientType=0 ); /* IE6-9 */
+
+	box-shadow: 2px 2px 2px #88aa88;
+
+	padding:2px;
+}
+/*
+ * tableaux
+ */
+.genElem {
+	margin:auto;
 }
 .altern-row, .genElem {
 	background-color: #beb;
@@ -173,23 +263,23 @@ table {
 	border-bottom: 5px solid #beb;
 	border-left: 5px solid #beb;
 
-	box-shadow: 10px 10px 5px #888888;                                                                                               
+	box-shadow: 10px 10px 5px #888888;
 
-	-moz-border-radius-bottomleft:5px;                                                                                               
-	-webkit-border-bottom-left-radius:5px;                                                                                           
-	border-bottom-left-radius:5px;                                                                                                   
+	-moz-border-radius-bottomleft:5px;
+	-webkit-border-bottom-left-radius:5px;
+	border-bottom-left-radius:5px;
 
-	-moz-border-radius-bottomright:5px;                                                                                              
-	-webkit-border-bottom-right-radius:5px;                                                                                          
-	border-bottom-right-radius:5px;                                                                                                  
+	-moz-border-radius-bottomright:5px;
+	-webkit-border-bottom-right-radius:5px;
+	border-bottom-right-radius:5px;
 
-	-moz-border-radius-topright:5px;                                                                                                 
-	-webkit-border-top-right-radius:5px;                                                                                             
-	border-top-right-radius:5px;                                                                                                     
+	-moz-border-radius-topright:5px;
+	-webkit-border-top-right-radius:5px;
+	border-top-right-radius:5px;
 
-	-moz-border-radius-topleft:5px;                                                                                                  
-	-webkit-border-top-left-radius:5px;                                                                                              
-	border-top-left-radius:5px;       
+	-moz-border-radius-topleft:5px;
+	-webkit-border-top-left-radius:5px;
+	border-top-left-radius:5px;
 }
 th {
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;

@@ -244,7 +244,11 @@ class utilisateur {
 	}
 	public function page($param = NULL) {
 		if (!is_null($param)) {
-			$this->page = $param;
+		       if (preg_match('/^[a-z][a-z_]*\.php\?*[[a-z_]*=*[a-z]*\&*]*/i', $param)) {
+			       $this->page = $param;
+		       } else {
+			       return false;
+		       }
 		}
 		return $this->page;
 	}

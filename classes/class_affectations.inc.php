@@ -36,8 +36,8 @@ class Affectation {
 	private $beginning;
 	private $end;
 	private $table = 'TBL_AFFECTATION'; // La table qui gère les affectations
-	private $previousAid = NULL; // Index de la précédente affectation
-	private $nextAid = NULL; // Index de l'affectation suivante
+	private $previous = false; // Index de la précédente affectation
+	private $next = false; // Index de l'affectation suivante
 // Consctucteur
 	public function __construct($param = NULL) {
 		if (is_null($param)) return true;
@@ -54,43 +54,57 @@ class Affectation {
 // Accesseurs
 	public function aid($aid = NULL) {
 		if (!is_null($aid)) {
-			$this->aid = $aid;
+			$this->aid = (int) $aid;
 		}
 		return $this->aid;
 	}
 	public function uid($uid = NULL) {
 		if (!is_null($uid)) {
-			$this->uid = $uid;
+			$this->uid = (int) $uid;
 		}
 		return $this->uid;
 	}
 	public function centre($centre = NULL) {
 		if (!is_null($centre)) {
-			$this->centre = $centre;
+			$this->centre = (string) $centre;
 		}
 		return $this->centre;
 	}
 	public function team($team = NULL) {
 		if (!is_null($team)) {
-			$this->team = $team;
+			$this->team = (string) $team;
 		}
 		return $this->team;
 	}
 	public function grade($grade = NULL) {
 		if (!is_null($grade)) {
-			$this->grade = $grade;
+			$this->grade = (string) $grade;
 		}
 		return $this->grade;
 	}
+	/*
+	 * Retourne le début de l'affectation comme une chaîne formattée pour la bdd
+	 */
 	public function beginning($beginning = NULL) {
 		if (!is_null($beginning)) {
-			$this->beginning = new Date($beginning);
+			if (is_a($beginning, 'Date')) {
+				$this->beginning = $beginning;
+			} else {
+				$this->beginning = new Date($beginning);
+			}
 		}
 		return $this->beginning;
 	}
+	/*
+	 * Retourne la fin de l'affectation comme une chaîne formattée pour la bdd
+	 */
 	public function end($end = NULL) {
 		if (!is_null($end)) {
-			$this->end = new Date($end);
+			if (is_a($end, 'Date')) {
+				$this->end = $end;
+			} else {
+				$this->end = new Date($end);
+			}
 		}
 		return $this->end;
 	}
@@ -109,19 +123,46 @@ class Affectation {
 	public function setFromDb($param) {
 		return $this->getFromAid($param);
 	}
-	public function previousAid($previousAid = NULL) {
-		if (!is_null($previousAid)) return $this->previousAid = $previousAid;
-		if (is_null($this->previousAid)) {
-			$this->_getPreviousAid();
+	/*
+	 * Retourne l'affectation précédente sous forme d'objet
+	 * le paramètre éventuel est un objet Affectation
+	 */
+	public function previous($param = NULL) {
+		if (is_a($param, 'Affectation')) return $this->previous = & $param;
+		if (!is_null($param)) return false;
+		if (false === $this->previous) {
+			$this->_getPrevious();
 		}
-		return $this->previousAid;
+		return $this->previous;
 	}
-	public function nextAid($nextAid = NULL) {
-		if (!is_null($nextAid)) return $this->nextAid = $nextAid;
-		if (is_null($this->nextAid)) {
-			$this->_getNextAid();
+	public function next($param = NULL) {
+		if (is_a($param, 'Affectation')) return $this->next = & $param;
+		if (!is_null($param)) return false;
+		if (false === $this->next) {
+			$this->_getNext();
 		}
-		return $this->nextAid;
+		return $this->next;
+	}
+	/*
+	 * Insère l'affectation après $oPreviousAffectation
+	 */
+	protected function _updatePrevious_n_Next() {
+		if (!is_null($this->previous())) {
+			$before = clone $this->beginning();
+			$before->decDate();
+			if ($this->previous()->end()->compareDate($before) != 0) {
+				$this->previous()->end($before);
+				$this->previous()->update();
+			}
+		}
+		if (!is_null($this->next())) {
+			$next = clone $this->end();
+			$next->incDate();
+			if ($this->next()->beginning()->compareDate($next) != 0) {
+				$this->next()->beginning($next);
+				$this->next()->update();
+			}
+		}
 	}
 	// Retourne l'objet sous forme de tableau
 	public function asArray() {
@@ -131,8 +172,8 @@ class Affectation {
 			, 'centre'	=> $this->centre
 			, 'team'	=> $this->team
 			, 'grade'	=> $this->grade
-			, 'beginning'	=> $this->beginning
-			, 'end'		=> $this->end
+			, 'beginning'	=> $this->beginning->date()
+			, 'end'		=> $this->end->date()
 		);
 	}
 // Méthode de la bdd
@@ -141,15 +182,14 @@ class Affectation {
 		       	FROM `$this->table`
 			WHERE
 			`aid` = '$aid'";
-		var_dump($sql);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$row = $_SESSION['db']->db_fetch_assoc($result);
 		mysqli_free_result($result);
-		var_dump($row);
 		$this->setFromRow($row);
 		return true;
 	}
 	public function update() {
+		$this->_updatePrevious_n_Next();
 		return $_SESSION['db']->db_update($this->table, $this->asArray());
 	}
 	public function insert() {
@@ -163,12 +203,17 @@ class Affectation {
 			, $this->aid()
 		);
 		$_SESSION['db']->db_interroge($sql);
+		/*
+		 * Mise à jour de la liste chaînée
+		 */
+		$this->next()->previous($this->previous());
+		$this->previous()->next($this->next());
 		$this->__destruct();
 		unset($this);
 	}
-	protected function _getPreviousAid() {
+	protected function _getPrevious() {
 		$sql = sprintf("
-			SELECT `aid`
+			SELECT *
 			FROM `%s`
 			WHERE
 			`beginning` > '%s'
@@ -179,17 +224,16 @@ class Affectation {
 		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		if (mysqli_num_rows($result) < 1) {
-			$this->previousAid = NULL;
+			$this->previous = NULL;
 		} else {
-			$row = $_SESSION['db']->db_fetch_row($result);
-			$this->previousAid = $row[0];
+			$this->previous(new Affectation($_SESSION['db']->db_fetch_row($result)));
 		}
 		mysqli_free_result($result);
-		return $this->previousAid;
+		return $this->previous;
 	}
-	protected function _getNextAid() {
+	protected function _getNext() {
 		$sql = sprintf("
-			SELECT `aid`
+			SELECT *
 			FROM `%s`
 			WHERE
 			`beginning` < '%s'
@@ -200,12 +244,12 @@ class Affectation {
 		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		if (mysqli_num_rows($result) < 1) {
-			$this->nextAid = NULL;
+			$this->next = NULL;
 		} else {
-			$row = $_SESSION['db']->db_fetch_row($result);
-			$this->nextAid = $row[0];
+			$row = 
+			$this->next(new Affectation($_SESSION['db']->db_fetch_row($result)));
 		}
 		mysqli_free_result($result);
-		return $this->nextAid;
+		return $this->next;
 	}
 }

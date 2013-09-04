@@ -100,6 +100,8 @@ $DEBUG = false;
 	if (empty($conf['page']['javascript']['index'])) $conf['page']['javascript']['index'] = false;
 	// Chargemenet du script pour la gestion des utilisateurs
 	if (empty($conf['page']['javascript']['gestionUtilisateurs'])) $conf['page']['javascript']['gestionUtilisateurs'] = false;
+	// chargement du script de gestion utilisateur
+	if (empty($conf['page']['javascript']['utilisateur'])) $conf['page']['javascript']['utilisateur'] = false;
 	// chargement du script de gestion tipoftheday
 	if (empty($conf['page']['elements']['tipoftheday'])) $conf['page']['javascript']['tipoftheday'] = false;
 	// Chargemenet du script pour les formulaires de saisie de briefing
@@ -125,6 +127,8 @@ $DEBUG = false;
 	// Chargement de la feuille de style 'online'
 	if (empty($conf['page']['stylesheet']['online'])) $conf['page']['stylesheet']['online'] = false;
 	if (empty($conf['page']['elements']['tipoftheday'])) $conf['page']['stylesheet']['tipoftheday'] = false;
+	// Chargement de la feuille de style 'utilisateur'
+	if (empty($conf['page']['stylesheet']['utilisateur'])) $conf['page']['stylesheet']['utilisateur'] = false;
 	
 	// Gestion du compactage des scripts javascript et css
 	if (empty($conf['page']['compact'])) $conf['page']['compact'] = false;
@@ -169,6 +173,7 @@ $DEBUG = false;
 	if (true === $conf['page']['elements']['tipoftheday']) $javascript[] = 'tipoftheday.js';
 	if (true === $conf['page']['elements']['formulaireBriefing']) $javascript[] = 'formulaireBriefing.js.php';
 	if (true === $conf['page']['javascript']['index']) $javascript[] = 'index.js';
+	if (true === $conf['page']['javascript']['utilisateur']) $javascript[] = 'utilisateur.js';
 
 // Liste des feuilles de styles à charger dans l'ordre de chargement
 	// Dépendances
@@ -250,6 +255,16 @@ $DEBUG = false;
 		$stylesheet[$compteur]['href'] = 'tipofthedayP.css';
 		$stylesheet[$compteur]['media'] = 'print';
 		$compteur++;
+	}
+	if (true === $conf['page']['stylesheet']['utilisateur']) {
+		$stylesheet[$compteur]['href'] = 'utilisateur.css';
+		$stylesheet[$compteur]['media'] = 'screen';
+		$compteur++;
+		/* TODO 
+		$stylesheet[$compteur]['href'] = 'utilisateurP.css';
+		$stylesheet[$compteur]['media'] = 'print';
+		$compteur++;
+		 */
 	}
 	if ($DEBUG) {
 		$stylesheet[$compteur]['href'] = 'debug.css';
