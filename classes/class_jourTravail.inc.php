@@ -305,12 +305,12 @@ class jourTravail extends Date {
 	 * constructeur
 	 */
 	public function __construct($row=false, $centre = 'athis', $team = '9e') {
+		$this->centre($_SESSION['centre']); // FIXME Supporter réellement le multicentre en ne limitant pas l'usage aux valeurs de la session
+		$this->team($_SESSION['team']);
 		if ($row) {
 			$check = 0;
 			if (is_string($row)) { // si $row est une chaîne...
 				if (parent::__construct($row)) { // ... au format date
-					$this->centre($centre);
-					$this->team($team);
 					$sql = sprintf("
 						SELECT *
 						FROM `TBL_GRILLE`

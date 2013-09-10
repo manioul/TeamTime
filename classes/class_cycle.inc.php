@@ -36,11 +36,10 @@ class Cycle {
 	private $compteTypeUserFin = array(); // Un tableau des décomptes par type (cf `type decompte` dans la bdd) et par utilisateur pour la fin du cycle
 	private $centre = NULL;
 	private $team = NULL;
-	public function __construct($date=NULL, $centre = 'athis', $team = '9e') {
+	public function __construct($date=NULL, $centre = NULL, $team = NULL) {
 		if (is_null($date)) return false;
-		if (empty($centre) || empty($team)) die("Aucun centre ou équipe...");
-		$this->centre($centre);
-		$this->team($team);
+		$this->centre($_SESSION['centre']); // FIXME Supporter réellement le multicentre en ne limitant pas l'usage aux valeurs de la session
+		$this->team($_SESSION['team']);
 		return $this->loadCycle($date);
 	}
 	public function __destruct() { // TODO Supprimer l'objet de la liste $_definedCycles
