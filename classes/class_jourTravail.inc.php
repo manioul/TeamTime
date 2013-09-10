@@ -331,10 +331,7 @@ class jourTravail extends Date {
 				}
 			}
 			if (is_array($row)) {
-				parent::__construct($row['date']);
-				foreach ($row as $cle => $valeur) {
-					$this->$cle = $valeur;
-				}
+				$this->setFromRow($row);
 			}
 			$this->jourDeLaSemaine();
 		}
@@ -353,7 +350,7 @@ class jourTravail extends Date {
 	public function cid($param = false) {
 		if (ctype_digit($param)) { // On vérifie que cid est composé uniquement de chiffres
 			// On doit ruser car modulo renvoie [0 .. cycleLength]
-			$this->cid = ($param-1) % $GLOBALS['cycleLength'] + 1;
+			$this->cid = ($param-1) % Cycle::getCycleLength() + 1;
 			$this->vacation(true);
 		} else if ($param) {
 			$this->cid = false;
@@ -364,7 +361,7 @@ class jourTravail extends Date {
 	// $param s'il existe, devrait être positionné à true
 	// Retourne le nom de la journée de travail si aucun paramètre n'est passé
 	public function vacation($param = false) {
-		if ($param || ! isset($this->vacation)) {
+		if ($param || empty($this->vacation)) {
 			if (!isset($this->cid)) {
 				$query = sprintf("
 					SELECT `cid`
@@ -440,7 +437,14 @@ class jourTravail extends Date {
 		}
 		return $this->conf;
 	}
-	public function readOnly() {
+	public function readOnly($param = NULL) {
+		if (!is_null($param)) {
+			if ($param) {
+				$this->readOnly = true;
+			} else {
+				$this->readOnly = false;
+			}
+		}
 		return $this->readOnly;
 	}
 	public function setReadWrite() {
@@ -470,8 +474,7 @@ class jourTravail extends Date {
 		return $this->team = $team;
 	}
 	// Retourne le cid suivant celui du jourTravail
-	public function nextCid() { // TODO skoi ce $GLOBALS ? :o
-		//$nCid = ($this->cid() % $GLOBALS['cycleLength']) + 1;
+	public function nextCid() {
 		$nCid = ($this->cid() % Cycle::getCycleLength($this->centre, $this->team)) + 1;
 		return $nCid;
 	}
@@ -512,7 +515,17 @@ class jourTravail extends Date {
 	public function presente() {
 		//printf("%s ---> %s - %s<br />", $this->date_(), $this->vacation(), $this->jourDeLaSemaine());
 	}
-	// Interactions avec la bdd
+	public function setFromRow($row) {
+		parent::__construct($row['date']);
+		foreach ($row as $key => $value) {
+			if (method_exists($this, $key)) {
+				$this->$key($value);
+			} else {
+				$this->key = $value;
+			}
+		}
+	}
+// Interactions avec la bdd
 	// Insertion dans la base
 	public function __dbQueryInsert() {
 		$sql = sprintf("
