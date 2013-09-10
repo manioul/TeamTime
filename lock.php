@@ -50,6 +50,7 @@ $requireEditeur = true;
  */
 require 'required_files.inc.php';
 
+ob_start();
 $err = "";
 
 
@@ -93,5 +94,7 @@ if ($err != "") {
 if (isset($_GET['noscript'])) { // Si le paramètre noscript est passé alors javascript n'est pas utilisé
 	print ("<br /><a href=\"affiche_grille.php\">Revenir &agrave; la grille</a>");
 }
+
+ob_end_flush();
 
 ?>
