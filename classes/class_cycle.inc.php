@@ -422,8 +422,11 @@ class Cycle {
 		       	FROM `TBL_L_SHIFT_DISPO` AS `TL`,
 			`TBL_DISPO` AS `TD`,
 			`TBL_USERS` AS `TU`,
-			`TBL_GRILLE` AS `TG`
+			`TBL_GRILLE` AS `TG`,
+			`TBL_CYCLE` AS `TC`
 			WHERE `TG`.`date` = `TL`.`date`
+			AND `TC`.`vacation` != '%s'
+			AND `TC`.`cid` = `TG`.`cid`
 			AND `TU`.`uid` = `TL`.`uid`
 			AND `TU`.`actif` = '1'
 			AND `TL`.`date` BETWEEN
@@ -453,6 +456,7 @@ class Cycle {
 				)
 			AND `TD`.`did` = `TL`.`did`
 			ORDER BY date ASC"
+			, REPOS
 			, $this->centre
 			, $this->team
 			, $dateMin->date()
