@@ -329,6 +329,7 @@ class Cycle {
 		if ($sql != "") {
 			$sql = $intro . substr($sql, 0, -1);
 			$_SESSION['db']->db_interroge($sql);
+			$this->dbDiscrepancy();
 		}
 	}
 	//-------------------------------------------------
@@ -568,6 +569,191 @@ class Cycle {
 		foreach ($this->dispos as $date => $array) {
 			$array['jourTravail']->setReadWrite();
 		}
+	}
+/*
+* DB Discrepancy
+
+* Effectue des tests sur la base de données et corrige les éventuelles erreurs
+*
+*/
+	/*
+	 * Vérification des vacances scolaires
+	 *
+	 * Lorsqu'un nouveau cycle est créé dans la base,
+	 * on ne met pas les infos de vacances scolaires.
+	 * Cette méthode met à jour la base pour ajouter
+	 * les vacances scolaires aux jours de la grille
+	 * qui auraient été créés après la saisie des
+	 * dates de vacances scolaires.
+	 *
+	 * $date est une chaîne contenant la date à partir
+	 * de laquelle il faut mettre à jour.
+	 * Par défaut, il s'agit de la date du jour.
+	 */
+	public function dbDiscrepancyVacancesScolaires($date = NULL) {
+		if (is_null($date)) {
+			$date = date('Y-m-d');
+		} elseif (!is_string($date)) {
+			return false;
+		}
+		// Recherche des vacances scolaires
+		$sql = sprintf("SELECT *
+			FROM `TBL_VACANCES_SCOLAIRES`
+			WHERE `dateF` > '%s'
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $date
+			, $this->centre
+			, $this->team
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$sql = sprintf("
+				UPDATE `TBL_GRILLE`
+				SET `vsid` = %d
+				WHERE `date` BETWEEN '%s' AND '%s'
+				"
+				, $row['id']
+				, $row['dateD']
+				, $row['dateF']
+			);
+			if ($row['centre'] != 'all') {
+				$sql .= sprintf("
+					AND `centre` = '%s'"
+					, $row['centre']
+				);
+			}
+			if ($row['team'] != 'all') {
+				$sql .= sprintf("
+					AND `team` = '%s'"
+					, $row['team']
+				);
+			}
+			$_SESSION['db']->db_interroge($sql);
+		}
+		mysqli_free_result($result);
+	}
+	/*
+	 * Vérification des briefings
+	 *
+	 * Lorsqu'un nouveau cycle est créé dans la base,
+	 * on ne met pas les infos de briefing.
+	 * Cette méthode met à jour la base pour ajouter
+	 * les briefings aux jours de la grille
+	 * qui auraient été créés après la saisie des
+	 * dates de briefings.
+	 *
+	 * $date est une chaîne contenant la date à partir
+	 * de laquelle il faut mettre à jour.
+	 * Par défaut, il s'agit de la date du jour.
+	 */
+	public function dbDiscrepancyBriefing($date = NULL) {
+		if (is_null($date)) {
+			$date = date('Y-m-d');
+		} elseif (!is_string($date)) {
+			return false;
+		}
+		// Recherche des vacances scolaires
+		$sql = sprintf("SELECT *
+			FROM `TBL_BRIEFING`
+			WHERE `dateF` > '%s'
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $date
+			, $this->centre
+			, $this->team
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$sql = sprintf("
+				UPDATE `TBL_GRILLE`
+				SET `briefing` = %d
+				WHERE `date` BETWEEN '%s' AND '%s'
+				"
+				, $row['id']
+				, $row['dateD']
+				, $row['dateF']
+			);
+			if ($row['centre'] != 'all') {
+				$sql .= sprintf("
+					AND `centre` = '%s'"
+					, $row['centre']
+				);
+			}
+			if ($row['team'] != 'all') {
+				$sql .= sprintf("
+					AND `team` = '%s'"
+					, $row['team']
+				);
+			}
+			$_SESSION['db']->db_interroge($sql);
+		}
+		mysqli_free_result($result);
+	}
+	/*
+	 * Vérification de la période de charge
+	 *
+	 * Lorsqu'un nouveau cycle est créé dans la base,
+	 * on ne met pas les infos de la période de charge.
+	 * Cette méthode met à jour la base pour ajouter
+	 * la période de charge aux jours de la grille
+	 * qui auraient été créés après la saisie des
+	 * dates de période de charge.
+	 *
+	 * $date est une chaîne contenant la date à partir
+	 * de laquelle il faut mettre à jour.
+	 * Par défaut, il s'agit de la date du jour.
+	 */
+	public function dbDiscrepancyPeriodeDeCharge($date = NULL) {
+		if (is_null($date)) {
+			$date = date('Y-m-d');
+		} elseif (!is_string($date)) {
+			return false;
+		}
+		// Recherche des vacances scolaires
+		$sql = sprintf("SELECT *
+			FROM `TBL_PERIODE_CHARGE`
+			WHERE `dateF` > '%s'
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $date
+			, $this->centre
+			, $this->team
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$sql = sprintf("
+				UPDATE `TBL_GRILLE`
+				SET `pcid` = %d
+				WHERE `date` BETWEEN '%s' AND '%s'
+				"
+				, $row['id']
+				, $row['dateD']
+				, $row['dateF']
+			);
+			if ($row['centre'] != 'all') {
+				$sql .= sprintf("
+					AND `centre` = '%s'"
+					, $row['centre']
+				);
+			}
+			if ($row['team'] != 'all') {
+				$sql .= sprintf("
+					AND `team` = '%s'"
+					, $row['team']
+				);
+			}
+			$_SESSION['db']->db_interroge($sql);
+		}
+		mysqli_free_result($result);
+	}
+	public function dbDiscrepancy($date = NULL) {
+		$this->dbDiscrepancyVacancesScolaires($date);
+		$this->dbDiscrepancyBriefing($date);
+		$this->dbDiscrepancyPeriodeDeCharge($date);
 	}
 }
 
