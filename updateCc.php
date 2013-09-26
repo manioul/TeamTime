@@ -41,7 +41,7 @@ $requireAdmin = true;
 	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = NULL; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
-	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
+	$conf['page']['include']['smarty'] = NULL; // Smarty sera utilisé sur cette page
 /*
  * Fin de la définition des include
  */
