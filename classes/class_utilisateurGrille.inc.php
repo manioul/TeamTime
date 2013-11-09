@@ -1036,13 +1036,32 @@ class utilisateursDeLaGrille {
 							$classe .= " absent";
 							// Ajout d'une classe particulière pour les congés validés
 							if ('conges' == $proprietesDispos[$vacation[$user['uid']]]['type decompte']) {
+								// On a besoin de connaître les did des dispo correspondant à des congés
+								// Pour ajouter une condition à la requête d'état des congés
+								// afin de permettre l'usage de dispo mutltiples pour un même jour
+								$result = $_SESSION['db']->db_interroge('
+									SELECT `did`
+									FROM `TBL_DISPO`
+									WHERE `type decompte` = "conges"
+									');
+								$conditionSql = "";
+								while ($row = $_SESSION['db']->db_fetch_row($result)) {
+									$conditionSql .= sprintf("`did` = %d OR ", $row[0]);
+								}
+								$conditionSql = substr($conditionSql, 0, -4);
+								mysqli_free_result($result);
 								$result = $_SESSION['db']->db_interroge(sprintf("
 									SELECT `etat`
 									FROM `TBL_VACANCES`
-									WHERE `date` = '%s'
-									AND `uid` = %d
+									WHERE `sdid` = (SELECT `sdid`
+								       			FROM `TBL_L_SHIFT_DISPO`
+											WHERE `date` = '%s'
+											AND `uid` = %d
+											AND (%s)
+										)
 									", $dateVacation
 									, $user['uid']
+									, $conditionSql
 								));
 								if (mysqli_num_rows($result) < 1) {
 									$classe .= " erreur";
