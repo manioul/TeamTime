@@ -133,12 +133,18 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 	);
 	// Recherche des congés de l'année en cours
 	$sql = sprintf('
-	SELECT `uid`, `date`
-	, `etat`
-	FROM `TBL_VACANCES`
-	WHERE `year` = %d
-	AND `did` = %d
-	ORDER BY `date` ASC', $year, $res['did']);
+		SELECT `uid`
+		, `date`
+		, `etat`
+		FROM `TBL_L_SHIFT_DISPO` `l`
+		, `TBL_VACANCES` `v`
+		WHERE `l`.`sdid` = `v`.`sdid`
+		AND `year` = %d
+		AND `did` = %d
+		ORDER BY `date` ASC
+		', $year
+		, $res['did']
+	);
 	$result = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 		$class = '';
@@ -146,7 +152,7 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 		$class .= ($row['etat'] == 2 ? ' confirmed' : '');
 		$date = new Date($row['date']);
 		$tab[$res['did']][$row['uid']][] = array(	'date' => $date->formatDate()
-							,'classe' => $class
+			,'classe' => $class
 		);
 	}
 }

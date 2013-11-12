@@ -42,7 +42,7 @@ class jourTravail extends Date {
 	 */
 	//-----------------------------------------
 	// Ajoute une occupation pour l'utilisateur
-	// dispo = array (uid=> , date=> , dispo => , oldDispo => )
+	// dispo = array (uid=> , date=> , dispo => , oldDispo => , pereq => 0|1)
 	// log = TRUE => les opérations sont loguées
 	//-----------------------------------------
 	public static function addDispo($dispo, $centre = 'athis', $team = '9e', $log=false) {
@@ -68,6 +68,33 @@ class jourTravail extends Date {
 		if ($row[0] == 1) return "Cette grille ne peut plus être éditée";
 		firePhpInfo($sql, $row[0] == 0 ? 'la date est éditable' : "la date n'est pas éditable");
 
+		/*
+		 * Supprime les précédentes entrées
+		 */
+		// Supprime le précédent congé
+		$sql = sprintf("
+			DELETE FROM `TBL_VACANCES`
+			WHERE `sdid` = (SELECT `sdid`
+		       			FROM `TBL_L_SHIFT_DISPO`
+					WHERE `date` = '%s'
+					AND `uid` = %d
+					AND `did` = (SELECT `did`
+						FROM `TBL_DISPO`
+						WHERE `dispo` = '%s'
+						AND (`centre` = '%s' OR `centre` = 'all')
+						AND (`team` = '%s' OR `team` = 'all')
+					)
+				)
+			"
+			, $dispo['date']
+			, $dispo['uid']
+			, $dispo['oldDispo']
+			, $centre
+			, $team
+		);
+		firePhpInfo($sql, 'Suppression du précédent congé');
+		$_SESSION['db']->db_interroge($sql);
+
 		// Supprime la précédente dispo
 		$sql = sprintf("
 			DELETE FROM `TBL_L_SHIFT_DISPO`
@@ -90,8 +117,15 @@ class jourTravail extends Date {
 		firePhpInfo($sql, 'Suppression de la précédente dispo');
 		$_SESSION['db']->db_interroge($sql);
 
-		// Les congés sont traités particulièrement
-		// Ils sont comptabilisés dans TBL_VACANCES
+		/*
+		 * Fin des suppressions
+		 */
+
+		/*
+		 * Les congés sont traités particulièrement
+		 *  Ils sont comptabilisés dans TBL_VACANCES
+		 */
+		// Recherche des dispos correspondants à des congés
 		$aVacances = array();
 		$sql = sprintf("
 			SELECT `dispo`,
@@ -140,9 +174,11 @@ class jourTravail extends Date {
 			firePhpInfo($dlCong, 'dlCong');
 			if ($date->compareDate($dlCong) < 0) {
 				$sql = sprintf("
-					SELECT %d - COUNT(`vid`)
-					FROM `TBL_VACANCES`
-					WHERE `did` = %d
+					SELECT %d - COUNT(`v`.`sdid`)
+					FROM `TBL_VACANCES` `v`
+					, `TBL_L_SHIFT_DISPO` `l`
+					WHERE `v`.`sdid` = `l`.`sdid`
+				       	AND `did` = %d
 					AND `uid` = %d
 					AND `year` = %d
 					"
@@ -161,9 +197,11 @@ class jourTravail extends Date {
 
 			// Recherche si il reste des congés disponibles
 			$sql = sprintf("
-				SELECT %d - COUNT(`vid`)
-				FROM `TBL_VACANCES`
-				WHERE `did` = %d
+				SELECT %d - COUNT(`v`.`sdid`)
+				FROM `TBL_VACANCES` `v`
+				, `TBL_L_SHIFT_DISPO` `l`
+				WHERE `v`.`sdid` = `l`.`sdid`
+				AND `did` = %d
 				AND `uid` = %d
 				AND `year` = %d
 				"
@@ -174,69 +212,57 @@ class jourTravail extends Date {
 			);
 			firePhpInfo($sql, 'Décompte de congés');
 			$result = $_SESSION['db']->db_interroge($sql);
+			if ($result === "Erreur") {
+				return "Erreur d'accès à la base...";
+			}
 			$row = $_SESSION['db']->db_fetch_row($result);
 			mysqli_free_result($result);
 			if ($row[0] <= 0) return "Ce congé n'est plus disponible";
-
-			$sql = sprintf("
-				INSERT INTO `TBL_VACANCES`
-				(`uid`, `date`, `did`, `year`)
-				VALUES (%d, '%s', %d, %d)
-				"
-				, $dispo['uid']
-				, $dispo['date']
-				, $aVacances[$dispo['dispo']]['did']
-				, $Year
-			);
-			firePhpInfo($sql, 'Décompte vacances');
-			$_SESSION['db']->db_interroge($sql);
-			if (mysql_error()) {
-				firePhpError($sql, mysql_error());
-				$return = sprintf("add_dispo(): %s / %s", mysql_error(), $sql);
-			}
-		}
-		// Si l'ancienne dispo était un congé
-		// on doit supprimer son entrée dans TBL_VACANCES
-		if (in_array($dispo['oldDispo'], array_keys($aVacances))) {
-			$sql = sprintf("
-				DELETE FROM `TBL_VACANCES`
-				WHERE `uid` = %d
-				AND `date` = '%s'
-				AND `did` = %d
-				"
-				, $dispo['uid']
-				, $dispo['date']
-				, $aVacances[$dispo['oldDispo']]['did']
-			);
-			firePhpInfo($sql, 'Décompte vacances');
-			$_SESSION['db']->db_interroge($sql);
-			if (mysql_error()) {
-				firePhpError($sql, mysql_error());
-				$return = sprintf("add_dispo(): %s / %s", mysql_error(), $sql);
-			}
 		}
 
 		// Ajoute la nouvelle dispo
 		if ($dispo['dispo'] != "") {
 			$sql = sprintf("
 				INSERT INTO `TBL_L_SHIFT_DISPO`
-				(`date`, `uid`, `did`)
+				(`date`, `uid`, `did`, `pereq`)
 				VALUES ('%s', '%s', (
 					SELECT `did`
 					FROM `TBL_DISPO`
 					WHERE `dispo` = '%s')
+					, %d
 				)
 				"
 				, $dispo['date']
 				, $dispo['uid']
 				, $dispo['dispo']
+				, $dispo['pereq']
 			);
 			//$undo = sprintf("DELETE FROM `TBL_L_SHIFT_DISPO` WHERE `date` = '%s' AND `uid` = '%s' AND `did` = (SELECT `did` FROM `TBL_DISPO` WHERE `dispo` = '%s'))", $dispo['date'], $dispo['uid'], $dispo['dispo']);
-			$_SESSION['db']->db_interroge($sql);
+			if ($_SESSION['db']->db_interroge($sql) === "Erreur") {
+				return "Erreur d'insertion de la dispo dans la base...";
+			}
 			firePhpInfo($sql, 'Màj');
-			if (mysql_error()) {
-				$return = sprintf("safe_insert_dispo(): %s / %s", mysql_error(), $sql);
-				firePhpError($sql, mysql_error());
+
+			// Insertion du congé dans la table TBL_VACANCES
+			$sql = sprintf("
+				INSERT INTO `TBL_VACANCES`
+				(`sdid`, `year`)
+				VALUES (
+					(SELECT `sdid`
+					FROM `TBL_L_SHIFT_DISPO`
+					WHERE `uid` = %d
+					AND `date` = '%s'
+					AND `did` = %d)
+					, %d)
+					"
+					, $dispo['uid']
+					, $dispo['date']
+					, $aVacances[$dispo['dispo']]['did']
+					, $Year
+				);
+			firePhpInfo($sql, 'Décompte vacances');
+			if ($_SESSION['db']->db_interroge($sql) === "Erreur") {
+				return "Erreur d'insertion dans la base...";
 			}
 		}
 		firePhpInfo($sql, 'vacances');
@@ -299,6 +325,70 @@ class jourTravail extends Date {
 		}
 		mysqli_free_result($result);
 		return $array;
+	}
+	//----------------------------------
+	// Ajoute une préréquation d'un type
+	// de dispo à un utilisateur
+	// $pereq = array(uid => , date => , dispo => , year => )
+	// year est l'année du congé (si la péréq correspond à un congé)
+	// si year n'existe pas, on considère que la péréq n'est pas un congé
+	//----------------------------------
+	public static function addPereq($pereq) {
+		// La date n'est pas indispensable pour une péréq et peut valoir 0 (0000-00-00)
+		if (! isset($pereq['date'])) $pereq['date'] = 0;
+		$sql = sprintf("
+			INSERT INTO `TBL_L_SHIFT_DISPO`
+			(`sdid`, `date`, `uid`, `did`, `pereq`, `priorite`)
+			VALUES
+			(NULL, '%s', %d, (SELECT `did` FROM `TBL_DISPO` WHERE `dispo` = '%s'), TRUE, NULL)
+			", $pereq['date']
+			, $pereq['uid']
+			, $pereq['dispo']
+		);
+		$_SESSION['db']->db_interroge($sql);
+		if (isset($pereq['year'])) {
+			$sql = sprintf("
+				INSERT INTO `TBL_VACANCES`
+				(`sdid`, `etat`, `year`)
+				VALUES
+				(%d, 2, %d)
+				", $_SESSION['db']->db_insert_id()
+				, $pereq['year']
+			);
+			$_SESSION['db']->db_interroge($sql);
+		}
+	}
+	//-----------------------------------
+	// Supprime une péréq
+	// $pereq = array(uid => , date => , dispo => )
+	//-----------------------------------
+	public static function delPereq($pereq) {
+		// La date n'est pas indispensable pour une péréq et peut valoir 0 (0000-00-00)
+		if (! isset($pereq['date'])) $pereq['date'] = 0;
+		// Recherche du sdid
+		$sql = sprintf("
+			SELECT `sdid`
+			FROM `TBL_L_SHIFT_DISPO`
+			WHERE `date` = '%s'
+			AND `uid` = %d
+			AND `did` = (SELECT `did` FROM `TBL_DISPO` WHERE `dispo` = '%s')
+			", $pereq['date']
+			, $pereq['uid']
+			, $pereq['dispo']
+		);
+		$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+		$sql = sprintf("
+			DELETE FROM `TBL_L_SHIFT_DISPO`
+			WHERE `sdid` = %d
+			", $row['sdid']
+		);
+		$_SESSION['db']->db_interroge($sql);
+		$sql = sprintf("
+			DELETE FROM `TBL_VACANCES`
+			WHERE `sdid` = %d
+			", $row['sdid']
+		);
+		$_SESSION['db']->db_interroge($sql);
 	}
 
 	/*

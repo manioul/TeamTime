@@ -55,7 +55,7 @@ firePhpLog($_POST, 'POST');
 $etat = ($_POST['f'] >= 2 ? 2 : 1);
 if (preg_match('/u(.+)d(\d{2,4}-\d{2}-\d{2,4})/', $_POST['id'], $array)) { // La date doit respecter les formats fr et us
 	$date = new Date($array[2]);
-	$sql = sprintf("UPDATE `TBL_VACANCES` SET `etat` = %d WHERE `date` = '%s' AND `uid` = %d", $etat, $date->date(), $array[1]);
+	$sql = sprintf("UPDATE `TBL_VACANCES` SET `etat` = %d WHERE `sdid` = (SELECT `sdid` FROM `TBL_L_SHIFT_DISPO` WHERE `date` = '%s' AND `uid` = %d LIMIT 1)", $etat, $date->date(), $array[1]);
 	$_SESSION['db']->db_interroge($sql);
 } else {
 	$err = "Date inconnue";

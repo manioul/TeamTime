@@ -37,6 +37,7 @@ if (isset($conf['page']['include']['class_menu']))		require_once 'classes/class_
 if (isset($conf['page']['include']['class_article']))		require_once 'classes/class_article.inc.php';
 if (isset($conf['page']['include']['init']))			require_once 'init.inc.php';
 if (isset($conf['page']['include']['session']))			require_once 'session.inc.php';
+if (isset($conf['page']['include']['bibliothequeMaintenance']))	require_once 'bibliotheque_maintenance.inc.php';
 if (isset($conf['page']['include']['smarty']))			require_once 'smarty_page.inc.php';
 
 ?>

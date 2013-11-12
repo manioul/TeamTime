@@ -120,7 +120,29 @@ $date2 = clone $date1;
 $date2->addJours(Cycle::getCycleLength()); // FIXME génère une erreur 500 si $date2 est une date vide
 
 // Recherche les congés qui doivent être déposés
-$sql = sprintf("SELECT `nom`, `prenom`, `tv`.`did`, `date`, `tu`.`uid` FROM `TBL_USERS` AS `tu`, `TBL_VACANCES` AS `tv` WHERE `tu`.`uid` = `tv`.`uid` AND `etat` = 0 AND `date` < (SELECT `date` FROM `TBL_GRILLE` WHERE `date` BETWEEN '%s' AND '%s' AND `cid` = (SELECT MAX(`cid`) FROM `TBL_CYCLE`)) ORDER BY `tv`.`did`, `nom`, `date`", $date1->date(), $date2->date());
+$sql = sprintf("
+	SELECT `nom`,
+	`prenom`,
+	`did`,
+	`date`,
+	`u`.`uid`
+	FROM `TBL_USERS` `u`
+	, `TBL_VACANCES` `v`
+	, `TBL_L_SHIFT_DISPO` `l`
+	WHERE `u`.`uid` = `l`.`uid`
+	AND `l`.`sdid` = `v`.`sdid`
+	AND `etat` = 0
+	AND `date` < (SELECT `date`
+       		FROM `TBL_GRILLE`
+		WHERE `date` BETWEEN '%s' AND '%s'
+		AND `cid` = (
+			SELECT MAX(`cid`)
+			FROM `TBL_CYCLE`)
+		) ORDER BY `l`.`did`
+		, `nom`, `date`
+		", $date1->date()
+		, $date2->date()
+	);
 $result = $_SESSION['db']->db_interroge($sql);
 $arr = array();
 while ($row = $_SESSION['db']->db_fetch_array($result)) {
@@ -130,6 +152,7 @@ while ($row = $_SESSION['db']->db_fetch_array($result)) {
 		,'traite'	=> 0 // Si ce congé a été traité
 	);
 }
+/*?><pre><? print_r($arr); ?></pre><? */
 mysqli_free_result($result);
 if (sizeof($arr) == 0) { // Il n'y a pas de congé à poser...
 	exit;
@@ -149,10 +172,34 @@ foreach (array_keys($arr) as $uid) {
 			do {
 				$nbCong++;
 				$dateFin = clone $prochainJt; // La date de fin de congé est le jour du congé si il n'y a qu'un seul jour de congé
+				// Le jour présentement traité passe à l'état 1 (filed)
+				// Ceci corrige un bug : précédemment, l'état des jours
+				// où des congés étaient déposés passaient en totalité à 1
+				// Or, il pouvait très bien y avoir dans cette période des
+				// congés dont l'état était déjà à 2 (confirmed).
+				$_SESSION['db']->db_interroge(sprintf("
+					UPDATE `TBL_VACANCES`
+					SET `etat` = 1
+					WHERE `sdid` = (SELECT `sdid`
+					FROM `TBL_L_SHIFT_DISPO`
+					WHERE `date` = '%s'
+					AND `uid` = %d
+					)
+					", $prochainJt->date()
+					, $uid
+				));
 				$arr[$uid][$dateFin->date()]['traite'] = 1; // Ce congé est traîté
 				$prochainJt = clone $prochainJt->nextWorkingDay();
 				$dateReprise = $prochainJt->formatDate(); // La date de reprise est la prochaine date de jour travaillé
-				$sql = sprintf("SELECT `etat`, `did` FROM `TBL_VACANCES` WHERE `uid` = %d AND `date` = '%s'", $uid, $prochainJt->date());
+				$sql = sprintf("
+					SELECT `etat`
+					, `did`
+					, `l`.`sdid`
+					FROM `TBL_VACANCES` `v`
+					, `TBL_L_SHIFT_DISPO` `l`
+					WHERE `v`.`sdid` = `l`.`sdid`
+				       	AND `uid` = %d
+				       	AND `date` = '%s'", $uid, $prochainJt->date());
 				$row = $_SESSION['db']->db_fetch_array($_SESSION['db']->db_interroge($sql));
 			} while (!empty($row[1]) && $row[1] == $arr[$uid][$date]['did']);
 			if ($arr[$uid][$date]['did'] == 1) {
@@ -160,8 +207,6 @@ foreach (array_keys($arr) as $uid) {
 				$nbCong = preg_replace('/\./', ',', $nbCong);
 			}
 			$titreConges->editTitreConges($arr[$uid][$date]['nom'], $arr[$uid][$date]['did'], $nbCong, $dateDebut->formatDate(), $dateFin->formatDate(), $dateReprise, $dateTitre, '9E');
-			$upd = sprintf("UPDATE `TBL_VACANCES` SET `etat` = 1 WHERE `date` BETWEEN '%s' AND '%s'", $dateDebut->date(), $dateFin->date());
-			$_SESSION['db']->db_interroge($upd);
 		}
 	}
 }
