@@ -101,10 +101,12 @@ class database {
 		if (! (is_resource($this->link)) ) {
 			$this->_db_connect();
 		}
-		if ( !(	$result = mysqli_query ( $this->link, $query ) ))
+		if ( ( $result = mysqli_query ( $this->link, $query ) ) === FALSE)
 		{ // Erreur de requête
+			$result = "Erreur";
 			debug::getInstance()->lastError(ERR_DB_SQL);
 			debug::getInstance()->triggerError(sprintf("Erreur de requête (%s): %s\n", $query, mysqli_error($this->link)));
+			//printf("Erreur de requête (%s): %s\n", $query, mysqli_error($this->link));
 		}
 		return $result;
 	}
