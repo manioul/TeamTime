@@ -290,6 +290,28 @@ class database {
 	public function db_real_escape_string($string) {
 		return mysqli_real_escape_string($this->link, $string);
 	}
+	// Copie la structure d'une table $origin
+	// vers la table $dest
+	// si $drop est non null la table $dest est supprimée avant
+	// si $data est non null les données sont recopiées
+	public function db_copy_table($origin, $dest, $drop = NULL, $datas = NULL) {
+		if ($origin != $this->db_real_escape_string($origin) || $dest != $this->db_real_escape_string($dest)) {
+			return FALSE;
+		}
+		$copy = "";
+		if (!is_null($drop)) {
+			$this->db_interroge("DROP TABLE IF EXISTS `$dest`");
+		}
+		$row = $this->db_fetch_row($this->db_interroge("SHOW CREATE TABLE `$origin`"));
+		$copy .= preg_replace("/$origin/", $dest, $row[1]);
+		$this->db_interroge($copy);
+		if (!is_null($datas)) {
+			$this->db_interroge("SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO'");
+			$this->db_interroge("INSERT INTO `$dest`
+				SELECT *
+				FROM `$origin`");
+		}
+	}
 }
 
 ?>
