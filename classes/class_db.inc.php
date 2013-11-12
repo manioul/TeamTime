@@ -155,6 +155,11 @@ class database {
 		$result = $this->db_interroge("SHOW COLUMNS FROM `$table`");
 		$fields = array();
 		while ($row = mysqli_fetch_assoc($result)) {
+			if ($row['Null'] == "YES") {
+				$row['Null'] = "NULL";
+			} else {
+				$row['Null'] = "NOT NULL";
+			}
 			$fields[$row['Field']] = $row;
 		}
 		mysqli_free_result($result);
