@@ -1,5 +1,5 @@
 <?php
-/* addMultipleDispoUser.php
+/* pereq.php
  *
  * Page squelette pour créer des pages personnalisées
  *
@@ -41,6 +41,7 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
 	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
+	$conf['page']['include']['bibliothequeMaintenance'] = 1; // La bibliothèque des fonctions de maintenance est nécessaire
 
 
 /*
@@ -109,64 +110,50 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 require 'required_files.inc.php';
 
 
-if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) || !isset($_POST['did'])) {
-	// Recherche des utilisateurs
-	$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
+// Recherche des utilisateurs
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
 
-	// Recherche des dispos
-	$sql = "
-		SELECT `did`
-		, `dispo`
-		FROM `TBL_DISPO`
-		WHERE `jours possibles` = 'all'
-		AND `actif` = 1
-		AND `need_compteur` != TRUE
-		ORDER BY `poids` ASC
+// Recherche des dispos candidates à péréq
+$sql = "
+	SELECT `did`
+	, `dispo`
+	FROM `TBL_DISPO`
+	WHERE `actif` = 1
+	AND (`type decompte` IS NOT NULL
+	    OR `need_compteur` IS TRUE)
+	ORDER BY `poids` ASC
 	";
-	$result = $_SESSION['db']->db_interroge($sql);
-	while ($row = $_SESSION['db']->db_fetch_array($result)) {
-		$dispos[$row[0]] = $row[1];
-	}
-	mysqli_free_result($result);
-	$smarty->assign('users', $users);
-	$smarty->assign('dispos', $dispos);
-} else {
-	$dateD = new Date($_POST['dateD']);
-	$dateF = new Date($_POST['dateF']);
-	if (false === $dateD || false === $dateF || $_POST['did'] != (int) $_POST['did'] || $_POST['uid'] != (int) $_POST['uid']) {
+$result = $_SESSION['db']->db_interroge($sql);
+while ($row = $_SESSION['db']->db_fetch_array($result)) {
+	$dispos[$row[0]] = $row[1];
+}
+mysqli_free_result($result);
+$smarty->assign('users', $users);
+$smarty->assign('dispos', $dispos);
+$years = array("", date("Y")-1, date("Y"), date("Y")+1);
+$smarty->assign('years', $years);
+if (isset($_POST['nb']) || isset($_POST['uid']) || isset($_POST['did']) || isset($_POST['year'])) {
+	if ($_POST['did'] != (int) $_POST['did'] || $_POST['uid'] != (int) $_POST['uid'] || $_POST['year'] != (int) $_POST['year'] || $_POST['nb'] != (int) $_POST['nb']) {
 		$err = "Paramètre incorrect... :o";
 	} else {
-		// Recherche les dates qui sont dans l'intervalle choisi par l'utilisateur et ne correspondent pas à des jours de repos du cycle
-		$sql = sprintf("
-			SELECT `date`
-			FROM `TBL_GRILLE`
-			WHERE `cid` IN (
-				SELECT `cid`
-				FROM `TBL_CYCLE`
-				WHERE `vacation` != '%s')
-			AND `date` BETWEEN '%s' AND '%s'
-			", REPOS
-			, $dateD->date()
-			, $dateF->date()
-		);
-		$result = $_SESSION['db']->db_interroge($sql);
-		$values = "";
-		while ($row = $_SESSION['db']->db_fetch_array($result)) {
-			$values .= sprintf("('', '%s', '%s', '%s'),", $row[0], (int) $_POST['uid'], (int) $_POST['did']);
+		if (isset($_POST['suppr'])) {
+			jourTravail::delPereq($_POST);
+		} else {
+			for ($i=1; $i <= $_POST['nb']; $i++) {
+				jourTravail::addPereq($_POST);
+			}
 		}
-		mysqli_free_result($result);
-		// Insère les données dans la base
-		$sql = sprintf("
-			INSERT INTO `TBL_L_SHIFT_DISPO`
-			(`sdid`, `date`, `uid`, `did`)
-			VALUES %s
-			", substr($values, 0, -1)
-		);
-		$_SESSION['db']->db_interroge($sql);
 	}
 }
 
-$smarty->display('addMultipleDispoUser.tpl');
+$smarty->display('pereq.tpl');
+
+$results = liste_pereq();
+if (sizeof($results) > 0) {
+	$smarty->assign("titre", "Péréquations");
+	$smarty->assign('results', $results);
+	$smarty->display('dispo_multiples.tpl');
+}
 
 
 /*

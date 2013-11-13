@@ -169,7 +169,7 @@ img.cadenasF {
  */
 form, input, textarea, select {
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
-	font-size: 9pt;
+	font-size: 11pt;
 	color: #060;
 }
 fieldset {
@@ -217,15 +217,15 @@ div#dConnexion input {
 }
 .bouton {
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
-	font-size: 9pt;
+	font-size: 11pt;
 	text-align:center;
 	color: #060;
 	border: 1px solid #060;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
-	-ms-border-radius: 3px;
-	-o-border-radius: 3px;
-	border-radius: 3px;
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	-ms-border-radius: 8px;
+	-o-border-radius: 8px;
+	border-radius: 8px;
 
 	background: #ccffcc; /* Old browsers */
 	background: -moz-linear-gradient(top, #e7ffe7 0%, #c7ffc7 50%, #c0f9c0 51%, #e7ffe7 100%); /* FF3.6+ */
@@ -238,7 +238,55 @@ div#dConnexion input {
 
 	box-shadow: 2px 2px 2px #88aa88;
 
-	padding:2px;
+	padding:4px;
+	margin:auto;
+}
+
+form#fPereq {
+	float:left;
+	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+	font-size: 11pt;
+	width:320px;
+	background-color:#beb;
+	border-radius:15px;
+	padding:10px;
+	margin:auto;
+
+	box-shadow: 2px 2px 2px #88aa88;
+}
+form#fPereq fieldset {
+	margin-bottom:10px;
+	border:none;
+}
+form#fPereq fieldset:last-of-type {
+	margin-bottom:0;
+}
+form#fPereq ul li {
+	border:3px solid rgba(255,255,255,.8);
+	border-radius:8px;
+	line-height:30px;
+	list-style:none;
+	padding:5px 10px;
+	margin-bottom:8px;
+}
+form#fPereq label {
+	float:left;
+	width:100px;
+	font-weight:bold;
+}
+form#fPereq input:not([type=radio]), select {
+	width:110px;
+}
+form#fPereq button {
+	display:block;
+	font-size:120%;
+	margin:auto;
+}
+
+.dispoMultiples {
+	display:block;
+	float:left;
+	margin:0 30px;
 }
 /*
  * tableaux
@@ -324,8 +372,7 @@ div#info {
  * notes de version
  */
 div#notesversion {
-	position: relative;
-	vertical-align: bottom;
+	float:left;
 	margin-top: 5em;
 	padding: 10px;
 	width: 100%;

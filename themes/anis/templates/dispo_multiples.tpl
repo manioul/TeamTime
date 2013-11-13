@@ -1,6 +1,7 @@
 {* Smarty *}
 {* Affiche un tableau des dispo multiples pour un même jour et un même utilisateur *}
 {* Permet également d'afficher la view VIEW_LIST_DISPO en passant le résultat dans un tableau de tableau : $results[0][] = $row *}
+<div class="dispoMultiples">
 <h1>{$titre}</h1>
 {foreach $results as $result}
 <table>
@@ -33,3 +34,4 @@
 </table>
 {/foreach}
 <div><a href="?end=1">Finish</a></div>
+</div>

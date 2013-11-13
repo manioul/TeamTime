@@ -329,7 +329,7 @@ class jourTravail extends Date {
 	//----------------------------------
 	// Ajoute une préréquation d'un type
 	// de dispo à un utilisateur
-	// $pereq = array(uid => , date => , dispo => , year => )
+	// $pereq = array(uid => , date => , did => , year => )
 	// year est l'année du congé (si la péréq correspond à un congé)
 	// si year n'existe pas, on considère que la péréq n'est pas un congé
 	//----------------------------------
@@ -338,12 +338,12 @@ class jourTravail extends Date {
 		if (! isset($pereq['date'])) $pereq['date'] = 0;
 		$sql = sprintf("
 			INSERT INTO `TBL_L_SHIFT_DISPO`
-			(`sdid`, `date`, `uid`, `did`, `pereq`, `priorite`)
+			(`sdid`, `date`, `uid`, `did`, `pereq`)
 			VALUES
-			(NULL, '%s', %d, (SELECT `did` FROM `TBL_DISPO` WHERE `dispo` = '%s'), TRUE, NULL)
+			(NULL, '%s', %d, %d, TRUE)
 			", $pereq['date']
 			, $pereq['uid']
-			, $pereq['dispo']
+			, $pereq['did']
 		);
 		$_SESSION['db']->db_interroge($sql);
 		if (isset($pereq['year'])) {
@@ -360,35 +360,62 @@ class jourTravail extends Date {
 	}
 	//-----------------------------------
 	// Supprime une péréq
-	// $pereq = array(uid => , date => , dispo => )
+	// $pereq = array(uid => , date => , did => , nb =>)
+	// nb est le nombre de pereq de ce type à supprimer pour l'utilisateur
 	//-----------------------------------
 	public static function delPereq($pereq) {
 		// La date n'est pas indispensable pour une péréq et peut valoir 0 (0000-00-00)
-		if (! isset($pereq['date'])) $pereq['date'] = 0;
+		if (! isset($pereq['date'])) $pereq['date'] = '0000-00-00';
+		if (! isset($pereq['nb'])) $pereq['nb'] = 1;
 		// Recherche du sdid
-		$sql = sprintf("
-			SELECT `sdid`
-			FROM `TBL_L_SHIFT_DISPO`
-			WHERE `date` = '%s'
-			AND `uid` = %d
-			AND `did` = (SELECT `did` FROM `TBL_DISPO` WHERE `dispo` = '%s')
-			", $pereq['date']
-			, $pereq['uid']
-			, $pereq['dispo']
-		);
-		$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
-		$sql = sprintf("
-			DELETE FROM `TBL_L_SHIFT_DISPO`
-			WHERE `sdid` = %d
-			", $row['sdid']
-		);
-		$_SESSION['db']->db_interroge($sql);
-		$sql = sprintf("
-			DELETE FROM `TBL_VACANCES`
-			WHERE `sdid` = %d
-			", $row['sdid']
-		);
-		$_SESSION['db']->db_interroge($sql);
+		if (isset($pereq['year'])) {
+			$sql = sprintf("
+				SELECT `l`.`sdid`
+				FROM `TBL_L_SHIFT_DISPO` `l`
+				, `TBL_VACANCES` `v`
+				WHERE `date` = '%s'
+				AND `uid` = %d
+				AND `did` = %d
+				AND `year` = %d
+				AND `l`.`sdid` = `v`.`sdid`
+				AND `pereq` = TRUE
+				LIMIT %d
+				", $pereq['date']
+				, $pereq['uid']
+				, $pereq['did']
+				, $pereq['year']
+				, $pereq['nb']
+			);
+		} else {
+			$sql = sprintf("
+				SELECT `sdid`
+				FROM `TBL_L_SHIFT_DISPO`
+				WHERE `date` = '%s'
+				AND `uid` = %d
+				AND `did` = %d
+				LIMIT %d
+				", $pereq['date']
+				, $pereq['uid']
+				, $pereq['did']
+				, $pereq['nb']
+			);
+		}
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$sql = sprintf("
+				DELETE FROM `TBL_L_SHIFT_DISPO`
+				WHERE `sdid` = %d
+				", $row['sdid']
+			);
+			$_SESSION['db']->db_interroge($sql);
+			$sql = sprintf("
+				DELETE FROM `TBL_VACANCES`
+				WHERE `sdid` = %d
+				", $row['sdid']
+			);
+			$_SESSION['db']->db_interroge($sql);
+		}
+		mysqli_free_result($result);
 	}
 
 	/*

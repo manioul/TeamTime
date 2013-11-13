@@ -355,6 +355,7 @@ function search_orphan_v($pereq = 1) {
 		, `w`.`etat`
 		, `w`.`year`
 		, `u`.`nom`
+		, `d`.`did`
 		, `d`.`dispo`
 		, `c`.`vacation`
 		, `v`.`sdid`
@@ -450,7 +451,7 @@ function search_orphan_l() {
 /*
  * Liste les péréq à partir de l'année $year
  */
-function liste_pereq($year) {
+function liste_pereq($year = 0) {
 	$results = array();
 	$sql = sprintf("
 		SELECT * FROM `VIEW_LIST_DISPO`
