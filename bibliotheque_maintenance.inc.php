@@ -1,7 +1,8 @@
 <?php
-// maintenance.php
+// bibliotheque_maintenance.inc.php
 //
-// Opérations de maintenance de la base de données
+// Bibliothèque de fonctions pour assurer des opérations
+// de maintenance de la base de données
 // Recherche les incongruences et permet de les corriger
 
 /*
@@ -26,8 +27,6 @@
 // L'utilisateur doit être logué pour accéder à cette page
 $requireAdmin = true;
 
-ob_start(); // Obligatoire pour firePHP
-
 /*
  * Configuration de la page
  * Définition des include nécessaires
@@ -40,80 +39,12 @@ ob_start(); // Obligatoire pour firePHP
 	$conf['page']['include']['globals_db'] = 1; // Le DSN de la connexion bdd est stockée dans globals_db.inc.php
 	$conf['page']['include']['class_db'] = 1; // Le script utilise class_db.inc.php
 	$conf['page']['include']['session'] = 1; // Le script utilise les sessions par session.imc
-	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
-	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
-	$conf['page']['include']['smarty'] = FALSE; // Smarty sera utilisé sur cette page
-	$conf['page']['compact'] = false; // Compactage des scripts javascript et css
 /*
  * Fin de la définition des include
  */
 
-
-/*
- * Configuration de la page
- */
-        $titrePage = sprintf(""); // Le titre de la page
-// Définit la valeur de $DEBUG pour le script
-// on peut activer le debug sur des parties de script et/ou sur certains scripts :
-// $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
-	$DEBUG = false;
-
-	/*
-	 * Choix des éléments à afficher
-	 */
-	
-	// Affichage du menu horizontal
-	$conf['page']['elements']['menuHorizontal'] = true;
-	// Affichage messages
-	$conf['page']['elements']['messages'] = true;
-	// Affichage du choix du thème
-	$conf['page']['elements']['choixTheme'] = false;
-	// Affichage du menu d'administration
-	$conf['page']['elements']['menuAdmin'] = false;
-	
-	// éléments de debug
-	
-	// FirePHP
-	$conf['page']['elements']['firePHP'] = true;
-	// Affichage des timeInfos
-	$conf['page']['elements']['timeInfo'] = $DEBUG;
-	// Affichage de l'utilisation mémoire
-	$conf['page']['elements']['memUsage'] = $DEBUG;
-	// Affichage des WherewereU
-	$conf['page']['elements']['whereWereU'] = $DEBUG;
-	// Affichage du lastError
-	$conf['page']['elements']['lastError'] = $DEBUG;
-	// Affichage du lastErrorMessage
-	$conf['page']['elements']['lastErrorMessage'] = $DEBUG;
-	// Affichage des messages de debug
-	$conf['page']['elements']['debugMessages'] = $DEBUG;
-
-
-
-	// Utilisation de jquery
-	$conf['page']['javascript']['jquery'] = false;
-	// Utilisation de ajax
-	$conf['page']['javascript']['ajax'] = false;
-	// Utilisation de grille2.js.php
-	$conf['page']['javascript']['grille2'] = false;
-	// Utilisation de utilisateur.js
-	$conf['page']['javascript']['utilisateur'] = false;
-
-	// Feuilles de styles
-	// Utilisation de la feuille de style general.css
-	$conf['page']['stylesheet']['general'] = true;
-	$conf['page']['stylesheet']['grille'] = false;
-	$conf['page']['stylesheet']['grilleUnique'] = false;
-	$conf['page']['stylesheet']['utilisateur'] = false;
-
-	// Compactage des pages
-	$conf['page']['compact'] = false;
-	
-/*
- * Fin de la configuration de la page
- */
 
 require 'required_files.inc.php';
 
@@ -523,16 +454,5 @@ function search_event_on_rest() {
 	mysqli_free_result($r);
 	return $results;
 }
-
-/*
- * Informations de debug
- */
-include 'debug.inc.php';
-firePhpLog($conf, '$conf');
-firePhpLog(debug::getInstance()->format(), 'format debug messages');
-firePhpLog($javascript, '$javascript');
-firePhpLog($stylesheet, '$stylesheet');
-
-ob_end_flush(); // Obligatoire pour firePHP
 
 ?>

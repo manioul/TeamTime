@@ -37,11 +37,6 @@ if ($_SESSION['ADMIN']) {
 		SELECT
 		`nom`,
 		`prenom`,
-		`arrivee`,
-		`theorique`,
-		`pc`,
-		`ce`,
-		`cds`,
 		`vismed`,
 		`login`,
 		`email`,
@@ -170,6 +165,14 @@ function subCc()
 $(function() {
 	updDispFormCc();
 });
+// Une fonction pour interragir avec la base de données
+// Mise à jour et suppression d'énregistrements
+// Utilisée par pereq.php
+function opDb(op, table, id, field, val)
+{
+	var sRequest = "op="+op+"&t="+table+"&id="+id+"&field="+field+"&val="+val;
+	submitRequest(sRequest, "opTable.php");
+}
 <?
 //ob_end_flush();
 ?>

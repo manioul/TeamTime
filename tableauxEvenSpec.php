@@ -112,18 +112,24 @@ $year = date('Y');
 $titre = "Évènements";
 
 $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $_SESSION['centre'], $_SESSION['team']);
+$uids = array(); // Un tableau des uid des utilisateurs
+foreach ($users as $user) {
+	$uids[] = $user->uid();
+}
 
 $tab = array();
-$sql = "
+$sql = sprintf("
 	SELECT `did`
 	, `nom_long`
 	FROM `TBL_DISPO`
-	WHERE `need_compteur` = TRUE
-	AND `actif` = TRUE
+	WHERE `need_compteur` IS TRUE
+	AND `actif` IS TRUE
 	AND `type decompte` != 'conges'
-	AND `centre` = 'athis'
-       	AND `team` = '9e'
-";
+	AND `centre` = '%s'
+	AND `team` = '%s'
+	", $_SESSION['centre']
+	, $_SESSION['team']
+);
 $results = $_SESSION['db']->db_interroge($sql);
 $index = 0;
 while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
@@ -131,31 +137,35 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 		,'quantity'		=> 10
 		,'param'		=> $res['did']
 	);
-	$uids = array(); // Un tableau des uid des utilisateurs
 	// Recherche des évènements
 	// Les évènements ne sont pas groupés par année
 	// On recherche le nombre minimal de chaque évènement
 	// ainsi que le maximum (pour définir le nombre de colonnes nécessaires)
 	$sql = sprintf("
-		SELECT `ts`.`uid`, COUNT(`ts`.`uid`) AS `compte`
-		FROM `TBL_L_SHIFT_DISPO` AS `ts`,
-		`TBL_AFFECTATION` AS `ta`
+		SELECT `l`.`uid`, COUNT(`l`.`uid`) AS `compte`
+		FROM `TBL_L_SHIFT_DISPO` `l`
+		, `TBL_USERS` `u`
 		WHERE `did` = %d
-		AND `ts`.`uid` = `ta`.`uid`
-		AND `ta`.`centre` = 'athis'
-		AND `ta`.`team` = '9e'
-		GROUP BY `ts`.`uid`
+		AND `l`.`uid` = `u`.`uid`
+		AND `actif` IS TRUE
+		GROUP BY `l`.`uid`
 		ORDER BY `compte` ASC
 		", $res['did']
+		, $_SESSION['centre']
+		, $_SESSION['team']
 	);
+	$i = 0;
 	$result = $_SESSION['db']->db_interroge($sql);
-	// Seul le minimum nous intéresse,
-	// soit donc le premier résultat retourné
-	$row = $_SESSION['db']->db_fetch_row($result);
-	$min = $row[1] - 1; // On souhaite avoir au moins une date pour l'utilisateur ayant le moins d'entrées
-	while ($row= $_SESSION['db']->db_fetch_row($result)) {
-		$uids[$row[0]] = $row[0];
-		$onglets[$index]['quantity'] = $row[1] - $min;
+	while ($row = $_SESSION['db']->db_fetch_row($result)) {
+		if (in_array($row[0], $uids)) {
+			// On souhaite connaître le minimum,
+			// soit donc le premier résultat retourné
+			if (!$i++) {
+				$min = $row[1] - 1; // On veut au moins une date pour l'utilisateur ayant le moins d'entrées
+			} else {
+				$onglets[$index]['quantity'] = $row[1] - $min;
+			}
+		}
 	}
 	// Le nombre de colonnes à afficher est défini
 	// par le max - min + 1

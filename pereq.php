@@ -25,6 +25,8 @@
 
 $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette page
 
+ob_start(); // Obligatoire pour firePHP
+
 /*
  * INCLUDES
  */
@@ -36,18 +38,19 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 	$conf['page']['include']['globals_db'] = 1; // Le DSN de la connexion bdd est stockée dans globals_db.inc.php
 	$conf['page']['include']['class_db'] = 1; // Le script utilise class_db.inc.php
 	$conf['page']['include']['session'] = 1; // Le script utilise les sessions par session.imc
-	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
+	$conf['page']['include']['classUtilisateur'] = false; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
 	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
 	$conf['page']['include']['bibliothequeMaintenance'] = 1; // La bibliothèque des fonctions de maintenance est nécessaire
+	$conf['page']['compact'] = false; // Compactage des scripts javascript et css
 
 
 /*
  * Configuration de la page
  */
-        $titrePage = "Administration de TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "Péréquations - Administration de TeamTime"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -94,6 +97,8 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 	$conf['page']['javascript']['grille2'] = false;
 	// Utilisation de online
 	$conf['page']['javascript']['online'] = true;
+	// Utilisation de administration
+	$conf['page']['javascript']['administration'] = true;
 
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
@@ -108,7 +113,6 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
  */
 
 require 'required_files.inc.php';
-
 
 // Recherche des utilisateurs
 $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
@@ -132,15 +136,28 @@ $smarty->assign('users', $users);
 $smarty->assign('dispos', $dispos);
 $years = array("", date("Y")-1, date("Y"), date("Y")+1);
 $smarty->assign('years', $years);
-if (isset($_POST['nb']) || isset($_POST['uid']) || isset($_POST['did']) || isset($_POST['year'])) {
-	if ($_POST['did'] != (int) $_POST['did'] || $_POST['uid'] != (int) $_POST['uid'] || $_POST['year'] != (int) $_POST['year'] || $_POST['nb'] != (int) $_POST['nb']) {
+if (isset($_POST['uid']) || isset($_POST['did']) || isset($_POST['year'])) {
+	$pereq = array();
+	if (empty($_POST['nb'])) {
+		$pereq['nb'] = 1;
+	} else {
+		$pereq['nb'] = (int) abs($_POST['nb']);
+	}
+	if (isset($_POST['date'])) {
+		$date = new Date($_POST['date']);
+		if ($date) $pereq['date'] = $date->date();
+	}	
+	if ($_POST['did'] != (int) $_POST['did'] || $_POST['uid'] != (int) $_POST['uid'] || $_POST['year'] != (int) $_POST['year'] || $_POST['did'] != abs($_POST['did']) || $_POST['uid'] != abs($_POST['uid']) || $_POST['year'] != abs($_POST['year'])) {
 		$err = "Paramètre incorrect... :o";
 	} else {
+		$pereq['did'] = (int) $_POST['did'];
+		$pereq['uid'] = (int) $_POST['uid'];
+		$pereq['year'] = (int) $_POST['year'];
 		if (isset($_POST['suppr'])) {
-			jourTravail::delPereq($_POST);
+			jourTravail::delPereq($pereq);
 		} else {
-			for ($i=1; $i <= $_POST['nb']; $i++) {
-				jourTravail::addPereq($_POST);
+			while ($pereq['nb']--) {
+				jourTravail::addPereq($pereq);
 			}
 		}
 	}
@@ -163,5 +180,7 @@ include 'debug.inc.php';
 
 // Affichage du bas de page
 $smarty->display('footer.tpl');
+
+ob_end_flush(); // Obligatoire pour firePHP
 
 ?>

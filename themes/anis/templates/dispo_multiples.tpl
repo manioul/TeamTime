@@ -19,19 +19,18 @@
 </thead>
 <tbody>
 {foreach $result as $row}
-<tr>
+<tr id="sdid{$row.sdid}">
 <td>{$row.sdid}</td>
 <td>{$row.nom}</td>
 <td>{$row.dispo}</td>
 <td>{$row.date}</td>
 <td>{$row.vacation}</td>
 <td>{if isset($row.year)}{$row.year}{else}-{/if}</td>
-<td><a href='?id={$row.sdid}&amp;op=upd&amp;t=l&amp;field=pereq&amp;val={!$row.pereq}'>{$row.pereq}</a></td>
-<td><a href='?id={$row.sdid}.&amp;op=del'>delete</a></td>
+<td class="bouton" onclick='opDb("upd", "l", {$row.sdid}, "pereq", {!$row.pereq};'>{$row.pereq}</td>
+<td class="bouton" onclick='opDb("del", "l", {$row.sdid}, 0, 0);'>delete</a></td>
 </tr>
 {/foreach}
 </tbody>
 </table>
 {/foreach}
-<div><a href="?end=1">Finish</a></div>
 </div>

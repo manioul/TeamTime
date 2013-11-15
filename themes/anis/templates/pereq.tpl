@@ -16,6 +16,9 @@
 <option value="{$dispo@key}">{$dispo}</option>
 {/foreach}
 </select></li>
+<li><label for="date">Date</label>
+<input type="date" name="date" placeholder="jj-mm-aaaa" />
+</li>
 <li><label for="year">Année</label>
 <select name="year" id='sCyear' onchange="">
 {foreach $years as $year}

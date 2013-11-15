@@ -346,7 +346,7 @@ class jourTravail extends Date {
 			, $pereq['did']
 		);
 		$_SESSION['db']->db_interroge($sql);
-		if (isset($pereq['year'])) {
+		if (isset($pereq['year']) && !empty($pereq['year'])) {
 			$sql = sprintf("
 				INSERT INTO `TBL_VACANCES`
 				(`sdid`, `etat`, `year`)

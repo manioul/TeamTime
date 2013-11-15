@@ -240,6 +240,11 @@ div#dConnexion input {
 
 	padding:4px;
 	margin:auto;
+
+	cursor:pointer;
+}
+.bouton:hover {
+	box-shadow: -1px -1px 0 #88aa88;
 }
 
 form#fPereq {
