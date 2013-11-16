@@ -26,7 +26,7 @@
 <td>{$row.date}</td>
 <td>{$row.vacation}</td>
 <td>{if isset($row.year)}{$row.year}{else}-{/if}</td>
-<td class="bouton" onclick='opDb("upd", "l", {$row.sdid}, "pereq", {!$row.pereq};'>{$row.pereq}</td>
+<td class="bouton" onclick='opDb("upd", "l", {$row.sdid}, "pereq", "{!$row.pereq}");'>{$row.pereq}</td>
 <td class="bouton" onclick='opDb("del", "l", {$row.sdid}, 0, 0);'>delete</a></td>
 </tr>
 {/foreach}
