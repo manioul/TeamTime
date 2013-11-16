@@ -42,7 +42,7 @@ $nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 	$conf['page']['include']['globals_db'] = 1; // Le DSN de la connexion bdd est stockée dans globals_db.inc.php
 	$conf['page']['include']['class_db'] = 1; // Le script utilise class_db.inc.php
 	$conf['page']['include']['session'] = 1; // Le script utilise les sessions par session.imc
-	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
+	$conf['page']['include']['classUtilisateur'] = false; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
@@ -56,7 +56,7 @@ $nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 /*
  * Configuration de la page
  */
-        $titrePage = sprintf("Affichage d%s - TeamTime", $nbCycle == 1 ? "'un cycle" : "e $nbCycle cycles"); // Le titre de la page
+        $conf['page']['titre'] = sprintf("Affichage d%s - TeamTime", $nbCycle == 1 ? "'un cycle" : "e $nbCycle cycles"); // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres

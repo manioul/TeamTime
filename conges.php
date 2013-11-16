@@ -45,7 +45,7 @@ $requireEditeur = true; // L'utilisateur doit être authentifié pour accéder �
 /*
  * Configuration de la page
  */
-        $titrePage = "TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "TeamTime"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres

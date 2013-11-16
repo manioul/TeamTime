@@ -46,7 +46,7 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 /*
  * Configuration de la page
  */
-        $titrePage = "Administration de TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "Administration de TeamTime"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
