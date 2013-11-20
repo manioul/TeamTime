@@ -58,8 +58,8 @@ class utilisateurGrille extends utilisateur {
 		, 2	=> array('titre'	=> 'Trois cycles'
 				  , 'uri'	=> 'affiche_grille.php?nbCycle=3'
 				  , 'gid'	=> 255)
-		, 3  	=> array('titre'	=> "Gestion d'un utilisateur"
-				 , 'uri'	=> 'utilisateur.php'
+		, 3  	=> array('titre'	=> "mon compte"
+				 , 'uri'	=> 'monCompte.php'
 				  , 'gid'	=> 255)
 		, 4  	=> array('titre'	=> "Gestion des utilisateurs"
 				 , 'uri'	=> 'utilisateur.php'
@@ -121,7 +121,7 @@ class utilisateurGrille extends utilisateur {
 	}
 // Constructeur
 	public function __construct ($param = NULL) {
-		firePhpLog($param, "Création d'un nouvel objet utilisateurGrille");
+		//firePhpLog($param, "Création d'un nouvel objet utilisateurGrille");
 		if (NULL !== $param) {
 			if (is_array($param)) {
 				parent::page('affiche_grille.php'); // La page par défaut des utilisateurs
@@ -336,9 +336,10 @@ class utilisateurGrille extends utilisateur {
 		$this->classe[$classe['classe']][$index]['beginning'] = $classe['beginning'];
 		$this->classe[$classe['classe']][$index]['end'] = $classe['end'];
 	}
-	public function db_condition_like_classe($champ) { // Retourne une condition LIKE sur les classes de l'utilisateur pour le champ $champ à la date $date
+	public function db_condition_like_classe($champ, $date = NULL) { // Retourne une condition LIKE sur les classes de l'utilisateur pour le champ $champ à la date $date
+		if (is_null($date)) $date = date('Y-m-d');
 		$condition = sprintf("`$champ` = 'all' OR `$champ` LIKE '%%%s%%' OR ", $this->login());
-		foreach ($this->classe(date('Y-m-d')) as $classe) {
+		foreach ($this->classe($date) as $classe) {
 			$condition .= sprintf("`%s` LIKE '%%%s%%' OR ", $champ, $classe);
 		}
 		return substr($condition, 0, -4);
@@ -442,7 +443,11 @@ class utilisateurGrille extends utilisateur {
 	 * Retourne les pages disponibles après la connexion pour l'utilisateur
 	 */
 	public function availablePages($type = 'titre', $index = NULL) {
-		if ($type !== 'titre' || $type !== 'uri' || $type !== 'index') $type = 'titre';
+		firePhpLog("In availablePages");
+		if ($type != 'titre' && $type != 'uri' && $type != 'index') {
+			firePhpLog("Mauvais type pour les AvailablePages", $type);
+			return NULL;
+		}
 		if (!is_null($index)) {
 			$index = (int) $index;
 			if (empty(self::$availablePages[$index][$type]) || self::$availablePages[$index]['gid'] < $this->gid()) $index = 1;
@@ -450,11 +455,15 @@ class utilisateurGrille extends utilisateur {
 		}
 		$pages = array();
 		foreach (self::$availablePages as $index => $array) {
+			firePhpLog('gid', $this->gid());
 			if ($array['gid'] >= $this->gid()) {
-				if ($type === 'titre') {
+				if ($type == 'titre') {
 					$pages[$index] = $array['titre'];
-				} else {
+				} elseif ($type == 'uri') {
 					$pages[$index] = $array['uri'];
+				} else {
+					firePhpWarn("Mauvais type pour les availablesPages", $type);
+					return NULL;
 				}
 			}
 		}

@@ -53,7 +53,7 @@ ob_start(); // Obligatoire pour firePHP
 /*
  * Configuration de la page
  */
-        $titrePage = sprintf(""); // Le titre de la page
+        $conf['page']['titre'] = sprintf(""); // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -122,10 +122,16 @@ if (empty($_SESSION['ADMIN']) && $_POST['uid'] != $_SESSION['utilisateur']->uid(
 firePhpLog($_POST, '$_POST');
 $utilisateur = new utilisateurGrille( (int) $_POST['uid']);
 
+if (!isset($_POST['actif'])) $_POST['actif'] = 0;
+if (!isset($_POST['locked'])) $_POST['locked'] = 0;
+if (!isset($_POST['totd'])) $_POST['showtipoftheday'] = 0;
+
 $utilisateur->setFromRow($_POST);
 
 // Ajout de la page favorite (jointe après la connexion)
-$utilisateur->page($utilisateur->availablePages('uri', $_POST['read']));
+if ($utilisateur->page($utilisateur->availablePages('uri', $_POST['read'])) === false) {
+	print "Erreur de mise à jour de la page...";
+}
 
 // S'il y a un nouveau téléphone à ajouter
 if (!empty($_POST['newnb'])) {
@@ -165,7 +171,7 @@ if (!empty($_POST['newcentre']) && !empty($_POST['newteam'])
 }
 
 
-$utilisateur->updateContact();
+$utilisateur->fullUpdateDB();
 
 /*
  * Informations de debug

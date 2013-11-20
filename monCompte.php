@@ -53,7 +53,7 @@ ob_start(); // Obligatoire pour firePHP
 /*
  * Configuration de la page
  */
-        $titrePage = sprintf("Carrière"); // Le titre de la page
+        $conf['page']['titre'] = sprintf("Carrière"); // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -101,6 +101,8 @@ ob_start(); // Obligatoire pour firePHP
 	$conf['page']['javascript']['grille2js'] = false;
 	// Utilisation de utilisateur.js
 	$conf['page']['javascript']['utilisateur'] = true;
+	// Utilisation de administration
+	$conf['page']['javascript']['administration'] = true;
 
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
@@ -119,22 +121,10 @@ ob_start(); // Obligatoire pour firePHP
 require 'required_files.inc.php';
 
 // Les utilisateurs non admin ne peuvent accéder qu'à leurs données
-if (empty($_SESSION['ADMIN']) || (!isset($_REQUEST['uid']))) {
-	$utilisateur = new UtilisateurGrille( (int) $_SESSION['utilisateur']->uid());
+if (!empty($_SESSION['ADMIN']) && !empty($_REQUEST['uid'])) {
+	$utilisateur = new UtilisateurGrille( (int) $_REQUEST['uid']);
 } else {
-	if (!empty($_REQUEST['uid'])) {
-		$sql = sprintf("SELECT * FROM `TBL_USERS`
-			WHERE
-			`uid` = %d"
-			, (int) $_REQUEST['uid']
-		);
-		$result = $_SESSION['db']->db_interroge($sql);
-		if (mysqli_num_rows($result) == 1) {
-			$utilisateur = new utilisateurGrille($_SESSION['db']->db_fetch_assoc($result));
-		} else {
-			die("Erreur ! L'uid ne correspond à aucun utilisateur...");
-		}
-	}
+	$utilisateur = new UtilisateurGrille( $_SESSION['utilisateur']->uid());
 }
 if (!is_a($utilisateur, 'utilisateurGrille')) {
 	die("On n'a pas obtenu l'objet attendu");
@@ -142,25 +132,16 @@ if (!is_a($utilisateur, 'utilisateurGrille')) {
 
 // Données nécessaires à la partie contact
 
-$smarty->assign('pages', $utilisateur->availablePages('titre'));
-$smarty->assign('uid', $utilisateur->uid());
-$smarty->assign('nom', $utilisateur->nom());
-$smarty->assign('prenom', $utilisateur->prenom());
-$smarty->assign('email', $utilisateur->email());
-$smarty->assign('phone', $utilisateur->phone());
-$smarty->assign('login', $utilisateur->login());
-$smarty->assign('gid', $utilisateur->gid());
+$smarty->assign('utilisateur', $utilisateur);
 $smarty->assign('locked', $utilisateur->locked());
 $smarty->assign('actif', $utilisateur->actif());
 $smarty->assign('totd', $utilisateur->showtipoftheday());
-$smarty->assign('poids', $utilisateur->poids());
-$smarty->assign('indexPage', $utilisateur->indexPage()); // FIXME
-$smarty->assign('adresse', $utilisateur->adresse());
+
 // Données relatives à la carrière
 
 $smarty->assign('datas', $utilisateur->affectations());
 
-$smarty->display("utilisateur.tpl");
+$smarty->display("monCompte.tpl");
 
 /*
  * Informations de debug

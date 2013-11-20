@@ -247,46 +247,114 @@ div#dConnexion input {
 	box-shadow: -1px -1px 0 #88aa88;
 }
 
-form#fPereq {
-	float:left;
-	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
-	font-size: 11pt;
-	width:320px;
-	background-color:#beb;
-	border-radius:15px;
-	padding:10px;
-	margin:auto;
+/*
+ * Formulaire de péréquations
+ */
+	form#fPereq {
+		float:left;
+		font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+		font-size: 11pt;
+		width:320px;
+		background-color:#beb;
+		border-radius:15px;
+		padding:10px;
+		margin:auto;
 
-	box-shadow: 2px 2px 2px #88aa88;
-}
-form#fPereq fieldset {
-	margin-bottom:10px;
-	border:none;
-}
-form#fPereq fieldset:last-of-type {
-	margin-bottom:0;
-}
-form#fPereq ul li {
-	border:3px solid rgba(255,255,255,.8);
-	border-radius:8px;
-	line-height:30px;
-	list-style:none;
-	padding:5px 10px;
-	margin-bottom:8px;
-}
-form#fPereq label {
-	float:left;
-	width:100px;
-	font-weight:bold;
-}
-form#fPereq input:not([type=radio]), select {
-	width:110px;
-}
-form#fPereq button {
-	display:block;
-	font-size:120%;
-	margin:auto;
-}
+		box-shadow: 2px 2px 2px #88aa88;
+	}
+	form#fPereq fieldset {
+		margin-bottom:10px;
+		border:none;
+	}
+	form#fPereq fieldset:last-of-type {
+		margin-bottom:0;
+	}
+	form#fPereq ul li {
+		border:3px solid rgba(255,255,255,.8);
+		border-radius:8px;
+		line-height:30px;
+		list-style:none;
+		padding:5px 10px;
+		margin-bottom:8px;
+	}
+	form#fPereq label {
+		float:left;
+		width:100px;
+		font-weight:bold;
+	}
+	form#fPereq input:not([type=radio]), select {
+		width:110px;
+	}
+	form#fPereq button {
+		display:block;
+		font-size:120%;
+		margin:auto;
+	}
+/*
+ * Fin du formulaire de péréquations
+ */
+
+/*
+ * Formulaire mon compte
+ */
+	form#fContact {
+		float:left;
+		font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+		font-size: 11pt;
+		width:875px;
+		background-color:#beb;
+		border-radius:15px;
+		padding:10px;
+		margin:auto;
+
+		box-shadow: 2px 2px 2px #88aa88;
+	}
+	form#fContact fieldset {
+		margin-bottom:10px;
+		border:none;
+	}
+	form#fContact li.contact {
+		float:left;
+		width: 400px;
+		margin-right:10px;
+	}
+	form#fContact li.contact:last-of-type {
+		margin:0;
+	}
+	form#fContact fieldset:last-of-type {
+		margin-bottom:0;
+	}
+	form#fContact ul li {
+		border:3px solid rgba(255,255,255,.8);
+		border-radius:8px;
+		line-height:30px;
+		list-style:none;
+		padding:5px 10px;
+		margin-bottom:8px;
+	}
+	form#fContact ul ul ul li {
+		border:0;
+	}
+	form#fContact label[for=addPhone],
+	form#fContact label[for=addAddress] {
+		width:200px;
+	}
+	form#fContact label {
+		float:left;
+		width:120px;
+		font-weight:bold;
+	}
+	form#fContact input:not([type=radio]),
+	form#fContact select,
+	form#fContact textarea {
+		width:200px;
+	}
+	form#fContact input[type=button] {
+		width:160px;
+	}
+/*
+ * Fin du formulaire mon compte
+ */
 
 .dispoMultiples {
 	display:block;
@@ -349,6 +417,13 @@ td {
 	-o-border-radius: 3px;
 	-webkit-border-radius: 3px;
 }
+
+/*
+ * Annuaire
+ */
+	div#annuaire ul {
+		list-style:none;
+	}
 /*
  * Fenêtre d'information
  */

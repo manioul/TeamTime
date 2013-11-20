@@ -45,12 +45,12 @@ $requireAuthenticatedUser = true; // L'utilisateur doit être authentifié pour 
 /*
  * Configuration de la page
  */
-        $conf['page']['titre'] = "TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "Annuaire"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
 	$DEBUG = true;
-	$conf['page']['elements']['firePHP'] = true;
+	$conf['page']['elements']['firePHP'] = false;
 
 	/*
 	 * Choix des éléments à afficher
@@ -105,7 +105,7 @@ require 'required_files.inc.php';
 
 $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y-m-d'), date('Y-m-d'), $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
 
-$arr = array( array('nom', 'prenom', 'email') );
+$arr = array( array('nom', 'prenom', 'email', 'phone') );
 $mailto = array_search('email', $arr[0]);
 foreach ($users as $user) {
 	$array = array();

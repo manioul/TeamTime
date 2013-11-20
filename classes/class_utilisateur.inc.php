@@ -160,7 +160,7 @@ class utilisateur {
 		$this->logout();
 		unset($this);
 	}
-	// Accesseurs
+// Accesseurs
 	public function asArray() {
 		return array(
 			'login'			=> $this->login
@@ -172,6 +172,7 @@ class utilisateur {
 			, 'creation'		=> $this->creation
 			, 'modification'	=> $this->modification
 			, 'actif'		=> $this->actif
+			, 'page'		=> $this->page
 		);
 	}
 	private function _setFromRow($row) {
@@ -220,7 +221,7 @@ class utilisateur {
 	}
 	public function actif ($param = NULL) {
 		if (!is_null($param)) {
-			$this->actif = ($param == 1 ? 1 : 0);
+			$this->actif = (empty($param) ? 0 : 1);
 		}
 		return $this->actif;
 	}
@@ -247,6 +248,7 @@ class utilisateur {
 		       if (preg_match('/^[a-z][a-z_]*\.php\?*[[a-z_]*=*[a-z]*\&*]*/i', $param)) {
 			       $this->page = $param;
 		       } else {
+			       firePhpWarn("Page non conforme", $param);
 			       return false;
 		       }
 		}
@@ -349,7 +351,7 @@ class utilisateur {
 		return FALSE;
 	}
 
-	/*
+/*
 	public function add_groupe($groupe) {
 		$this->groupes[] = $groupe;
 	}
@@ -433,20 +435,20 @@ class utilisateur {
 			// Retourne une condition toujours valide pour l'admin
 			return '1 = 1';
 		}
-		$condition = "( " . $field . " = 'nogroup' OR ";
+		$condition = "`" . $field . "` IN ('nogroup', ";
 		foreach ($this->groupes as $groupe) {
 			if ($groupe == 'nogroup') { continue; }
-			$condition .= sprintf ("%s = '%s' OR ", $field, $groupe);
+			$condition .= "'" . $groupe "', ";
 		}
-		$condition = substr ($condition, 0, -4);
-		$condition .= " )";
+		$condition = substr ($condition, 0, -2);
+		$condition .= ")";
 		return $condition;
 	}
 	// Retourne le lastlogin sous une forme francisée
 	public function lastlogin_fr() {
 		return date_sql2fr($this->lastlogin);
 	}
-	*/
+*/
 }
 
 ?>
