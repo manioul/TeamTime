@@ -131,6 +131,7 @@ if (!is_a($utilisateur, 'utilisateurGrille')) {
 }
 
 if (sizeof($_POST) > 0) {
+	if (empty($_SESSION['ADMIN'])) $_POST['uid'] = $_SESSION['utilisateur']->uid();
 	if (!empty($_POST['submitAffect'])) {
 		$utilisateur->addAffectation($_POST);
 	} else if (!empty($_POST['submitContact'])) {
