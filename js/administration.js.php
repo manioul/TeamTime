@@ -97,15 +97,10 @@ $(function() {
 		SELECT
 		`nom`,
 		`prenom`,
-		`arrivee`,
-		`theorique`,
-		`pc`,
-		`ce`,
-		`cds`,
 		`vismed`,
 		`login`,
 		`email`,
-		`poids`,
+		`poids`
 		FROM `TBL_USERS`,
 		`TBL_AFFECTATION`
 		WHERE `gid` > 0
@@ -166,7 +161,7 @@ $(function() {
 	updDispFormCc();
 });
 // Une fonction pour interragir avec la base de données
-// Mise à jour et suppression d'énregistrements
+// Mise à jour et suppression d'enregistrements
 // Utilisée par pereq.php
 function opDb(op, table, id, field, val)
 {

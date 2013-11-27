@@ -25,8 +25,6 @@
 // L'utilisateur doit être logué pour accéder à cette page
 $requireAuthenticatedUser = true;
 
-ob_start(); // Obligatoire pour firePHP
-
 /*
  * Configuration de la page
  * Définition des include nécessaires
@@ -41,10 +39,10 @@ ob_start(); // Obligatoire pour firePHP
 	$conf['page']['include']['session'] = 1; // Le script utilise les sessions par session.imc
 	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
-	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
-	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
-	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
-	$conf['page']['compact'] = false; // Compactage des scripts javascript et css
+	$conf['page']['include']['class_cycle'] = NULL; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
+	$conf['page']['include']['class_menu'] = NULL; // La classe menu est nécessaire à ce script
+	$conf['page']['include']['smarty'] = NULL; // Smarty sera utilisé sur cette page
+	$conf['page']['compact'] = NULL; // Compactage des scripts javascript et css
 /*
  * Fin de la définition des include
  */
@@ -53,63 +51,6 @@ ob_start(); // Obligatoire pour firePHP
 /*
  * Configuration de la page
  */
-        $titrePage = sprintf(""); // Le titre de la page
-// Définit la valeur de $DEBUG pour le script
-// on peut activer le debug sur des parties de script et/ou sur certains scripts :
-// $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
-	$DEBUG = false;
-
-	/*
-	 * Choix des éléments à afficher
-	 */
-	
-	// Affichage du menu horizontal
-	$conf['page']['elements']['menuHorizontal'] = true;
-	// Affichage messages
-	$conf['page']['elements']['messages'] = true;
-	// Affichage du choix du thème
-	$conf['page']['elements']['choixTheme'] = false;
-	// Affichage du menu d'administration
-	$conf['page']['elements']['menuAdmin'] = false;
-	
-	// éléments de debug
-	
-	// FirePHP
-	$conf['page']['elements']['firePHP'] = true;
-	// Affichage des timeInfos
-	$conf['page']['elements']['timeInfo'] = $DEBUG;
-	// Affichage de l'utilisation mémoire
-	$conf['page']['elements']['memUsage'] = $DEBUG;
-	// Affichage des WherewereU
-	$conf['page']['elements']['whereWereU'] = $DEBUG;
-	// Affichage du lastError
-	$conf['page']['elements']['lastError'] = $DEBUG;
-	// Affichage du lastErrorMessage
-	$conf['page']['elements']['lastErrorMessage'] = $DEBUG;
-	// Affichage des messages de debug
-	$conf['page']['elements']['debugMessages'] = $DEBUG;
-
-
-
-	// Utilisation de jquery
-	$conf['page']['javascript']['jquery'] = false;
-	// Utilisation de ajax
-	$conf['page']['javascript']['ajax'] = false;
-	// Utilisation de grille2.js.php
-	$conf['page']['javascript']['grille2'] = false;
-	// Utilisation de utilisateur.js
-	$conf['page']['javascript']['utilisateur'] = false;
-
-	// Feuilles de styles
-	// Utilisation de la feuille de style general.css
-	$conf['page']['stylesheet']['general'] = true;
-	$conf['page']['stylesheet']['grille'] = false;
-	$conf['page']['stylesheet']['grilleUnique'] = false;
-	$conf['page']['stylesheet']['utilisateur'] = false;
-
-	// Compactage des pages
-	$conf['page']['compact'] = false;
-	
 /*
  * Fin de la configuration de la page
  */
@@ -117,9 +58,9 @@ ob_start(); // Obligatoire pour firePHP
 require 'required_files.inc.php';
 
 
-switch ($_GET['q']) {
+switch ($_REQUEST['q']) {
 case 'phone' :
-	$oPhone = new Phone( (int) $_GET['id']);
+	$oPhone = new Phone( (int) $_REQUEST['id']);
 	if (!empty($_SESSION['ADMIN']) || $_SESSION['utilisateur']->uid() == $oPhone->uid()) {
 		$oPhone->delete();
 		print("Mise à jour effectuée");
@@ -128,7 +69,7 @@ case 'phone' :
 	}
 	break;
 case 'adresse' :
-	$oAdresse = new Adresse( (int) $_GET['id']);
+	$oAdresse = new Adresse( (int) $_REQUEST['id']);
 	if (!empty($_SESSION['ADMIN']) || $_SESSION['utilisateur']->uid() == $oAdresse->uid()) {
 		$oAdresse->delete();
 		print("Mise à jour effectuée");
@@ -137,7 +78,7 @@ case 'adresse' :
 	}
 	break;
 case 'affectation' :
-	$oAffectation = new Affectation( (int) $_GET['id']);
+	$oAffectation = new Affectation( (int) $_REQUEST['id']);
 	if (!empty($_SESSION['ADMIN']) || $_SESSION['utilisateur']->uid() == $oAffectation->uid()) {
 		$oAffectation->delete();
 		print("Mise à jour effectuée");
@@ -147,18 +88,5 @@ case 'affectation' :
 	break;
 }
 
-/*
- * Informations de debug
- */
-include 'debug.inc.php';
-firePhpLog($conf, '$conf');
-firePhpLog(debug::getInstance()->format(), 'format debug messages');
-firePhpLog($javascript, '$javascript');
-firePhpLog($stylesheet, '$stylesheet');
-
-// Affichage du bas de page
-$smarty->display('footer.tpl');
-
-ob_end_flush(); // Obligatoire pour firePHP
 
 ?>

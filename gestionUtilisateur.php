@@ -25,6 +25,8 @@
 
 $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette page
 
+ob_start(); // Obligatoire pour firePHP
+
 /*
  * INCLUDES
  */
@@ -125,7 +127,6 @@ if (empty($_POST['nom'])) { // On vérifie que des données de formulaire n'ont 
 	$form = array();
 	$header = array();
 }
-
 // Recherche les champs de la table des utilisateurs
 $j = 0;
 $result = $_SESSION['db']->db_interroge("SHOW COLUMNS FROM `TBL_USERS`");

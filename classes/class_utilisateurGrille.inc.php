@@ -42,6 +42,7 @@ class utilisateurGrille extends utilisateur {
 	private $phone = array(); // Numéro de téléphone
 	private $adresse; // adresse
 	private $affectations = array(); // tableau des affectations
+	private $orderedAffectations = array(); // tableau des affectations rangées en ordre croissant
 	private $centre = NULL; // centre actuel
 	private $team = NULL; // team actuelle
 	private $grade = NULL; // grade actuel
@@ -63,7 +64,7 @@ class utilisateurGrille extends utilisateur {
 				  , 'gid'	=> 255)
 		, 4  	=> array('titre'	=> "Gestion des utilisateurs"
 				 , 'uri'	=> 'utilisateur.php'
-				 , 'gid'	=> 128)
+				 , 'gid'	=> 0)
 	);
 	protected static function _label($index) {
 		if (isset(self::$label[$index])) {
@@ -358,7 +359,7 @@ class utilisateurGrille extends utilisateur {
 		$row['uid'] = $this->uid();
 		$affectation = new Affectation($row);
 		$aid = $affectation->insert();
-		$this->affectations[$aid] = $affectation;
+		$this->retrieveAffectations();
 		return true;
 	}
 	/*
@@ -400,6 +401,13 @@ class utilisateurGrille extends utilisateur {
 	public function centre () {
 		if (is_null($this->centre)) $this->getPresentAffectationFromDb();
 		return $this->centre;
+	}
+	/*
+	 * Retourne un tableau des affectations en ordre croissant
+	 */
+	public function orderedAffectations() {
+		if (sizeof($this->orderedAffectations) < 1) $this->retrieveAffectations();
+		return $this->orderedAffectations;
 	}
 	public function team () {
 		if (is_null($this->team)) $this->getPresentAffectationFromDb();
@@ -541,11 +549,9 @@ class utilisateurGrille extends utilisateur {
 				SELECT *
 				FROM `TBL_AFFECTATION`
 				WHERE `uid` = %d
-				AND `beginning` < '%s'
-				AND `end` > '%s'"
+				AND `beginning` < DATE(NOW())
+				AND `end` > DATE(NOW())"
 				, $this->uid()
-				, date('Y-m-d')
-				, date('Y-m-d')
 			));
 			if (mysqli_num_rows($result) != 1) return false;
 			$row = $_SESSION['db']->db_fetch_assoc($result);
@@ -566,9 +572,13 @@ class utilisateurGrille extends utilisateur {
 			ORDER BY `end` ASC
 			", $this->uid()
 		));
+		$this->orderedAffectations = array();
+		$i = 0;
 		$today = new Date('Y-m-d'); // La date du jour pour définir le centre et la team actuels
 		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 			$this->affectations[$row['aid']] = new Affectation($row);
+			$this->orderedAffectations[$i] = $this->affectations[$row['aid']];
+			$i++;
 			// Rempli l'affectation du jour
 			if ($this->affectations[$row['aid']]->beginning()->compareDate($today) > 0 && $this->affectations[$row['aid']]->end()->compareDate($today) < 0) {
 				$this->centre($this->affectations[$row['aid']]->centre());
@@ -638,18 +648,12 @@ class utilisateurGrille extends utilisateur {
 			$adresse->update();
 		}
 	}
-	protected function _updateAffectations() {
-		foreach ($this->affectations() as $affectation) {
-			$affectation->update();
-		}
-	}
 	public function updateContact() {
 		$this->_updatePhone();
 		$this->_updateAdresse();
 	}
 	public function fullUpdateDB() {
 		$this->_updateUser();
-		$this->_updateAffectations();
 		$this->updateContact();
 		//$this->_updateClasse();
 	}

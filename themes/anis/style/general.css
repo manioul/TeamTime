@@ -205,6 +205,14 @@ input, textarea, select {
 }
 label, .label {
 }
+/*
+ * placeholder
+ */
+	::-webkit-input-placeholder { color:#7a7; }
+	::-moz-placeholder { color:#7a7; } /* firefox 19+ */
+	:-ms-input-placeholder { color:#7a7; } /* ie */
+	input:-moz-placeholder { color:#7a7; }
+
 div#dConnexion {
 	width: 70px;
 	margin: auto;
@@ -295,17 +303,23 @@ div#dConnexion input {
  */
 
 /*
- * Formulaire mon compte
+ * Formulaires mon compte
  */
-	form#fContact {
+	div#monCompte {
+		width:875px;
+		margin:auto;
+	}
+	div#monCompte form {
 		float:left;
 		font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 		font-size: 11pt;
 		width:875px;
-		background-color:#beb;
-		border-radius:15px;
 		padding:10px;
 		margin:auto;
+	}
+	form#fContact {
+		background-color:#beb;
+		border-radius:15px;
 
 		box-shadow: 2px 2px 2px #88aa88;
 	}
@@ -335,8 +349,8 @@ div#dConnexion input {
 	form#fContact ul ul ul li {
 		border:0;
 	}
-	form#fContact label[for=addPhone],
-	form#fContact label[for=addAddress] {
+	form#fContact label[for=iAddPhone],
+	form#fContact label[for=iAddAddress] {
 		width:200px;
 	}
 	form#fContact label {
@@ -352,8 +366,16 @@ div#dConnexion input {
 	form#fContact input[type=button] {
 		width:160px;
 	}
+	form#fAffectation input,
+	form#fAffectation select {
+		width:100px;
+	}
+	form#fAffectation table {
+		border-left:1px solid #3f7f00;
+		width:875px;
+	}
 /*
- * Fin du formulaire mon compte
+ * Fin des formulaires mon compte
  */
 
 .dispoMultiples {

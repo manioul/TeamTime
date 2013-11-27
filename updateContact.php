@@ -122,9 +122,9 @@ if (empty($_SESSION['ADMIN']) && $_POST['uid'] != $_SESSION['utilisateur']->uid(
 firePhpLog($_POST, '$_POST');
 $utilisateur = new utilisateurGrille( (int) $_POST['uid']);
 
-if (!isset($_POST['actif'])) $_POST['actif'] = 0;
-if (!isset($_POST['locked'])) $_POST['locked'] = 0;
-if (!isset($_POST['totd'])) $_POST['showtipoftheday'] = 0;
+if (!isset($_POST['actif']) && $_SESSION['ADMIN']) $_POST['actif'] = 0;
+if (!isset($_POST['locked']) && $_SESSION['ADMIN']) $_POST['locked'] = 0;
+if (!isset($_POST['totd']) && $_SESSION['ADMIN']) $_POST['showtipoftheday'] = 0;
 
 $utilisateur->setFromRow($_POST);
 

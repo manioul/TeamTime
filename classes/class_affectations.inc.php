@@ -36,8 +36,6 @@ class Affectation {
 	private $beginning;
 	private $end;
 	private $table = 'TBL_AFFECTATION'; // La table qui gère les affectations
-	private $previous = false; // Index de la précédente affectation
-	private $next = false; // Index de l'affectation suivante
 // Consctucteur
 	public function __construct($param = NULL) {
 		if (is_null($param)) return true;
@@ -48,7 +46,7 @@ class Affectation {
 			$this->setFromRow($param);
 		}
 	}
-	public function __desctruct() {
+	public function __destruct() {
 		return true;
 	}
 // Accesseurs
@@ -123,47 +121,6 @@ class Affectation {
 	public function setFromDb($param) {
 		return $this->getFromAid($param);
 	}
-	/*
-	 * Retourne l'affectation précédente sous forme d'objet
-	 * le paramètre éventuel est un objet Affectation
-	 */
-	public function previous($param = NULL) {
-		if (is_a($param, 'Affectation')) return $this->previous = & $param;
-		if (!is_null($param)) return false;
-		if (false === $this->previous) {
-			$this->_getPrevious();
-		}
-		return $this->previous;
-	}
-	public function next($param = NULL) {
-		if (is_a($param, 'Affectation')) return $this->next = & $param;
-		if (!is_null($param)) return false;
-		if (false === $this->next) {
-			$this->_getNext();
-		}
-		return $this->next;
-	}
-	/*
-	 * Insère l'affectation après $oPreviousAffectation
-	 */
-	protected function _updatePrevious_n_Next() {
-		if (!is_null($this->previous())) {
-			$before = clone $this->beginning();
-			$before->decDate();
-			if ($this->previous()->end()->compareDate($before) != 0) {
-				$this->previous()->end($before);
-				$this->previous()->update();
-			}
-		}
-		if (!is_null($this->next())) {
-			$next = clone $this->end();
-			$next->incDate();
-			if ($this->next()->beginning()->compareDate($next) != 0) {
-				$this->next()->beginning($next);
-				$this->next()->update();
-			}
-		}
-	}
 	// Retourne l'objet sous forme de tableau
 	public function asArray() {
 		return array(
@@ -188,12 +145,18 @@ class Affectation {
 		$this->setFromRow($row);
 		return true;
 	}
-	public function update() {
-		$this->_updatePrevious_n_Next();
-		return $_SESSION['db']->db_update($this->table, $this->asArray());
-	}
 	public function insert() {
-		return $this->aid($_SESSION['db']->db_insert($this->table, $this->asArray()));
+		$sql = sprintf("
+			CALL addAffectation( %d, '%s', '%s', '%s', '%s', '%s')
+			", $this->uid
+			, $this->centre
+			, $this->team
+			, $this->grade
+			, $this->beginning->date()
+			, $this->end->date()
+		);
+		$_SESSION['db']->db_interroge($sql);
+		return $_SESSION['db']->db_insert_id();
 	}
 	public function delete() {
 		$sql = sprintf("
@@ -206,50 +169,7 @@ class Affectation {
 		/*
 		 * Mise à jour de la liste chaînée
 		 */
-		$this->next()->previous($this->previous());
-		$this->previous()->next($this->next());
 		$this->__destruct();
 		unset($this);
-	}
-	protected function _getPrevious() {
-		$sql = sprintf("
-			SELECT *
-			FROM `%s`
-			WHERE
-			`beginning` > '%s'
-			ORDER BY `beginning` ASC
-			LIMIT 1"
-			, $this->table
-			, $this->beginning()->date()
-		);
-		$result = $_SESSION['db']->db_interroge($sql);
-		if (mysqli_num_rows($result) < 1) {
-			$this->previous = NULL;
-		} else {
-			$this->previous(new Affectation($_SESSION['db']->db_fetch_row($result)));
-		}
-		mysqli_free_result($result);
-		return $this->previous;
-	}
-	protected function _getNext() {
-		$sql = sprintf("
-			SELECT *
-			FROM `%s`
-			WHERE
-			`beginning` < '%s'
-			ORDER BY `beginning` DESC
-			LIMIT 1"
-			, $this->table
-			, $this->beginning()->date()
-		);
-		$result = $_SESSION['db']->db_interroge($sql);
-		if (mysqli_num_rows($result) < 1) {
-			$this->next = NULL;
-		} else {
-			$row = 
-			$this->next(new Affectation($_SESSION['db']->db_fetch_row($result)));
-		}
-		mysqli_free_result($result);
-		return $this->next;
 	}
 }

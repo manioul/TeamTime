@@ -1,5 +1,5 @@
 <?php
-// utilisateur.php
+// monCompte.php
 //
 // Page permettant de gérer l'état civil et les informations de la carrière d'un utilisateur
 
@@ -130,6 +130,50 @@ if (!is_a($utilisateur, 'utilisateurGrille')) {
 	die("On n'a pas obtenu l'objet attendu");
 }
 
+if (sizeof($_POST) > 0) {
+	if (!empty($_POST['submitAffect'])) {
+		$utilisateur->addAffectation($_POST);
+	} else if (!empty($_POST['submitContact'])) {
+		if (!isset($_POST['actif']) && $_SESSION['ADMIN']) $_POST['actif'] = 0;
+		if (!isset($_POST['locked']) && $_SESSION['ADMIN']) $_POST['locked'] = 0;
+		if (!isset($_POST['totd']) && $_SESSION['ADMIN']) $_POST['showtipoftheday'] = 0;
+
+		$utilisateur->setFromRow($_POST);
+
+		// Ajout de la page favorite (jointe après la connexion)
+		if ($utilisateur->page($utilisateur->availablePages('uri', $_POST['read'])) === false) {
+			print "Erreur de mise à jour de la page...";
+		}
+
+		// S'il y a un nouveau téléphone à ajouter
+		if (!empty($_POST['newnb'])) {
+			$newPhone = array(
+				'uid'	=> $utilisateur->uid()
+				, 'phone'		=> $_POST['newnb']
+				, 'description'	=> $_POST['newdesc']
+			);
+			if (isset($_POST['newpal'])) {
+				$newPhone['principal'] = true;
+			} else {
+				$newPhone['principal'] = false;
+			}
+			$utilisateur->addPhone($newPhone);
+		}
+
+		// S'il y a une nouvelle adresse à ajouter
+		if (!empty($_POST['newadresse']) && !empty($_POST['newville']) && !empty($_POST['newcp'])) {
+			$utilisateur->addAdresse(array(
+				'uid'	=> $utilisateur->uid()
+				, 'adresse'	=> $_POST['newadresse']
+				, 'ville'	=> $_POST['newville']
+				, 'cp'		=> $_POST['newcp']
+				)
+			);
+		}
+		$utilisateur->fullUpdateDB();
+	}
+}
+
 // Données nécessaires à la partie contact
 
 $smarty->assign('utilisateur', $utilisateur);
@@ -139,7 +183,7 @@ $smarty->assign('totd', $utilisateur->showtipoftheday());
 
 // Données relatives à la carrière
 
-$smarty->assign('datas', $utilisateur->affectations());
+$smarty->assign('datas', $utilisateur->orderedAffectations());
 
 $smarty->display("monCompte.tpl");
 

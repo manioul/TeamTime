@@ -1,7 +1,7 @@
 {* Smarty *}
 {* template d'affichage et de modification des informations d'un utilisateur *}
-<div id="utilisateur">
-<form name="fContact" id="fContact" class="" method="POST" action="updateContact.php">
+<div id="monCompte">
+<form name="fContact" id="fContact" class="" method="POST" action="monCompte.php">
 <fieldset><legend>Mon compte</legend>
 <ul>
 <li>
@@ -20,7 +20,7 @@
 <label for="read">page d'accueil : </label>
 <select name="read" id="read">
 {foreach $utilisateur->availablePages('titre') as $k => $p}
-<option value="{$key}"{if $indexPage == $key} selected="selected"{/if}>{$p}</option>
+<option value="{$k}"{if $utilisateur->indexPage() == $k} selected="selected"{/if}>{$p}</option>
 {/foreach}
 </select>
 </li>
@@ -31,9 +31,9 @@
 <legend>Téléphone</legend>
 <ul>
 {foreach $utilisateur->phone() as $key => $tph}
-<li>
+<li id="phone{$tph->phoneid()}">
 <fieldset>
-<legend>Téléphone {$tph->description()}</legend><div class="imgwrapper12"><a href="suppress.php?q=phone&amp;id={$tph->phoneid()}&amp;uid={$uid}"><img class="cnl" alt="supprimer" src="{$image}" /></a></div>
+<legend>Téléphone {$tph->description()}</legend><div class="imgwrapper12" onclick='supprInfo("phone", {$tph->phoneid()}, {$utilisateur->uid()});'><img class="cnl" alt="supprimer" src="{$image}" /></div>
 <input type="hidden" name="phone[{$key}][phoneid]" value="{$tph->phoneid()}" />
 <ul>
 <li>
@@ -50,7 +50,7 @@
 </li>
 {/foreach}
 <li>
-<label for="addPhone">Ajouter un téléphone : </label><input type="button" onclick="newPhone()" value="+" class="bouton" id="iAddPhone" />
+<label for="iAddPhone">Ajouter un téléphone : </label><input type="button" onclick="newPhone()" value="+" class="bouton" id="iAddPhone" />
 </li>
 </ul>
 </fieldset>
@@ -62,9 +62,9 @@
 <legend>Adresses</legend>
 <ul>
 {foreach $utilisateur->adresse() as $key => $add}
-<li>
+<li id="adresse{$add->adresseid()}">
 <fieldset>
-<legend></legend><div class="imgwrapper12" style="left:15px;"><a href="suppress.php?q=adresse&amp;id={$add->adresseid()}&amp;uid={$uid}"><img class="cnl" alt="supprimer" src="{$image}" /></a></div>
+<legend></legend><div class="imgwrapper12" style="left:15px;" onclick='supprInfo("adresse", {$add->adresseid()}, {$utilisateur->uid()});'><img class="cnl" alt="supprimer" src="{$image}" /></div>
 <input type="hidden" name="adresse[{$key}][adresseid]" value="{$add->adresseid()}" />
 <ul>
 <li>
@@ -81,7 +81,7 @@
 </li>
 {/foreach}
 <li>
-<label for="addAddress">Ajouter une adresse : </label><input type="button" class="bouton" onclick="newAddress()" value="+" id="iAddAddress" />
+<label for="iAddAddress">Ajouter une adresse : </label><input type="button" class="bouton" onclick="newAddress()" value="+" id="iAddAddress" />
 </li>
 </ul>
 </fieldset>
@@ -89,7 +89,7 @@
 </fieldset>
 {* Fin de la partie contact *}
 
-<input type="submit" class="bouton" id="submitcontact" value="Mettre à jour" />
+<input type="submit" class="bouton" name="submitContact" value="Mettre à jour" />
 
 
 {* Réservé à l'administrateur *}
@@ -117,43 +117,45 @@
 </ul>
 </fieldset>
 
-<input type="submit" class="bouton" id="submitcontact" value="Mettre à jour" />
+<input type="submit" class="bouton" id="submitContact" value="Mettre à jour" />
 {/if}
 
 </form>
 
 
 
+<form name="fAffectation" id="fAffectation" class="" method="POST" action="monCompte.php">
+<input type="hidden" name="uid" value="{$utilisateur->uid()}" />
 <div id="carriere">
 <h2>Carrière et affectations</h2>
 <table class="altern-row">
 <thead>
 <tr>
-<td>Centre</td><td>Équipe</td><td>grade</td><td>Début</td><td>Fin</td>
+<td>Centre</td><td>Équipe</td><td>grade</td><td>Début</td><td>Fin</td><td></td>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>
-<input type="text" name="newcentre" /></td>
-<td><input type="text" name="newteam" /></td>
-<td><select name="newgrade"><option value="c">C</option><option value="theo">Théorique</option><option value="pc">PC</option><option value="ce">CE</option><option value="cds">CDS</option></select></td>
-<td><input type="date" name="newbeginning" id="dateD" /></td>
-<td><div><input type="date" name="newend" id="dateF" /></div></td>
+<input type="text" name="centre" value="{$utilisateur->centre()}" /></td>
+<td><input type="text" name="team" value="{$utilisateur->team()}" /></td>
+<td><select name="grade"><option value="c">C</option><option value="theo">Théorique</option><option value="pc">PC</option><option value="fmp">FMP</option><option value="dtch">Détaché</option><option value="ce">CE</option><option value="cds">CDS</option></select></td>
+<td><input type="date" name="beginning" id="dateD" /></td>
+<td><input type="date" name="end" id="dateF" /></td>
+<td><input type="submit" class="bouton" name="submitAffect" value="Mettre à jour" /></td>
 </tr>
-{foreach from=$datas key=k item=carriere name=data}
-<tr>
-<td>
-<input type="text" name="centre" value="{$carriere->centre()}" /></td>
-<td><input type="text" name="team" value="{$carriere->team()}" /></td>
-<td><input type="text" name="grade" value="{$carriere->grade()}" /></td>
-<td><input type="date" name="beginning" value="{$carriere->beginning()->date()}"></td>
-<td><div><input type="date" name="end" value="{$carriere->end()->date()}" /></div><div class="cell middle"><div class="imgwrapper12" style="left:5px;"><a href="suppress.php?q=affectation&amp;id={$carriere->aid()}&amp;uid={$uid}"><img class="cnl" alt="supprimer" src="{$image}" /></a></div></div></td>
+{foreach $datas as $carriere}
+<tr id="affectation{$carriere->aid()}">
+<td>{$carriere->centre()}</td>
+<td>{$carriere->team()}</td>
+<td>{$carriere->grade()}</td>
+<td>{$carriere->beginning()->date()}</td>
+<td>{$carriere->end()->date()}</td>
+<td><div class="imgwrapper12" style="left:5px;cursor:pointer;" onclick='supprInfo("affectation", {$carriere->aid()}, {$utilisateur->uid()});' title="Supprimer l'entrée"><img class="cnl" alt="supprimer" src="{$image}" /></div></td>
 </tr>
 {/foreach}
 </tbody>
 </table>
 </div><!-- #carriere -->
-<input type="submit" class="bouton" id="submitcontact" value="Mettre à jour" />
 </form>
 </div><!-- Fin div #utilisateur -->

@@ -3,9 +3,9 @@
 <form name="fCc" method="post" action="" onsubmit="">
 <table class="genElem">
 <tr>
-<td><label for="uid">nom</label></td>
+<td><label for="uid">Nom</label></td>
 <td><select name="uid" id='sCcnom' onchange="">
-{foreach from=$users item=user}
+{foreach $users as $user}
 <option value="{$user->uid()}">{$user->nom()}</option>
 {/foreach}
 </select>
@@ -13,8 +13,8 @@
 </tr><tr>
 <td><label for="did">Dispo</label></td>
 <td><select name="did" id='sCcnom' onchange="">
-{foreach from=$dispos item=dispo key=i}
-<option value="{$i}">{$dispo}</option>
+{foreach $dispos as $dispo}
+<option value="{$dispo@key}">{$dispo}</option>
 {/foreach}
 </select>
 </td>

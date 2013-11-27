@@ -1,9 +1,9 @@
-function display(id) {
+function display(id)
+{
 	$('#'+id).show('slow');
 }
-function newPhone() {
-	alert("Attention : vous ne pouvez ajouter qu'un téléphone à la fois");
-
+function newPhone()
+{
 	var objFieldset = document.createElement('fieldset');
 	var objLegend = document.createElement('legend');
 	var objTextLegend = document.createTextNode('Nouveau téléphone');
@@ -64,10 +64,10 @@ function newPhone() {
 	objFieldset.appendChild(objUl);
 
 	$('#iAddPhone').parent().before(objFieldset);
+	$('#iAddPhone').parent().hide();
 }
-function newAddress() {
-	alert("Attention : vous ne pouvez ajouter qu'une adresse à la fois");
-	
+function newAddress()
+{
 	var objFieldset = document.createElement('fieldset');
 	var objLegend = document.createElement('legend');
 	var objTextLegend = document.createTextNode('Nouvelle adresse');
@@ -128,4 +128,11 @@ function newAddress() {
 	objFieldset.appendChild(objUl);
 
 	$('#iAddAddress').parent().before(objFieldset);
+	$('#iAddAddress').parent().hide();
+}
+function supprInfo(q, id, uid)
+{
+	var sRequest = "q="+q+"&id="+id+"&uid="+uid;
+	submitRequest(sRequest, 'suppress.php');
+	$('#'+q+id).hide('slow');
 }
