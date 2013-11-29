@@ -482,22 +482,26 @@ class Cycle {
 		$date = clone $this->dateRef();
 		$date->decDate();
 		$sql = sprintf("
-			SELECT `tl`.`uid`,
-			MOD(COUNT(`tl`.`sdid`), 10)
-			FROM `TBL_L_SHIFT_DISPO` AS `tl`,
-			`TBL_AFFECTATION` AS `ta`,
-			`TBL_DISPO` AS `td`
-			WHERE `tl`.`did` = `td`.`did`
-			AND `tl`.`uid` = `ta`.`uid`
-			AND (`ta`.`centre` = '%s' OR `ta`.`centre` = 'all')
-			AND (`ta`.`team` = '%s' OR `ta`.`team` = 'all')
-			AND `td`.`type decompte` = '%s'
-			AND `tl`.`date` < '%s'
+			SELECT `l`.`uid`,
+			MOD(COUNT(`l`.`sdid`), 10)
+			FROM `TBL_L_SHIFT_DISPO` `l`,
+			`TBL_AFFECTATION` `a`,
+			`TBL_DISPO` `d`
+			WHERE `l`.`did` = `d`.`did`
+			AND `l`.`uid` = `a`.`uid`
+			AND (`a`.`centre` = '%s' OR `a`.`centre` = 'all')
+			AND (`a`.`team` = '%s' OR `a`.`team` = 'all')
+			AND `d`.`type decompte` = '%s'
+			AND `l`.`date` < '%s'
+			AND `a`.`beginning` < '%s'
+			AND `a`.`end` > '%s'
 			GROUP BY `uid`"
 			, $this->centre
 			, $this->team
 			, $type
 			, $date->date()
+			, $date->date()
+			, $date->addJours(2)->date()
 		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
@@ -521,22 +525,26 @@ class Cycle {
 		$date = clone $this->dateRef();
 		$date->addJours(self::getCycleLength()-1);
 		$sql = sprintf("
-			SELECT `tl`.`uid`,
-			MOD(COUNT(`tl`.`sdid`), 10)
-			FROM `TBL_L_SHIFT_DISPO` AS `tl`,
-			`TBL_AFFECTATION` AS `ta`,
-			`TBL_DISPO` AS `td`
-			WHERE `tl`.`did` = `td`.`did`
-			AND `tl`.`uid` = `ta`.`uid`
-			AND (`ta`.`centre` = '%s' OR `ta`.`centre` = 'all')
-			AND (`ta`.`team` = '%s' OR `ta`.`team` = 'all')
-			AND `td`.`type decompte` = '%s'
-			AND `tl`.`date` < '%s'
+			SELECT `l`.`uid`,
+			MOD(COUNT(`l`.`sdid`), 10)
+			FROM `TBL_L_SHIFT_DISPO` `l`,
+			`TBL_AFFECTATION` `a`,
+			`TBL_DISPO` `d`
+			WHERE `l`.`did` = `d`.`did`
+			AND `l`.`uid` = `a`.`uid`
+			AND (`a`.`centre` = '%s' OR `a`.`centre` = 'all')
+			AND (`a`.`team` = '%s' OR `a`.`team` = 'all')
+			AND `d`.`type decompte` = '%s'
+			AND `l`.`date` < '%s'
+			AND `a`.`beginning` < '%s'
+			AND `a`.`end` > '%s'
 			GROUP BY `uid`"
 			, $this->centre
 			, $this->team
 			, $type
 			, $date->date()
+			, $date->date()
+			, $this->dateRef()->date()
 		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
