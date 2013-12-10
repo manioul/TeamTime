@@ -84,6 +84,25 @@ class Cycle {
 		}
 		return self::$_cycleLengthNoRepos;
 	}
+	// La liste des jours de travail d'un cycle
+	public static function jtCycle($centre = NULL) {
+		if (is_null($centre)) $centre = $_SESSION['centre'];
+		$array = array();
+		$sql = sprintf("
+			SELECT `rang`, `vacation`, `horaires`
+			FROM `TBL_CYCLE`
+			WHERE `vacation` != '%s'
+			AND `centre` = '%s'
+			", REPOS
+			, $centre
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$array[] = $row;
+		}
+		mysqli_free_result($result);
+		return $array;
+	}
 
 	//-----------
 	// Accesseurs
