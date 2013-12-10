@@ -312,6 +312,23 @@ class database {
 				FROM `$origin`");
 		}
 	}
+	// Retourne dans un tableau les valeurs SET ou ENUM d'un champ
+	// Le premier paramètre est la table, le second est le champ
+	public function db_set_enum_to_array($table, $field) {
+		$aEnum = array();
+		$sql = sprintf("
+			SHOW COLUMNS
+			FROM `%s`
+			LIKE '%s'
+			", $this->db_real_escape_string($table)
+			, $this->db_real_escape_string($field)
+		);
+		$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+		preg_match('/^(set|enum)\((.*)\)$/', $row['Type'], $enum);
+		$aEnum = preg_split("/[,'+]/", $enum[2], NULL, PREG_SPLIT_NO_EMPTY);
+		$aEnum['Type'] = $row[1]; // Le type SET ou ENUM
+		return $aEnum;
+	}
 }
 
 ?>

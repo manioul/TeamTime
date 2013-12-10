@@ -86,6 +86,15 @@ case 'affectation' :
 		print("Désolé, vous ne pouvez pas faire cela...");
 	}
 	break;
+case 'dispatchSchema' :
+	$sql = sprintf("
+		DELETE FROM `TBL_DISPATCH_HEURES`
+		WHERE `rid` = %d
+		", $_POST['id']
+	);
+	$_SESSION['db']->db_interroge($sql);
+	print "Mise à jour effectuée";
+	break;
 }
 
 
