@@ -83,7 +83,7 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 
 
 	// Gestion des briefings
-	$conf['page']['elements']['formulaireBriefing'] = true;
+	$conf['page']['elements']['intervalDate'] = true;
 
 	// Utilisation de jquery
 	$conf['page']['javascript']['jquery'] = true;

@@ -13,15 +13,31 @@
 {/foreach}
 </table>
 <h3>Ajouter des {$titre.intitule}</h3>
-<form name="form{$titre.t}" action="addGestion.php" method="post">
+<form name="form{$titre.t}" id="fGestionCalendrier" action="addGestion.php" method="POST">
+<ul>
+<li>
 <label for="desc">Description ({$descLength} caractères maxi)</label>
 <input type="text" name="desc" id="desc" maxlength={$descLength} />
+</li>
+<li>
+<fieldset>
+<ul>
+<li>
 <label for="dateD">Date de début des {$titre.intitule}</label>
-<input type="text" name="dateD" id="dateD" />
+<input type="date" name="dateD" id="dateD" />
+</li>
+<li>
 <label for="dateF">Date de fin des {$titre.intitule}</label>
-<input type="text" name="dateF" id="dateF" />
-<input type="hidden" name="t" value="{$titre.t}" />
+<input type="date" name="dateF" id="dateF" />
+</li>
+</ul>
+</fieldset>
+</li>
+<li>
 <input type="submit" value="Envoyer" />
+</li>
+</ul>
+<input type="hidden" name="t" value="{$titre.t}" />
 </form>
 {else}
 <ul>

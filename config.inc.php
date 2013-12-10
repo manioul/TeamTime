@@ -104,8 +104,8 @@ $DEBUG = false;
 	if (empty($conf['page']['javascript']['utilisateur'])) $conf['page']['javascript']['utilisateur'] = false;
 	// chargement du script de gestion tipoftheday
 	if (empty($conf['page']['elements']['tipoftheday'])) $conf['page']['javascript']['tipoftheday'] = false;
-	// Chargemenet du script pour les formulaires de saisie de briefing
-	if (empty($conf['page']['elements']['formulaireBriefing'])) $conf['page']['elements']['formulaireBriefing'] = false;
+	// Chargemenet du script pour les formulaires de choix d'intervalle de dates
+	if (empty($conf['page']['elements']['intervalDate'])) $conf['page']['elements']['intervalDate'] = false;
 
 	// Chargement de la feuille de style 'index'
 	if (empty($conf['page']['stylesheet']['index'])) $conf['page']['stylesheet']['index'] = false;
@@ -136,7 +136,7 @@ $DEBUG = false;
 	/*
 	 *  Gestion des dépendances
 	 */
-	if (true === $conf['page']['elements']['formulaireBriefing']) {
+	if (true === $conf['page']['elements']['intervalDate']) {
 		$conf['page']['javascript']['jquery'] = true;
 		$conf['page']['javascript']['jquery-ui'] = true;
 		$conf['page']['stylesheet']['jquery-ui'] = true;
@@ -171,7 +171,7 @@ $DEBUG = false;
 	if (true === $conf['page']['javascript']['conG']) $javascript[] = 'tableauxCong.js.php'; // Gestion des tableaux de congés
 	if (true === $conf['page']['javascript']['online']) $javascript[] = 'online.js.php';
 	if (true === $conf['page']['elements']['tipoftheday']) $javascript[] = 'tipoftheday.js';
-	if (true === $conf['page']['elements']['formulaireBriefing']) $javascript[] = 'formulaireBriefing.js.php';
+	if (true === $conf['page']['elements']['intervalDate']) $javascript[] = 'intervalDate.js';
 	if (true === $conf['page']['javascript']['index']) $javascript[] = 'index.js';
 	if (true === $conf['page']['javascript']['utilisateur']) $javascript[] = 'utilisateur.js';
 
