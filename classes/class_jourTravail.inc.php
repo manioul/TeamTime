@@ -463,7 +463,9 @@ class jourTravail extends Date {
 	 * Accesseurs
 	 */
 	// Attention à bien passer un (string) en paramètre.
-	// IL est fortement conseillé de caster le paramètre passé
+	// Il est fortement conseillé de caster le paramètre passé
+	// FIXME Ceci n'est pas compatible multicentre, 
+	// il faut utiliser le rang à la place de cid /FIXME
 	public function cid($param = false) {
 		if (ctype_digit($param)) { // On vérifie que cid est composé uniquement de chiffres
 			// On doit ruser car modulo renvoie [0 .. cycleLength]

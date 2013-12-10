@@ -170,6 +170,7 @@ class Date {
 		}
 	}
 // Méthodes d'attribution et d'accès à l'objet
+	// Attribue éventuellement la date et retourne une date au format YYYY-MM-dd
 	public function date($date=NULL) {
 		if (!is_null($date)) {
 			if (is_string($date)) {
