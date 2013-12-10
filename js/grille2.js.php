@@ -9,6 +9,8 @@
 // L'utilisateur doit être logué pour accéder à cette page
 $requireAuthenticatedUser = true;
 
+ob_start();
+
 header('Content-Type: application/javascript');
 //ob_start();
 $conf['page']['elements']['firePHP'] = true;
@@ -551,7 +553,7 @@ function infosFromId(sId) {
 		}
 		else
 		{
-			aId = sId.match(/locka(\d+)m(\d+)j(\d+)(c\d+)/);
+			aId = sId.match(/locka(\d+)m(\d+)j(\d+)c(\d+)/);
 			if (aId instanceof Array) {
 				var aArray = new Array();
 				aArray["Year"] = aId[1];
@@ -748,5 +750,5 @@ function uncollapseRow(sId) {
 }
 
 <?
-//			ob_end_flush();
+ob_end_flush();
 ?>
