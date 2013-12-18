@@ -56,7 +56,7 @@ $nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 /*
  * Configuration de la page
  */
-        $conf['page']['titre'] = sprintf("Affichage d%s - TeamTime", $nbCycle == 1 ? "'un cycle" : "e $nbCycle cycles"); // Le titre de la page
+        $conf['page']['titre'] = sprintf("%s - TeamTime", $nbCycle == 1 ? "Un cycle" : "$nbCycle cycles"); // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -102,6 +102,8 @@ $nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 	$conf['page']['javascript']['grille2'] = true;
 	// Utilisation de grille2.js
 	$conf['page']['javascript']['grille2js'] = false;
+	// Utilisation de administration
+	$conf['page']['javascript']['administration'] = true;
 
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
