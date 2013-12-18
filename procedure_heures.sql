@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `TBL_HEURES_A_PARTAGER` (
 	  `dispatched` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'POsitionné lorsque les heures ont été calculées',
 	  `writable` tinyint(1) NOT NULL DEFAULT '1',
 	  PRIMARY KEY (`centre`,`team`,`date`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Le nombre d''heures à paratager par jour';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Le nombre d''heures à paratager par jour';
 
 CREATE TABLE IF NOT EXISTS `TBL_DISPATCH_HEURES` (
 	  `rid` int(11) NOT NULL AUTO_INCREMENT,
