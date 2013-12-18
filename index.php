@@ -212,9 +212,6 @@ while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 	firePhpLog($row, 'charset db');
 }
 
-// Affichage des en-têtes de page
-$smarty->display('header.tpl');
-
 
 if (isset($_SESSION['AUTHENTICATED'])) {
 	if (isset($_GET['norights'])) {
