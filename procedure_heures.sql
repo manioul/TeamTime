@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `TBL_DISPATCH_HEURES` (
 	  PRIMARY KEY (`rid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8;
 
-CREATE TABLE iIF NOT EXISTS `TBL_DISPATCH_HEURES_USER` (
+CREATE TABLE IF NOT EXISTS `TBL_DISPATCH_HEURES_USER` (
 	  `rid` int(11) NOT NULL,
 	  `cycles` varchar(64) NOT NULL,
 	  `centre` varchar(50) NOT NULL DEFAULT 'athis',
@@ -530,7 +530,6 @@ CREATE TRIGGER deleteHours
 				WHERE centre = OLD.centre
 				AND team = OLD.team
 				AND OLD.date BETWEEN beginning AND end)|
-
 DELIMITER ;
 
 DROP VIEW IF EXISTS affectations;
