@@ -1,5 +1,5 @@
 {* Smarty *}
-<form id="fSaisieHeuresInd" method="POST" action="">
+<form id="fSaisieHeuresInd" class="ng" method="POST" action="">
 <fieldset>
 <legend>Ajout</legend>
 <ul>

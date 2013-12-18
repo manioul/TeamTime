@@ -13,7 +13,7 @@
 {/foreach}
 </table>
 <h3>Ajouter des {$titre.intitule}</h3>
-<form name="form{$titre.t}" id="fGestionCalendrier" action="addGestion.php" method="POST">
+<form name="form{$titre.t}" id="fGestionCalendrier" class="ng" action="addGestion.php" method="POST">
 <ul>
 <li>
 <label for="desc">Description ({$descLength} caractères maxi)</label>

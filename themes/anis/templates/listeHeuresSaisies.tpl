@@ -1,6 +1,6 @@
 {* Smarty *}
 <div id="listHS">
-<form id="fHS" method="POST" action="">
+<form id="fHS" class="ng" method="POST" action="">
 <ul>
 <li>
 <label for="dateFrom">Début</label>

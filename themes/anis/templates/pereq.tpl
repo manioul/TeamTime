@@ -1,5 +1,5 @@
 {* Smarty *}
-<form id="fPereq" method="POST" action="">
+<form id="fPereq" class="ng" method="POST" action="">
 <fieldset>
 <legend>Péréquations</legend>
 

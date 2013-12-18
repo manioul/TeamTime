@@ -1,7 +1,7 @@
 {* Smarty *}
 {* template d'affichage et de modification des informations d'un utilisateur *}
 <div id="monCompte">
-<form name="fContact" id="fContact" class="" method="POST" action="monCompte.php">
+<form name="fContact" id="fContact" class="ng" method="POST" action="monCompte.php">
 <fieldset><legend>Mon compte</legend>
 <ul>
 <li>

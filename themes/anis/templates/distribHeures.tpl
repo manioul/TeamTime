@@ -1,5 +1,5 @@
 {* Smarty *}
-<form id="fDistribHeures" method="POST" action="distribHeures.php">
+<form id="fDistribHeures" class="ng" method="POST" action="distribHeures.php">
 <fieldset>
 <ul>
 <li>

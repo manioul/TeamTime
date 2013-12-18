@@ -172,7 +172,7 @@ form, input, textarea, select {
 	font-size: 11pt;
 	color: #060;
 }
-form {
+form.ng {
 		padding:10px;
 		margin:auto;
 		background-color:#beb;
