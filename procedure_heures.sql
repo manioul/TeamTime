@@ -76,6 +76,30 @@ BEGIN
 
 	CLOSE curDatesToDispatch;
 END|
+DROP PROCEDURE IF EXISTS dispatchHeuresBetween|
+CREATE PROCEDURE dispatchHeuresBetween( IN centr CHAR(50) , IN tea CHAR(10) , IN debut DATE , IN fin DATE )
+BEGIN
+	DECLARE done BOOLEAN DEFAULT 0;
+	DECLARE current DATE;
+	DECLARE curDate CURSOR FOR SELECT date
+		FROM TBL_HEURES_A_PARTAGER
+		WHERE centre = centr
+		AND team = tea
+		AND date BETWEEN debut AND fin;
+
+	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
+
+	OPEN curDate;
+
+	REPEAT
+	FETCH curDate INTO current;
+	IF NOT done THEN
+		CALL dispatchOneDayHeures( centr, tea, current);
+	END IF;
+	UNTIL done END REPEAT;
+
+	CLOSE curDate;
+END|
 DROP PROCEDURE IF EXISTS dispatchOneDayHeures|
 CREATE PROCEDURE dispatchOneDayHeures ( IN centr CHAR(50) , IN tea CHAR(10) , IN dat DATE )
 BEGIN
@@ -141,7 +165,6 @@ BEGIN
 	REPEAT
 	FETCH curFixed INTO ruleid, gradeFixed, typeFixed, valeurFixed, didFixed;
 	IF NOT done THEN
-		SELECT ruleid, dat, typeFixed, gradeFixed, didFixed, valeurFixed;
 		IF typeFixed = 'norm' THEN
 			UPDATE TBL_HEURES
 			SET normales = valeurFixed
@@ -182,8 +205,6 @@ BEGIN
 	AND team = tea
 	AND p.date = dat;
 
-	SELECT heuresLeft;
-
 	SELECT heuresLeft / (SELECT COUNT(uid) FROM TBL_HEURES
 			WHERE statut = 'unattr'
 			AND uid IN
@@ -221,8 +242,6 @@ BEGIN
 					WHERE date = dat)
 				)
 		) INTO heuresEach;
-
-	SELECT heuresEach;
 
 	UPDATE TBL_HEURES
 	SET normales = (SELECT ROUND(heuresEach * 4) / 4)

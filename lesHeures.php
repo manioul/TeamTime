@@ -1,7 +1,7 @@
 <?php
-// affiche_grille.php
+// lesHeures.php
 //
-// Affiche la grille sous différents formats
+// Affiche les heures de tous les utilisateurs d'un même centre, même équipe depuis la date demandée
 
 /*
 	TeamTime is a software to manage people working in team on a cyclic shift.
@@ -27,9 +27,6 @@ $requireAuthenticatedUser = true;
 
 ob_start(); // Obligatoire pour firePHP
 
-// Choix du nombre de cycle à présenter
-$nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
-
 /*
  * Configuration de la page
  * Définition des include nécessaires
@@ -42,12 +39,13 @@ $nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 	$conf['page']['include']['globals_db'] = 1; // Le DSN de la connexion bdd est stockée dans globals_db.inc.php
 	$conf['page']['include']['class_db'] = 1; // Le script utilise class_db.inc.php
 	$conf['page']['include']['session'] = 1; // Le script utilise les sessions par session.imc
-	$conf['page']['include']['classUtilisateur'] = false; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
+	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
 	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
 	$conf['page']['compact'] = false; // Compactage des scripts javascript et css
+	$conf['page']['include']['bibliothequeMaintenance'] = false; // La bibliothèque des fonctions de maintenance est nécessaire
 /*
  * Fin de la définition des include
  */
@@ -56,7 +54,7 @@ $nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 /*
  * Configuration de la page
  */
-        $conf['page']['titre'] = "Saisie des heures"; // Le titre de la page
+        $conf['page']['titre'] = sprintf("Liste les heures de l'équipe"); // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -93,22 +91,24 @@ $nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 	$conf['page']['elements']['debugMessages'] = $DEBUG;
 
 
-
 	// Gestion des briefings
 	$conf['page']['elements']['intervalDate'] = true;
 
 	// Utilisation de jquery
-	$conf['page']['javascript']['jquery'] = true;
+	$conf['page']['javascript']['jquery'] = false;
 	// Utilisation de ajax
-	$conf['page']['javascript']['ajax'] = true;
+	$conf['page']['javascript']['ajax'] = false;
 	// Utilisation de grille2.js.php
-	$conf['page']['javascript']['grille2'] = true;
+	$conf['page']['javascript']['grille2'] = false;
+	// Utilisation de utilisateur.js
+	$conf['page']['javascript']['utilisateur'] = false;
 
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
 	$conf['page']['stylesheet']['general'] = true;
-	$conf['page']['stylesheet']['grille'] = true;
-	$conf['page']['stylesheet']['grilleUnique'] = ($nbCycle == 1 ? true : false);
+	$conf['page']['stylesheet']['grille'] = false;
+	$conf['page']['stylesheet']['grilleUnique'] = false;
+	$conf['page']['stylesheet']['utilisateur'] = false;
 
 	// Compactage des pages
 	$conf['page']['compact'] = false;
@@ -119,126 +119,102 @@ $nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 
 require 'required_files.inc.php';
 
-
 $aHeures = array();
-$aDates = array();
-$aListe = array();
-$dHeures = NULL;
-$fHeures = NULL;
-
-if (!empty($_POST['tableau'])) {
-	if (preg_match_all('/([\.\d]+)\s+([,\d]+)/', $_POST['tableau'], $array, PREG_PATTERN_ORDER)) {
-		$aDates = preg_replace('/(\d{2})\.(\d{2})\.(\d{2})/', '${1}/${2}/20${3}', $array[1]);
-		$aHeures = preg_replace('/,/', '.', $array[2]);
-		foreach ($aDates as $i => $date) {
-			if (($oDate = new Date($date)) !== false) {
-				$sql = sprintf("
-					REPLACE INTO `TBL_HEURES_A_PARTAGER`
-					(`centre`, `team`, `date`, `heures`, `dispatched`, `writable`)
-					VALUES
-					('%s', '%s', '%s', %02d, 0, 1)
-					", $_SESSION['centre']
-					, $_SESSION['team']
-					, $_SESSION['db']->db_real_escape_string($oDate->date())
-					, $aHeures[$i]
-				);
-				$_SESSION['db']->db_interroge($sql);
-				if (is_null($dHeures)) {
-					$dHeures = clone $oDate;
-				} else {
-					if ($dHeures->compareDate($oDate) > 0) $dHeures = clone $oDate;
-				}
-				if (is_null($fHeures)) {
-					$fHeures = clone $oDate;
-				} else {
-					if ($fHeures->compareDate($oDate) < 0) $fHeures = clone $oDate;
-				}
-				/*$sql = sprintf("
-					CALL dispatchOneDayHeures('%s', '%s', '%s')
-					", $_SESSION['centre']
-					, $_SESSION['team']
-					, $_SESSION['db']->db_real_escape_string($oDate->date())
-				);
-				$_SESSION['db']->db_interroge($sql);
-				 */
-			} else {
-				$err[] = sprintf("La date %s n'est pas correcte et n'a pas été insérée...", $aDates[$i]);
-			}
-		}
-		$sql = sprintf ("
-			CALL dispatchHeuresBetween('%s', '%s', '%s', '%s');
-			", $_SESSION['centre']
-			, $_SESSION['team']
-			, $dHeures->date()
-			, $fHeures->date()
-		);
-		$_SESSION['db']->db_interroge($sql);
-	} else {
-		$err[] = "Les heures saisies ne sont pas au format attendu... :(";
-	}
-}
-if (!empty($_POST['dateD']) && !empty($_POST['dateF'])) {
-	$dateD = new Date($_POST['dateD']);
-	$dateF = new Date($_POST['dateF']);
-	$sql = sprintf("
-		CALL dispatchHeuresBetween('%s', '%s', '%s', '%s');
-		", $_SESSION['centre']
-		, $_SESSION['team']
-		, $dateD->date()
-		, $dateF->date()
-	);
-	$_SESSION['db']->db_interroge($sql);
-}
-if (!empty($_POST['calcAll'])) {
-	$sql = sprintf("
-		CALL dispatchAllHeures('%s', '%s')
-		", $_SESSION['centre']
-		, $_SESSION['team']
-	);
-	$_SESSION['db']->db_interroge($sql);
-}
+$aTotaux = array();
+$checked = array();
 
 /*
- * Liste des heures déjà saisies
+ * Recherche des dispo pour créer une liste d'exclusion
  */
-if (empty($_POST['dateFrom'])) {
-	$dateFrom = new Date(date('Y-m-d'));
-	$dateFrom->subJours(36);
-} else {
-	$dateFrom = new Date($_POST['dateFrom']);
-}
-if (empty($_POST['dateTo'])) {
-	$dateTo = new Date(date('Y-m-d'));
-} else {
-	$dateTo = new Date($_POST['dateTo']);
-}
 $sql = sprintf("
-	SELECT `date`, `heures`, `dispatched`, `writable`
-	FROM `TBL_HEURES_A_PARTAGER`
-	WHERE `centre` = '%s'
-	AND `team` = '%s'
-	AND `date` BETWEEN '%s' AND '%s'
+	SELECT `did`, `dispo`, `nom_long`
+	FROM TBL_DISPO
+	WHERE `actif` IS TRUE
+	AND absence IS NOT TRUE
+	AND (`centre` = '%s' OR `centre` = 'all')
+	AND (`team` = '%s' OR `team` = 'all')
 	", $_SESSION['centre']
 	, $_SESSION['team']
-	, $dateFrom->date()
-	, $dateTo->date()
 );
 $result = $_SESSION['db']->db_interroge($sql);
-while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-	$aListe[] = $row;
+while ($row = $_SESSION['db']->db_fetch_row($result)) {
+	$aDispos[$row[0]] = (!empty($row[2]) ? $row[2] : $row[1]) ;
+	if ($row[1] == 'Rempla') $checked[$row[0]] = 1;
 }
 mysqli_free_result($result);
-$smarty->assign('aListe', $aListe);
+
+$smarty->assign('defaultD', '01/01/2013');
+$smarty->assign('aDispos', $aDispos);
+$smarty->assign('checked', $checked);
+
+$smarty->display('debutHeuresForm.tpl');
+
 
 /*
- * Début des appels d'affichage Smarty
+ * Traitement du formulaire d'affichage des heures
  */
+if (!empty($_POST['dateD'])) {
+	$dateDebut = new Date($_POST['dateD']);
+	if (!empty($_POST['dateF'])) {
+		$dateFin = new Date($_POST['dateF']);
+	} else {
+		$dateFin = clone $dateDebut;
+		$dateFin->addJours(365);
+	}
+	/*
+	 * Gestion des exclusions
+	 */
+	$exclude = "";
+	if (sizeof($_POST['dispo']) > 0) {
+		$exclude = sprintf("
+			AND NOT FIND_IN_SET(`did`, '%s')
+			", $_SESSION['db']->db_real_escape_string(implode(',', array_keys($_POST['dispo'])))
+		);
+	}
 
-$smarty->display('saisieHeures.tpl');
+	/*
+	 * Calcul des totaux
+	 */
+	$sql = sprintf("
+		SELECT `nom`, SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`
+		FROM `TBL_HEURES`
+		WHERE `date` BETWEEN '%s' AND '%s'
+		%s
+		GROUP BY `uid`
+		", $dateDebut->date()
+		, $dateFin->date()
+		, $exclude
+	);
+	$result = $_SESSION['db']->db_interroge($sql);
+	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+		$aTotaux[] = $row;
+	}
+	mysqli_free_result($result);
 
-$smarty->display('recalcHeures.tpl');
-
-$smarty->display('listeHeuresSaisies.tpl');
+	$smarty->assign('dateDebut', $dateDebut->formatDate('fr'));
+	$smarty->assign('dateFin', $dateFin->formatDate('fr'));
+	$smarty->assign('mTotaux', $aTotaux);
+	$smarty->display('lesHeures.tpl');
+}
+/*
+ * Traitement du formulairte d'ajout d'heures
+ */
+if (!empty($_POST['date'])) {
+	$date = new Date($_POST['date']);
+	$norm = !empty($_POST['norm']) ? 0+$_POST['norm'] : 0;
+	$instru = !empty($_POST['instru']) ? 0+$_POST['instru'] : 0;
+	$simu = !empty($_POST['simu']) ? 0+$_POST['simu'] : 0;
+	$sql = sprintf("
+		CALL addHeuresIndividuelles(%d, '%s', '%s', '%s', '%s')
+		", $_SESSION['utilisateur']->uid()
+		, $date->date()
+		, $norm
+		, $instru
+		, $simu
+	);
+	$_SESSION['db']->db_interroge($sql);
+	print $sql;
+}
 
 /*
  * Informations de debug
