@@ -207,6 +207,7 @@ BEGIN
 
 	SELECT heuresLeft / (SELECT COUNT(uid) FROM TBL_HEURES
 			WHERE statut = 'unattr'
+			AND date = dat
 			AND uid IN
 				(SELECT u.uid
 				FROM TBL_USERS AS u

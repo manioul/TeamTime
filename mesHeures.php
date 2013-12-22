@@ -122,6 +122,19 @@ require 'required_files.inc.php';
 $aHeures = array();
 $aTotaux = array();
 $checked = array();
+$uid = (empty($_GET['uid']) || empty($_SESSION['ADMIN']) ? $_SESSION['utilisateur']->uid() : (int) $_GET['uid']);
+$dateDebut = "01-10-2012";
+$dateFin = "01-01-2014";
+$nom = $_SESSION['utilisateur']->nom();
+$prenom = $_SESSION['utilisateur']->prenom();
+if (!empty($_GET['d'])) $dateDebut = $_GET['d'];
+if (!empty($_GET['f'])) $dateFin = $_GET['f'];
+if (!empty($_GET['nom'])) {
+	$nom = $_GET['nom'];
+	$prenom = "";
+}
+if (!empty($_POST['dateD'])) $dateDebut = $_POST['dateD'];
+if (!empty($_POST['dateF'])) $dateFin = $_POST['dateF'];
 
 /*
  * Recherche des dispo pour créer une liste d'exclusion
@@ -154,10 +167,10 @@ $smarty->display('saisieHeuresIndividuelles.tpl');
 /*
  * Traitement du formulaire d'affichage des heures
  */
-if (!empty($_POST['dateD'])) {
-	$dateDebut = new Date($_POST['dateD']);
-	if (!empty($_POST['dateF'])) {
-		$dateFin = new Date($_POST['dateF']);
+if (!empty($dateDebut)) {
+	$dateDebut = new Date($dateDebut);
+	if (!empty($dateFin)) {
+		$dateFin = new Date($dateFin);
 	} else {
 		$dateFin = clone $dateDebut;
 		$dateFin->addJours(365);
@@ -180,7 +193,7 @@ if (!empty($_POST['dateD'])) {
 		AND `date` BETWEEN '%s' AND '%s'
 		%s
 		ORDER BY `date` ASC
-		", $_SESSION['utilisateur']->uid()
+		", $uid
 		, $dateDebut->date()
 		, $dateFin->date()
 		, $exclude
@@ -201,7 +214,7 @@ if (!empty($_POST['dateD'])) {
 		WHERE `uid` = %d
 		AND `date` BETWEEN '%s' AND '%s'
 		%s
-		", $_SESSION['utilisateur']->uid()
+		", $uid
 		, $dateDebut->date()
 		, $dateFin->date()
 		, $exclude
@@ -210,7 +223,7 @@ if (!empty($_POST['dateD'])) {
 
 	$smarty->assign('dateDebut', $dateDebut->formatDate('fr'));
 	$smarty->assign('dateFin', $dateFin->formatDate('fr'));
-	$smarty->assign('nom', $_SESSION['utilisateur']->prenom() . " " . $_SESSION['utilisateur']->nom());
+	$smarty->assign('nom', $prenom . " " . $nom);
 	$smarty->assign('heures', $aHeures);
 	$smarty->assign('totaux', $aTotaux);
 	$smarty->display('mesHeures.tpl');
@@ -225,7 +238,7 @@ if (!empty($_POST['date'])) {
 	$simu = !empty($_POST['simu']) ? 0+$_POST['simu'] : 0;
 	$sql = sprintf("
 		CALL addHeuresIndividuelles(%d, '%s', '%s', '%s', '%s')
-		", $_SESSION['utilisateur']->uid()
+		", $uid
 		, $date->date()
 		, $norm
 		, $instru

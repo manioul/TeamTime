@@ -176,12 +176,20 @@ if (!empty($_POST['dateD'])) {
 	 * Calcul des totaux
 	 */
 	$sql = sprintf("
-		SELECT `nom`, SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`
+		SELECT `uid`, `nom`, SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`
 		FROM `TBL_HEURES`
 		WHERE `date` BETWEEN '%s' AND '%s'
 		%s
 		GROUP BY `uid`
+		UNION
+		SELECT 'uid', 'Total', SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`
+		FROM `TBL_HEURES`
+		WHERE `date` BETWEEN '%s' AND '%s'
+		%s
 		", $dateDebut->date()
+		, $dateFin->date()
+		, $exclude
+		, $dateDebut->date()
 		, $dateFin->date()
 		, $exclude
 	);
@@ -195,25 +203,6 @@ if (!empty($_POST['dateD'])) {
 	$smarty->assign('dateFin', $dateFin->formatDate('fr'));
 	$smarty->assign('mTotaux', $aTotaux);
 	$smarty->display('lesHeures.tpl');
-}
-/*
- * Traitement du formulairte d'ajout d'heures
- */
-if (!empty($_POST['date'])) {
-	$date = new Date($_POST['date']);
-	$norm = !empty($_POST['norm']) ? 0+$_POST['norm'] : 0;
-	$instru = !empty($_POST['instru']) ? 0+$_POST['instru'] : 0;
-	$simu = !empty($_POST['simu']) ? 0+$_POST['simu'] : 0;
-	$sql = sprintf("
-		CALL addHeuresIndividuelles(%d, '%s', '%s', '%s', '%s')
-		", $_SESSION['utilisateur']->uid()
-		, $date->date()
-		, $norm
-		, $instru
-		, $simu
-	);
-	$_SESSION['db']->db_interroge($sql);
-	print $sql;
 }
 
 /*

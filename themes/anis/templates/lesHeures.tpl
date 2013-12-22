@@ -12,7 +12,7 @@
 <tbody>
 {foreach $mTotaux as $totaux}
 <tr>
-<td>{$totaux.nom|upper}</td>
+<td><a href="mesHeures.php?uid={$totaux.uid}&amp;d={$dateDebut}&amp;f={$dateFin}&amp;nom={$totaux.nom}">{$totaux.nom|upper}</a></td>
 <td>{$totaux.normales}</td>
 <td>{$totaux.instruction}</td>
 <td>{$totaux.simulateur}</td>
