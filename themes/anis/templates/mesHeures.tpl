@@ -16,7 +16,7 @@
 {foreach $heures as $aHeure}
 <tr>
 <td>{$nom|upper}</td>
-<td>{$aHeure.date}</td>
+<td><a href="heuresJour.php?d={$aHeure.date}">{$aHeure.date}</a></td>
 <td>{$aHeure.normales}</td>
 <td>{$aHeure.instruction}</td>
 <td>{$aHeure.simulateur}</td>

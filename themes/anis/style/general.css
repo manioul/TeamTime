@@ -641,6 +641,20 @@ div#dConnexion input {
  * Fin du tableau d'affichage des heures
  */
 /*
+ * Tableau d'affichage de la distribution des heures
+ */
+	table#heuresJour {
+		margin:auto;
+	}
+	table#heuresJour caption {
+		font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+		font-size:200%;
+		padding-bottom:10px;
+	}
+/*
+ * Fin du tableau d'affichage de la distribution des heures
+ */
+/*
  * Tableau de gestion de la distribution des heures
  */
 	div#dispatchSchema {
