@@ -655,6 +655,28 @@ div#dConnexion input {
  * Fin du tableau d'affichage de la distribution des heures
  */
 /*
+ * Titres de congés déjà édités
+ */
+	div#tce {
+		width:500px;
+		margin:auto;
+		background-color:#beb;
+		border-radius:15px;
+		box-shadow: 2px 2px 2px #88aa88;
+	}
+	div#tce h3 {
+		font-size:200%;
+		margin:30px 0;
+		text-align:center;
+	}
+	div#tce ul {
+		margin:0 30px;;
+		font-size:150%;
+	}
+/*
+ * Fin de titres de congés déjà édités
+ */
+/*
  * Tableau de gestion de la distribution des heures
  */
 	div#dispatchSchema {

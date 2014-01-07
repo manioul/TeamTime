@@ -209,6 +209,8 @@ class TitreConges extends tFPDF {
 	}
 
 	public function editTitres() {
+		$titre = $_SERVER['DOCUMENT_ROOT'] . "/titresConges/" . date('YmdHis') . '.pdf';
+		$this->Output($titre, 'F');
 		$this->Output('titres.pdf', 'D');
 	}
 }
