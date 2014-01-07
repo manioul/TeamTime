@@ -143,7 +143,9 @@ while ($row = $_SESSION['db']->db_fetch_row($result)) {
 }
 mysqli_free_result($result);
 
-$smarty->assign('defaultD', '01/01/2013');
+$dd = '01-01-2013';
+
+$smarty->assign('defaultD', $dd);
 $smarty->assign('aDispos', $aDispos);
 $smarty->assign('checked', $checked);
 
@@ -157,10 +159,12 @@ if (!empty($_POST['dateD'])) {
 	$dateDebut = new Date($_POST['dateD']);
 	if (!empty($_POST['dateF'])) {
 		$dateFin = new Date($_POST['dateF']);
-	} else {
-		$dateFin = clone $dateDebut;
-		$dateFin->addJours(365);
 	}
+} else {
+	$dateDebut = new Date($dd);
+	$dateFin = clone $dateDebut;
+	$dateFin->addJours(365);
+}
 	/*
 	 * Gestion des exclusions
 	 */
@@ -205,7 +209,6 @@ if (!empty($_POST['dateD'])) {
 	$smarty->assign('dateFin', $dateFin->formatDate('fr'));
 	$smarty->assign('mTotaux', $aTotaux);
 	$smarty->display('lesHeures.tpl');
-}
 
 /*
  * Informations de debug
