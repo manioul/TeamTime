@@ -229,7 +229,7 @@ if (!empty($dateDebut)) {
 	$smarty->display('mesHeures.tpl');
 }
 /*
- * Traitement du formulairte d'ajout d'heures
+ * Traitement du formulaire d'ajout d'heures
  */
 if (!empty($_POST['date'])) {
 	$date = new Date($_POST['date']);
