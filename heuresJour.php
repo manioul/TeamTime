@@ -124,8 +124,10 @@ if (!is_a($date, 'Date')) return false;
 
 $sql = sprintf("
 	SELECT `nom`, `normales`, `instruction`, `simulateur`
-	FROM `TBL_HEURES`
+	FROM `TBL_HEURES` AS `h`,
+	`TBL_USERS` AS `u`
 	WHERE `date` = '%s'
+	AND `h`.`uid` = `u`.`uid`
 	UNION
 	SELECT 'TOTAL',SUM(`normales`), SUM(`instruction`), SUM(`simulateur`)
 	FROM `TBL_HEURES`

@@ -1,16 +1,14 @@
 -- Création des tables si elles n'existent pas
 
+DROP TABLE IF EXISTS TBL_HEURES;
 CREATE TABLE IF NOT EXISTS TBL_HEURES (
 	uid INT(11) NOT NULL,
-	nom VARCHAR(64) NOT NULL,
-	grade VARCHAR(64) NOT NULL,
 	did INT(11) NOT NULL,
 	date DATE NOT NULL,
 	normales DECIMAL(4,2) NOT NULL,
 	instruction DECIMAL(4,2) NOT NULL,
 	simulateur DECIMAL(4,2) NOT NULL,
 	statut ENUM('fixed', 'shared', 'unattr') DEFAULT 'unattr',
-	rid INT(11),
 	PRIMARY KEY (uid, date)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 

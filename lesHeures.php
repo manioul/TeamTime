@@ -176,11 +176,13 @@ if (!empty($_POST['dateD'])) {
 	 * Calcul des totaux
 	 */
 	$sql = sprintf("
-		SELECT `uid`, `nom`, SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`
-		FROM `TBL_HEURES`
+		SELECT `h`.`uid`, `nom`, SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`
+		FROM `TBL_HEURES` AS `h`,
+		`TBL_USERS` AS `u`
 		WHERE `date` BETWEEN '%s' AND '%s'
+		AND `h`.`uid` = `u`.`uid`
 		%s
-		GROUP BY `uid`
+		GROUP BY `h`.`uid`
 		UNION
 		SELECT 'uid', 'Total', SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`
 		FROM `TBL_HEURES`
