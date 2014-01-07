@@ -104,8 +104,19 @@ BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE gradeFixed VARCHAR(64);
 	DECLARE typeFixed VARCHAR(64);
-	DECLARE ruleid, valeurFixed, didFixed, heuresLeft INT;
-	DECLARE heuresEach FLOAT;
+	DECLARE userid, dispoid, ruleid, eleves, instructeursId, unattr, valeurFixed, didFixed, heuresLeft INT;
+	DECLARE inst, heuresEach FLOAT;
+	DECLARE nbInstructeurs INT DEFAULT 5; -- Nombre de personnes (moins une) qui se partageront les heures d'instruction
+	-- Recherche les dispo des utilisateurs présents
+	DECLARE curDisp CURSOR FOR SELECT uid, did
+		FROM TBL_L_SHIFT_DISPO
+		WHERE date = dat
+		AND did NOT IN (SELECT did
+			FROM TBL_DISPO
+			WHERE absence IS TRUE
+			OR dispo = 'fmp'
+			OR dispo = 'cds');
+	-- Liste les heures fixes attribuées à des dispos qui sont présentes dans la grille ce jour
 	DECLARE curFixed CURSOR FOR SELECT rid, grades, type, heures, dids
 		FROM TBL_DISPATCH_HEURES
 		WHERE statut = 'fixed'
@@ -115,47 +126,99 @@ BEGIN
 				AND centre = centr
 				AND team = tea)
 			, cids);
-
-	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
-
-	-- On vide les heures correspondant à la date
-	DELETE FROM TBL_HEURES WHERE date = dat;
-
-	SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO';
-	-- Met à NULL les heures des personnels présents sans particularité (case vide dans la grille)
-	REPLACE INTO TBL_HEURES
-	(SELECT u.uid, nom, grade, did, dat, 0, 0, 0, 'unattr', 0
-		FROM TBL_USERS AS u
-		, TBL_L_SHIFT_DISPO AS l
-		, TBL_AFFECTATION AS a
-	       	WHERE date = dat
-	       	AND l.uid = u.uid
-	       	AND u.uid = a.uid
-		AND centre = centr
-		AND team = tea
-		AND dat BETWEEN beginning AND end
-		AND grade != 'c'
-		AND grade != 'theo'
+	-- Recherche deux pc qui ont le moins d'heures d'instruction pour leur attribuer les heures disponibles
+	-- Ils doivent avoir une certaine ancienneté dans l'affectation (4 mois)
+	DECLARE curInstructeurs CURSOR FOR SELECT uid, SUM(instruction) AS instru
+		FROM TBL_HEURES
+		WHERE date BETWEEN DATE_SUB(dat, INTERVAL 4 MONTH) AND dat
+		AND uid IN (SELECT uid -- utilisateur dans la bonne affectation
+			FROM TBL_AFFECTATION
+			WHERE centre = centr
+			AND team = tea
+			AND grade != 'dtch'
+			AND grade != 'c'
+			AND grade != 'theo'
+			AND validated IS TRUE
+			AND dat BETWEEN beginning AND end
+			AND DATE_SUB(dat, INTERVAL 4 MONTH) BETWEEN beginning AND end)
 		AND did NOT IN (SELECT did
 			FROM TBL_DISPO
-		       	WHERE (absence IS TRUE OR dispo = 'fmp' OR dispo = 'cds')
-		AND actif IS TRUE)
+			WHERE (absence IS TRUE OR dispo = 'fmp' OR dispo = 'cds'))
+		GROUP BY uid
+		ORDER BY instru ASC
+		LIMIT nbInstructeurs;
+	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
+
+	-- Table temporaire listant les utilisateurs présents au regard du décompte d'heure
+	CREATE TEMPORARY TABLE IF NOT EXISTS tmpPresents (
+		uid INT(11) NOT NULL,
+		grade VARCHAR(64) NOT NULL,
+		did INT(11) NOT NULL,
+		normales DECIMAL(4,2) NOT NULL,
+		instruction DECIMAL(4,2) NOT NULL,
+		simulateur DECIMAL(4,2) NOT NULL,
+		statut ENUM('fixed', 'shared', 'unattr') DEFAULT 'unattr',
+		rid INT(11),
+		centre VARCHAR(50),
+		team VARCHAR(10),
+		PRIMARY KEY (uid)
 	);
 
-	REPLACE INTO TBL_HEURES
-	(SELECT u.uid, nom, grade, NULL, dat, 0, 0, 0, 'unattr', 0
-	       	FROM TBL_USERS u
-		, TBL_AFFECTATION a
-		WHERE u.uid = a.uid
-	       	AND centre = centr
-	       	AND team = tea
+	DELETE FROM tmpPresents WHERE team = tea AND centre = centr;
+	INSERT INTO tmpPresents
+		SELECT uid, grade, 0, 0, 0, 0, 'unattr', 0, centr, tea
+		FROM TBL_AFFECTATION
+		WHERE centre = centr
+		AND team = tea
 		AND dat BETWEEN beginning AND end
-	       	AND grade != 'c'
-	       	AND grade != 'theo'
-	       	AND a.uid NOT IN (SELECT uid
-		       	FROM TBL_L_SHIFT_DISPO
-		       	WHERE date = dat)
-	       	AND actif IS TRUE);
+		AND validated IS TRUE
+		-- Les c n'ont pas d'heure
+		AND grade != 'c'
+		AND grade != 'theo'
+		-- les utilisateurs qui ont une case remplie qui n'est pas une absence
+		AND uid NOT IN (SELECT uid
+			FROM TBL_L_SHIFT_DISPO
+			WHERE date = dat
+			AND did IN (SELECT did
+				FROM TBL_DISPO
+				WHERE absence IS TRUE
+				OR dispo = 'fmp'
+				OR dispo = 'cds')
+			)
+		-- cds en nuit (2)
+		AND uid NOT IN (SELECT uid
+			FROM TBL_L_SHIFT_DISPO
+			WHERE date = dat
+			AND did = (SELECT did
+				FROM TBL_DISPO
+				WHERE dispo = '2')
+			AND uid IN (SELECT uid
+				FROM TBL_AFFECTATION
+				WHERE grade = 'cds'
+				AND dat BETWEEN beginning AND end)
+			)
+		;
+	-- Remplit les did
+	OPEN curDisp;
+	REPEAT
+	FETCH curDisp INTO userid, dispoid;
+	IF NOT done THEN
+		UPDATE tmpPresents
+		SET did = dispoid
+		WHERE uid = userid;
+	END IF;
+	UNTIL done END REPEAT;
+	SET done = 0;
+
+	-- On vide les heures correspondant à la date
+	DELETE FROM TBL_HEURES
+		WHERE date = dat
+		AND uid IN (SELECT uid
+			FROM TBL_AFFECTATION
+			WHERE centre = centr
+			AND team = tea
+			AND dat BETWEEN beginning AND end)
+		AND statut != 'unattr'; -- les heures saisies par l'utilisateur ont un statut unattr
 
 	OPEN curFixed;
 
@@ -164,95 +227,131 @@ BEGIN
 	FETCH curFixed INTO ruleid, gradeFixed, typeFixed, valeurFixed, didFixed;
 	IF NOT done THEN
 		IF typeFixed = 'norm' THEN
-			UPDATE TBL_HEURES
+			UPDATE tmpPresents
 			SET normales = valeurFixed
 			, statut = 'fixed'
 			, rid = ruleid
-			WHERE date = dat
-			AND (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
 			AND (FIND_IN_SET(did, didFixed) OR did = didFixed);
 		ELSEIF typeFixed = 'instru' THEN
-			UPDATE TBL_HEURES
+			UPDATE tmpPresents
 			SET instruction = valeurFixed
 			, statut = 'fixed'
 			, rid = ruleid
-			WHERE date = dat
-			AND (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
 			AND (FIND_IN_SET(did, didFixed) OR did = didFixed);
 		ELSEIF typeFixed = 'simu' THEN
-			UPDATE TBL_HEURES
+			UPDATE tmpPresents
 			SET simulateur = valeurFixed
 			, statut = 'fixed'
 			, rid = ruleid
-			WHERE date = dat
-			AND (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
 			AND (FIND_IN_SET(did, didFixed) OR did = didFixed);
 		END IF;
 	END IF;
 	UNTIL done END REPEAT;
 
 	CLOSE curFixed;
+	SET done = 0;
 
-	-- Calcul les heures restantes
+	-- Vérifie si il y a des élèves et le cas échéant si des heures instruction ont été attribuées
+	SELECT COUNT(uid)
+	INTO eleves
+	FROM TBL_AFFECTATION
+	WHERE centre = centr
+	AND team = tea
+	AND (grade = 'c' OR grade = 'theo')
+	AND dat BETWEEN beginning AND end
+	AND uid NOT IN (SELECT uid
+		FROM TBL_L_SHIFT_DISPO
+		WHERE date = dat
+		AND did IN (SELECT did
+			FROM TBL_DISPO
+			WHERE absence IS TRUE
+			AND centre = centr
+			AND team = tea));
+	IF eleves > 0 THEN
+		SELECT SUM(instruction)
+		INTO inst
+		FROM tmpPresents
+		WHERE centre = centr
+		AND team = tea;
+	END IF;
+
+	-- Sélectionne les utilisateurs ayant le moins d'heures d'instruction sur une certaine période (cf cursor)
+	IF inst = 0 THEN
+		-- Calcule les heures restantes
+		SELECT (p.heures) - SUM(t.normales) - SUM(t.instruction)
+		INTO heuresLeft
+		FROM TBL_HEURES_A_PARTAGER AS p
+		, tmpPresents AS t
+		WHERE t.centre = centr
+		AND t.centre = p.centre
+		AND t.team = tea
+		AND t.team = p.team
+		AND p.date = dat;
+		-- Recherche le nombre de présents qui n'ont pas encore d'heures attribuées
+		SELECT COUNT(uid)
+		INTO unattr
+		FROM tmpPresents
+		WHERE statut = 'unattr'
+		AND centre = centr
+		AND team = tea;
+
+		OPEN curInstructeurs;
+		REPEAT
+		FETCH curInstructeurs INTO instructeursId, inst;
+		IF NOT done THEN
+			-- Attribue des heures d'instruction en fonction du nombre d'heures restantes à partager et le nombre de présents qui n'ont pas encore d'heures attribuées
+			UPDATE tmpPresents
+			SET instruction = ROUND(heuresLeft * 4 / unattr + .49) / 4, -- heuresLeft * 4 quarts d'heures / unattr + .49 pour arrondir au-dessus
+			normales = ROUND(heuresLeft * 2 / unattr + .49) / 4, -- heuresLeft * 4 quarts d'heures / (2 * unattr) +.49 pour arrondir au-dessus
+			statut = 'shared'
+			WHERE uid = instructeursId;
+		END IF;
+		UNTIL done END REPEAT;
+		CLOSE curInstructeurs;
+	END IF;
+
+	-- Calcule les heures restantes
 	SELECT (p.heures) - SUM(t.normales) - SUM(t.instruction)
 	INTO heuresLeft
 	FROM TBL_HEURES_A_PARTAGER AS p
-	, TBL_HEURES AS t
-	WHERE p.date = t.date
-	AND centre = centr
-	AND team = tea
+	, tmpPresents AS t
+	WHERE t.centre = centr
+	AND t.centre = p.centre
+	AND t.team = tea
+	AND t.team = p.team
 	AND p.date = dat;
 
-	SELECT heuresLeft / (SELECT COUNT(uid) FROM TBL_HEURES
+	SELECT heuresLeft / (SELECT COUNT(uid) FROM tmpPresents
 			WHERE statut = 'unattr'
-			AND date = dat
-			AND uid IN
-				(SELECT u.uid
-				FROM TBL_USERS AS u
-				, TBL_L_SHIFT_DISPO AS l
-				, TBL_AFFECTATION AS a
-				WHERE date = dat
-				AND l.uid = u.uid
-				AND u.uid = a.uid
-				AND actif IS TRUE
-				AND centre = centr
-				AND team = tea
-				AND dat BETWEEN beginning AND end
-				AND grade != 'c'
-				AND grade != 'theo'
-				AND did NOT IN (SELECT did
-					FROM TBL_DISPO
-					WHERE (absence IS TRUE OR dispo = 'fmp' OR dispo = 'cds')
-					AND actif IS TRUE)
-				UNION
-				-- et les personnels présents avec particularité (case non vide dans la grille)
-				SELECT u.uid
-				FROM TBL_USERS u
-				, TBL_AFFECTATION a
-				WHERE u.uid = a.uid
-				AND actif IS TRUE
-				AND centre = centr
-				AND team = tea
-				AND grade != 'c'
-				AND grade != 'theo'
-				AND dat BETWEEN beginning AND end
-				AND a.uid NOT IN (SELECT uid
-					FROM TBL_L_SHIFT_DISPO
-					WHERE date = dat)
-				)
+			AND centre = centr
+			AND team = tea
 		) INTO heuresEach;
+	
+	-- On ne peut avoir 0 heure sur une journée
+	IF heuresEach < .25 THEN
+		UPDATE tmpPresents
+		SET normales = .25
+		, statut = 'shared'
+		WHERE statut = 'unattr'
+		AND centre = centr
+		AND team = tea;
+	ELSE
+		UPDATE tmpPresents
+		SET normales = (SELECT ROUND(heuresEach * 4) / 4)
+		, statut = 'shared'
+		WHERE statut = 'unattr'
+		AND centre = centr
+		AND team = tea;
+	END IF;
 
-	UPDATE TBL_HEURES
-	SET normales = (SELECT ROUND(heuresEach * 4) / 4)
-	, statut = 'shared'
-	WHERE statut = 'unattr'
-	AND date = dat
-	AND uid IN (SELECT uid
-		FROM TBL_AFFECTATION
+	REPLACE INTO TBL_HEURES
+		(SELECT uid, did, dat, normales, instruction, simulateur, statut
+		FROM tmpPresents
 		WHERE centre = centr
-		AND team = tea
-		AND dat BETWEEN beginning AND end
-	);
+		AND team = tea);
 
 	UPDATE TBL_HEURES_A_PARTAGER
 	SET dispatched = TRUE
@@ -520,9 +619,51 @@ DROP PROCEDURE IF EXISTS addHeuresIndividuelles|
 CREATE PROCEDURE addHeuresIndividuelles( IN userid INT, IN dateH DATE, IN normal FLOAT, IN instruc FLOAT, IN simul FLOAT )
 BEGIN
 	REPLACE INTO TBL_HEURES
-		(uid, nom, date, normales, instruction, simulateur)
+		(uid, nom, date, normales, instruction, simulateur, statut)
 		VALUES
-		(userid, (SELECT nom FROM TBL_USERS WHERE uid = userid), dateH, normal, instruc, simul);
+		(userid, (SELECT nom FROM TBL_USERS WHERE uid = userid), dateH, normal, instruc, simul, 'unattr');
+END
+|
+DROP PROCEDURE IF EXISTS attribAnneeConge|
+CREATE PROCEDURE attribAnneeConge( IN nomU CHAR(64) , IN dateC DATE , IN anneeC INT )
+BEGIN
+	DECLARE done BOOLEAN DEFAULT 0;
+	DECLARE count_rows INT;
+	DECLARE userid INT;
+	DECLARE super INT;
+
+	SELECT SQL_CALC_FOUND_ROWS uid
+	INTO userid
+	FROM TBL_USERS
+	WHERE nom = nomU;
+
+	SELECT FOUND_ROWS()
+	INTO count_rows;
+
+	IF count_rows > 1 THEN
+		SET done = 1;
+	END IF;
+
+	IF NOT done THEN
+		SELECT SQL_CALC_FOUND_ROWS sdid
+		INTO super
+		FROM TBL_L_SHIFT_DISPO
+		WHERE uid = userid
+		AND date = dateC;
+
+		SELECT FOUND_ROWS()
+		INTO count_rows;
+
+		IF count_rows > 1 THEN
+			SET done = 1;
+		END IF;
+
+		IF NOT done THEN
+			UPDATE TBL_VACANCES
+			SET year = anneeC
+			WHERE sdid = super;
+		END IF;
+	END IF;
 END
 |
 
