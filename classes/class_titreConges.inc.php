@@ -35,6 +35,7 @@ class TitreConges extends tFPDF {
 		,30	=> 'tfpdf/titreVro.png' // Vro
 		,32	=> 'tfpdf/titreConges.png' // Vex
 	);
+	private $imageAnnulation = 'tfpdf/annulation.png';
 	private $cteam = array(
 		1	=> array( 1 => array(123, 60), 2 => array(245, 115))
 		,2	=> array( 1 => array(123, 60), 2 => array(245, 115))
@@ -107,6 +108,12 @@ class TitreConges extends tFPDF {
 		,30	=> array( 1 => array(64, 146.5))
 		,32	=> array( 1 => array(64, 146.5))
 	);
+	private $annulation = false; // Positionné si il s'agit d'un titre d'annulation de congé
+
+	// Permet de générer un titre d'annulation
+	public function annulation() {
+		$this->annulation = true;
+	}
 
 	public function __construct() {
 		parent::__construct($orientation='l', $unit='mm', $size='A4');
@@ -205,6 +212,9 @@ class TitreConges extends tFPDF {
 				$this->Cell(0, 0, substr($commentaire, 0, $maxlength));
 				// $this->Cell(0, 0, substr(iconv('UTF-8', 'ISO-8859-1', $commentaire), 0, $maxlength)); // Si la police n'est pas utf8
 			}
+		}
+		if ($this->annulation) {
+			$this->Image($this->imageAnnulation);
 		}
 	}
 
