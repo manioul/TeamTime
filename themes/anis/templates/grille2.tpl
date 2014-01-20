@@ -2,7 +2,7 @@
 <div id="tgrille">
 	<table id="grille">
 {foreach $grille as $lines}{* Les deux premières lignes sont dans un thead, les suivantes dans le tbody *}
-	{if $lines@first}<thead>{elseif $lines@iteration == 2}</thead>
+	{if $lines@first}<thead>{elseif $lines@iteration == 3}</thead>
 	<tbody>{/if}
 	<tr id="line{$lines@iteration}">
 {foreach $lines as $value}
