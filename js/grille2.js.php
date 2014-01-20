@@ -564,7 +564,20 @@ function infosFromId(sId) {
 			}
 			else
 			{
-				return false;
+				aId = sId.match(/deca(\d+)m(\d+)j(\d+)s(.+)c(\d+)/);
+				if (aId instanceof Array) {
+					var aArray = new Array();
+					aArray["Year"] = aId[1];
+					aArray["Month"] = aId[2];
+					aArray["Day"] = aId[3];
+					aArray["Vacation"] = aId[4];
+					aArray["cycleId"] = aId[5];
+					return aArray;
+				}
+				else
+				{
+					return false;
+				}
 			}
 		}
 	}
@@ -727,7 +740,7 @@ function collapseRow(sId) {
 	var sRow = "#"+oParent[0].id;
 	var aSiblings = $(sRow).siblings();
 	var sTest = "";
-	for (var i=0; i<aSiblings.length; i++) {
+	for (var i=0; i<aSiblings.length - 1; i++) {
 		var sTempId = "#" + aSiblings[i].id;
 		if (sId != sTempId) {
 			$(sTempId).hide();
