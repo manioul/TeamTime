@@ -723,10 +723,10 @@ class utilisateursDeLaGrille {
 			$cond = "WHERE " . implode(' AND ', $condition);
 		}
 		$sql = sprintf("
-			SELECT *
+			SELECT DISTINCT uid, *
 			FROM `TBL_USERS`
 			%s
-		       	%s"
+			%s"
 			, $cond
 			, $order
 		);
@@ -747,7 +747,8 @@ class utilisateursDeLaGrille {
 		if (is_null($centre)) $centre = 'athis';
 		if (is_null($team)) $team = '9e';
 		if ('all' == $centre && 'all' == $team) {
-			$sql = "SELECT `TU`.*,
+			$sql = "SELECT DISTINCT `TU`.`uid`,
+				`TU`.*,
 				`TA`.`centre`,
 				`TA`.`team`
 				FROM `TBL_USERS` AS `TU`
@@ -760,7 +761,8 @@ class utilisateursDeLaGrille {
 			       	AND `TU`.`actif` = 1 ";
 			$sql .= "ORDER BY `TU`.`poids` ASC";
 		} elseif ('all' == $team) {
-			$sql = "SELECT `TU`.*,
+			$sql = "SELECT DISTINCT `TU`.`uid`,
+				`TU`.*,
 				`TA`.`centre`,
 				`TA`.`team`
 				FROM `TBL_USERS` AS `TU`
@@ -774,7 +776,8 @@ class utilisateursDeLaGrille {
 			       	AND `TU`.`actif` = 1 ";
 			$sql .= "ORDER BY `TU`.`poids` ASC";
 		} else {
-			$sql = "SELECT `TU`.*,
+			$sql = "SELECT DISTINCT `TU`.`uid`,
+				`TU`.*,
 				`TA`.`centre`,
 				`TA`.`team`
 				FROM `TBL_USERS` AS `TU`
