@@ -499,7 +499,6 @@ class Cycle {
 	//-----------------------------------------------
 	public function compteType($type = 'dispo') {
 		$date = clone $this->dateRef();
-		$date->decDate();
 		$sql = sprintf("
 			SELECT `l`.`uid`,
 			MOD(COUNT(`l`.`sdid`), 10)
@@ -511,16 +510,15 @@ class Cycle {
 			AND (`a`.`centre` = '%s' OR `a`.`centre` = 'all')
 			AND (`a`.`team` = '%s' OR `a`.`team` = 'all')
 			AND `d`.`type decompte` = '%s'
-			AND `l`.`date` < '%s'
-			AND `a`.`beginning` < '%s'
-			AND `a`.`end` > '%s'
+			AND `l`.`date` <= '%s'
+			AND `l`.`date` >= `a`.`beginning`
+			AND '%s' BETWEEN `a`.`beginning` AND `a`.`end`
 			GROUP BY `uid`"
 			, $this->centre
 			, $this->team
 			, $type
 			, $date->date()
 			, $date->date()
-			, $date->addJours(2)->date()
 		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
@@ -545,18 +543,19 @@ class Cycle {
 		$date->addJours(self::getCycleLength()-1);
 		$sql = sprintf("
 			SELECT `l`.`uid`,
-			MOD(COUNT(`l`.`sdid`), 10)
-			FROM `TBL_L_SHIFT_DISPO` `l`,
-			`TBL_AFFECTATION` `a`,
-			`TBL_DISPO` `d`
+			MOD(COUNT(DISTINCT `l`.`sdid`), 10)
+			FROM `TBL_L_SHIFT_DISPO` AS `l`,
+			`TBL_AFFECTATION` AS `a`,
+			`TBL_DISPO` AS `d`
 			WHERE `l`.`did` = `d`.`did`
 			AND `l`.`uid` = `a`.`uid`
 			AND (`a`.`centre` = '%s' OR `a`.`centre` = 'all')
 			AND (`a`.`team` = '%s' OR `a`.`team` = 'all')
 			AND `d`.`type decompte` = '%s'
-			AND `l`.`date` < '%s'
-			AND `a`.`beginning` < '%s'
-			AND `a`.`end` > '%s'
+			AND `l`.`date` <= '%s'
+			AND `l`.`date` >= `a`.`beginning`
+			AND `a`.`beginning` <= '%s'
+			AND `a`.`end` >= '%s'
 			GROUP BY `uid`"
 			, $this->centre
 			, $this->team
