@@ -93,6 +93,10 @@ class Affectation {
 		}
 		return $this->beginning;
 	}
+	// Alias pour la méthode beginning (utilisée pour la récupération des valeurs du formulaire)
+	public function dateD($beginning = NULL) {
+		return $this->beginning($beginning);
+	}
 	/*
 	 * Retourne la fin de l'affectation comme une chaîne formattée pour la bdd
 	 */
@@ -105,6 +109,10 @@ class Affectation {
 			}
 		}
 		return $this->end;
+	}
+	// Alias pour la méthode end (utilisée pour la récupération des valeurs du formulaire)
+	public function dateF($end = NULL) {
+		return $this->end($end);
 	}
 	public function setFromRow($row) {
 		foreach ($row as $key => $value) {

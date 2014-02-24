@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS `TBL_DISPATCH_HEURES` (
 	  `statut` enum('shared','fixed') NOT NULL COMMENT 'Les heures sont partagées ou fixes',
 	  `heures` decimal(4,2) NOT NULL COMMENT 'Nombre de minutes allouées',
 	  PRIMARY KEY (`rid`)
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `TBL_DISPATCH_HEURES_USER` (
 	  `rid` int(11) NOT NULL,
@@ -361,7 +361,7 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS addDispatchSchema|
-CREATE PROCEDURE addDispatchSchema( IN cycles VARCHAR(64) , IN centr VARCHAR(50) , IN tea VARCHAR(10) , IN grades VARCHAR(60) , IN dispos VARCHAR(128) , IN typ VARCHAR(64) , IN statu VARCHAR(64) , IN nbHeures DECIMAL(4,2) )
+CREATE PROCEDURE addDispatchSchema( IN cycles VARCHAR(64) , IN centr VARCHAR(50) , IN tea VARCHAR(10) , IN grad VARCHAR(64) , IN dispos VARCHAR(128) , IN typ VARCHAR(64) , IN statu VARCHAR(64) , IN nbHeures DECIMAL(4,2) )
 BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE dids VARCHAR(64);
@@ -386,7 +386,7 @@ BEGIN
 		cycles VARCHAR( 64 ) NOT NULL ,
 		centre VARCHAR( 50 ) NOT NULL DEFAULT 'athis',
 		team VARCHAR( 10 ) NOT NULL DEFAULT '9e',
-		grades VARCHAR( 60 ) NOT NULL DEFAULT 'pc',
+		grades VARCHAR( 64 ) NOT NULL DEFAULT 'pc',
 		dispos VARCHAR( 128 ) DEFAULT NULL ,
 		type ENUM( 'norm', 'instru', 'simu' ) NOT NULL ,
 		statut ENUM( 'shared', 'fixed' ) NOT NULL COMMENT 'Les heures sont partagées ou fixes',
@@ -421,19 +421,30 @@ BEGIN
 	INSERT INTO TBL_DISPATCH_HEURES
 	(rid, cids, centre, team, grades, dids, type, statut, heures)
 	VALUES
-	(NULL, cids, centr, tea, grades, dids, typ, statu, nbHeures);
+	(NULL, cids, centr, tea, grad, dids, typ, statu, nbHeures);
 
 	INSERT INTO TBL_DISPATCH_HEURES_USER
 	(rid, cycles, centre, team, grades, dispos, type, statut, heures)
 	VALUES
-	(LAST_INSERT_ID(), cycles, centr, tea, UPPER(grades), dispos, typ, statu, nbHeures);
+	(LAST_INSERT_ID(), cycles, centr, tea, UPPER(grad), dispos, typ, statu, nbHeures);
 
-	SELECT * FROM TBL_DISPATCH_HEURES;
-	SELECT * FROM TBL_DISPATCH_HEURES_USER;
+	-- SELECT * FROM TBL_DISPATCH_HEURES;
+	-- SELECT * FROM TBL_DISPATCH_HEURES_USER;
+END
+|
+DROP PROCEDURE IF EXISTS searchAffectation|
+CREATE PROCEDURE searchAffectation( IN userid INT(11) , IN dat DATE , OUT centr VARCHAR(50) , OUT tea VARCHAR(10) , OUT grad VARCHAR(64) )
+BEGIN
+	SELECT centre, team, grade
+	INTO centr, tea, grad
+	FROM TBL_AFFECTATION
+	WHERE dat BETWEEN beginning AND end
+	AND uid = userid
+	AND validated IS TRUE;
 END
 |
 DROP PROCEDURE IF EXISTS addAffectation|
-CREATE PROCEDURE addAffectation( IN userid INT , IN centr VARCHAR(50) , IN tea VARCHAR(10) , IN gra VARCHAR(64) , IN debut DATE , IN fin DATE )
+CREATE PROCEDURE addAffectation( IN userid INT , IN centr VARCHAR(50) , IN tea VARCHAR(10) , IN grad VARCHAR(64) , IN debut DATE , IN fin DATE )
 BEGIN
 	DECLARE notFound, prevFound, nextFound BOOLEAN DEFAULT 0;
 	DECLARE prevAffectId, nextAffectId INT;
@@ -490,27 +501,27 @@ BEGIN
 		IF NOT prevFound AND NOT nextFound THEN
 			-- Ajoute la nouvelle affectation
 			INSERT INTO TBL_AFFECTATION
-			(aid, uid, centre, team, grade, beginning, end)
+			(aid, uid, centre, team, grade, beginning, end, validated)
 			VALUES
-			(NULL, userid, centr, tea, gra, debut, fin);
+			(NULL, userid, centr, tea, grad, debut, fin, TRUE);
 		ELSE
 			-- Si la nouvelle affectation est identique à la précédente, on prolonge la précédente au besoin
-			IF centr = prevCentre AND tea = prevTeam AND gra = prevGrade AND prevEnd < fin THEN
+			IF centr = prevCentre AND tea = prevTeam AND grad = prevGrade AND prevEnd < fin THEN
 				UPDATE TBL_AFFECTATION
 				SET end = fin
 				WHERE aid = prevAffectId;
 			ELSE
 				-- Si la nouvelle affectation est identique à la précédente, on étend la précédente au besoin
-				IF centr = nextCentre AND tea = nextTeam AND gra = nextGrade AND nextBeginning > debut THEN
+				IF centr = nextCentre AND tea = nextTeam AND grad = nextGrade AND nextBeginning > debut THEN
 					UPDATE TBL_AFFECTATION
 					SET beginning = debut
 					WHERE aid = prevAffectId;
 				ELSE
 					-- Ajoute la nouvelle affectation
 					INSERT INTO TBL_AFFECTATION
-					(aid, uid, centre, team, grade, beginning, end)
+					(aid, uid, centre, team, grade, beginning, end, validated)
 					VALUES
-					(NULL, userid, centr, tea, gra, debut, fin);
+					(NULL, userid, centr, tea, grad, debut, fin, TRUE);
 
 					IF prevFound THEN
 						-- Modifie la date de fin de l'affectation précédente
@@ -522,9 +533,9 @@ BEGIN
 						-- l'ancien poste, après la nouvelle affectation
 						IF fin < prevEnd AND NOT nextFound THEN
 							INSERT INTO TBL_AFFECTATION
-							(aid, uid, centre, team, grade, beginning, end)
+							(aid, uid, centre, team, grade, beginning, end, validated)
 							VALUES
-							(NULL, userid, centr, tea, prevGrade, DATE_ADD(fin, INTERVAL 1 DAY), prevEnd);
+							(NULL, userid, prevCentre, prevTeam, prevGrade, DATE_ADD(fin, INTERVAL 1 DAY), prevEnd, TRUE);
 						END IF;
 					END IF;
 					IF nextFound THEN
@@ -537,9 +548,9 @@ BEGIN
 						-- l'ancien poste, après la nouvelle affectation
 						IF debut > prevBeginning AND NOT prevFound THEN
 							INSERT INTO TBL_AFFECTATION
-							(aid, uid, centre, team, grade, beginning, end)
+							(aid, uid, centre, team, grade, beginning, end, validated)
 							VALUES
-							(NULL, userid, centr, tea, nextGrade, nextBeginning, DATE_SUB(fin, INTERVAL 1 DAY));
+							(NULL, userid, nextCentre, nextTeam, nextGrade, nextBeginning, DATE_SUB(fin, INTERVAL 1 DAY), TRUE);
 						END IF;
 					END IF;
 				END IF;

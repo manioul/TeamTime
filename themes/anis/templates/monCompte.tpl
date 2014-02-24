@@ -124,7 +124,7 @@
 
 
 
-<form name="fAffectation" id="fAffectation" class="" method="POST" action="monCompte.php">
+<form name="fAffectation" id="fAffectation" class="" method="POST" action="monCompte.php" onsubmit="return confirm('La modification des carrières influe sur le calcul des heures. Confirmez-vous cette modification ?')">
 <input type="hidden" name="uid" value="{$utilisateur->uid()}" />
 <div id="carriere">
 <h2>Carrière et affectations</h2>
@@ -140,8 +140,8 @@
 <input type="text" name="centre" value="{$utilisateur->centre()}" /></td>
 <td><input type="text" name="team" value="{$utilisateur->team()}" /></td>
 <td><select name="grade"><option value="c">C</option><option value="theo">Théorique</option><option value="pc">PC</option><option value="fmp">FMP</option><option value="dtch">Détaché</option><option value="ce">CE</option><option value="cds">CDS</option></select></td>
-<td><input type="date" name="beginning" id="dateD" /></td>
-<td><input type="date" name="end" id="dateF" /></td>
+<td><input type="date" name="dateD" id="dateD" /></td>
+<td><input type="date" name="dateF" id="dateF" /></td>
 <td><input type="submit" class="bouton" name="submitAffect" value="Mettre à jour" /></td>
 </tr>
 {foreach $datas as $carriere}
@@ -149,8 +149,8 @@
 <td>{$carriere->centre()}</td>
 <td>{$carriere->team()}</td>
 <td>{$carriere->grade()}</td>
-<td>{$carriere->beginning()->date()}</td>
-<td>{$carriere->end()->date()}</td>
+<td>{$carriere->beginning()->formatDate()}</td>
+<td>{$carriere->end()->formatDate()}</td>
 <td><div class="imgwrapper12" style="left:5px;cursor:pointer;" onclick='supprInfo("affectation", {$carriere->aid()}, {$utilisateur->uid()});' title="Supprimer l'entrée"><img class="cnl" alt="supprimer" src="{$image}" /></div></td>
 </tr>
 {/foreach}
