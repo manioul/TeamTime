@@ -139,7 +139,6 @@ if (!empty($_GET['f']) && preg_match('/^\d{14}\.pdf$/', $_GET['f']) && file_exis
 require 'required_files.inc.php';
 
 $titres = array();
-$index = 0;
 
 if (is_dir($dir)) {
 	if ($dh = opendir($dir)) {
@@ -147,7 +146,8 @@ if (is_dir($dir)) {
 			$matches = array();
 			if (preg_match('/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\.pdf$/', $file, $matches) === 1) {
 				$fileF = $_SERVER['DOCUMENT_ROOT'] . "/$dir/$file";
-				$titres[$index++] = array(
+				$index = sprintf("%s%s%s%s%s%s", $matches[1], $matches[2], $matches[3], $matches[4], $matches[5], $matches[6]);
+				$titres[$index] = array(
 					'date'		=> sprintf("le %s/%s/%s à %s:%s:%s", $matches[3], $matches[2], $matches[1], $matches[4], $matches[5], $matches[6])
 					, 'file'	=> $file
 					, 'filesize'	=> filesize($fileF)
@@ -157,6 +157,7 @@ if (is_dir($dir)) {
 		closedir($dh);
 	}
 }
+krsort($titres);
 
 $smarty->assign('titres', $titres);
 
