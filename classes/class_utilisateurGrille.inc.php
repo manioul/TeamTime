@@ -128,7 +128,7 @@ class utilisateurGrille extends utilisateur {
 				parent::page('affiche_grille.php'); // La page par défaut des utilisateurs
 				parent::__construct($param);
 				$this->gid = 255; // Par défaut, on fixe le gid à la valeur la plus élevée
-				return $this->setFromRow($param); // Retourne true si l'affectation s'est bien passée, false sinon
+				return @ $this->setFromRow($param); // Retourne true si l'affectation s'est bien passée, false sinon
 			} elseif (is_int($param)) {
 				$this->setFromDb($param);
 			}
@@ -159,9 +159,9 @@ class utilisateurGrille extends utilisateur {
 			if (method_exists($this, $key)) {
 				$this->$key($value);
 			} else {
-				$this->key = $value;
-				firePhpError($cle . " => " . $valeur, 'Valeur inconnue');
-				debug::getInstance()->triggerError('Valeur inconnue' . $cle . " => " . $valeur);
+				$this->$key = $value;
+				firePhpError($this->$key . " => " . $value, 'Valeur inconnue');
+				debug::getInstance()->triggerError('Valeur inconnue' . $this->$key . " => " . $value);
 				debug::getInstance()->lastError(ERR_BAD_PARAM);
 				$valid = false;
 			}
