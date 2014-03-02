@@ -30,9 +30,11 @@ CREATE TABLE IF NOT EXISTS `TBL_DISPATCH_HEURES` (
 	  `dids` varchar(128) DEFAULT NULL,
 	  `type` enum('norm','instru','simu') NOT NULL,
 	  `statut` enum('shared','fixed') NOT NULL COMMENT 'Les heures sont partagées ou fixes',
-	  `heures` decimal(4,2) NOT NULL COMMENT 'Nombre de minutes allouées',
+	  `heures` decimal(4,2) NOT NULL COMMENT 'Nombre d''heures allouées',
+	  `ordre` INT NOT NULL COMMENT 'définit la précédence des règles',
 	  PRIMARY KEY (`rid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+ALTER TABLE `TBL_DISPATCH_HEURES` ADD `ordre` INT NOT NULL COMMENT 'définit la précédence des règles';
 
 CREATE TABLE IF NOT EXISTS `TBL_DISPATCH_HEURES_USER` (
 	  `rid` int(11) NOT NULL,
@@ -116,6 +118,7 @@ BEGIN
 			OR dispo = 'fmp'
 			OR dispo = 'cds');
 	-- Liste les heures fixes attribuées à des dispos qui sont présentes dans la grille ce jour
+	-- Au cas où plusieurs règles sont susceptibles de s'appliquer, celle dont ordre est le plus élevé est retenue (traitée en dernier)
 	DECLARE curFixed CURSOR FOR SELECT rid, grades, type, heures, dids
 		FROM TBL_DISPATCH_HEURES
 		WHERE statut = 'fixed'
@@ -124,7 +127,8 @@ BEGIN
 				WHERE date = dat
 				AND centre = centr
 				AND team = tea)
-			, cids);
+			, cids)
+		ORDER BY ordre ASC;
 	-- Recherche deux pc qui ont le moins d'heures d'instruction pour leur attribuer les heures disponibles
 	-- Ils doivent avoir une certaine ancienneté dans l'affectation (4 mois)
 	DECLARE curInstructeurs CURSOR FOR SELECT uid, SUM(instruction) AS instru
@@ -233,6 +237,14 @@ BEGIN
 			, rid = ruleid
 			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
 			AND (FIND_IN_SET(did, didFixed) OR did = didFixed);
+			-- Pour les attribution fixes à des grades particuliers sans dispo particulières
+			UPDATE tmpPresents
+			SET normales = valeurFixed
+			, statut = 'fixed'
+			, rid = ruleid
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
+			AND didFixed IS NULL
+			AND did IS NULL;
 		ELSEIF typeFixed = 'instru' THEN
 			UPDATE tmpPresents
 			SET instruction = valeurFixed
@@ -240,6 +252,14 @@ BEGIN
 			, rid = ruleid
 			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
 			AND (FIND_IN_SET(did, didFixed) OR did = didFixed);
+			-- Pour les attribution fixes à des grades particuliers sans dispo particulières
+			UPDATE tmpPresents
+			SET normales = valeurFixed
+			, statut = 'fixed'
+			, rid = ruleid
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
+			AND didFixed IS NULL
+			AND did IS NULL;
 		ELSEIF typeFixed = 'simu' THEN
 			UPDATE tmpPresents
 			SET simulateur = valeurFixed
@@ -247,6 +267,14 @@ BEGIN
 			, rid = ruleid
 			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
 			AND (FIND_IN_SET(did, didFixed) OR did = didFixed);
+			-- Pour les attribution fixes à des grades particuliers sans dispo particulières
+			UPDATE tmpPresents
+			SET normales = valeurFixed
+			, statut = 'instru'
+			, rid = ruleid
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
+			AND didFixed IS NULL
+			AND did IS NULL;
 		END IF;
 	END IF;
 	UNTIL done END REPEAT;
