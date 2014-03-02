@@ -152,7 +152,6 @@ while ($row = $_SESSION['db']->db_fetch_array($result)) {
 		,'traite'	=> 0 // Si ce congé a été traité
 	);
 }
-/*?><pre><? print_r($arr); ?></pre><? */
 mysqli_free_result($result);
 if (sizeof($arr) == 0) { // Il n'y a pas de congé à poser...
 	exit;

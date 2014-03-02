@@ -126,6 +126,7 @@ $aListe = array();
 $dHeures = NULL;
 $fHeures = NULL;
 
+// Saisie des heures
 if (!empty($_POST['tableau'])) {
 	if (preg_match_all('/([\.\d]+)\s+([,\d]+)/', $_POST['tableau'], $array, PREG_PATTERN_ORDER)) {
 		$aDates = preg_replace('/(\d{2})\.(\d{2})\.(\d{2})/', '${1}/${2}/20${3}', $array[1]);
@@ -177,6 +178,7 @@ if (!empty($_POST['tableau'])) {
 		$err[] = "Les heures saisies ne sont pas au format attendu... :(";
 	}
 }
+// Recalcul des heures
 if (!empty($_POST['dateD']) && !empty($_POST['dateF'])) {
 	$dateD = new Date($_POST['dateD']);
 	$dateF = new Date($_POST['dateF']);
