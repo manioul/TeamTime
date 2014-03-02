@@ -26,11 +26,11 @@
 $conf['page']['elements']['firePHP'] = 1;
 $conf['page']['include']['constantes'] = 1; // Ce script nécessite la définition des constantes
 $conf['page']['include']['errors'] = 1; // le script gère les erreurs avec errors.inc.php
-$conf['page']['include']['class_debug'] = 1; // La classe debug est nécessaire à ce script
+$conf['page']['include']['class_debug'] = NULL; // La classe debug est nécessaire à ce script
 $conf['page']['include']['globalConfig'] = 1; // Ce script nécessite config.inc.php
 $conf['page']['include']['init'] = 1; // la session est initialisée par init.inc.php
-$conf['page']['include']['globals_db'] = 1; // Le DSN de la connexion bdd est stockée dans globals_db.inc.php
-$conf['page']['include']['class_db'] = 1; // Le script utilise class_db.inc.php
+$conf['page']['include']['globals_db'] = 0; // Le DSN de la connexion bdd est stockée dans globals_db.inc.php
+$conf['page']['include']['class_db'] = 0; // Le script utilise class_db.inc.php
 $conf['page']['include']['session'] = 1; // Le script utilise les sessions par session.imc
 $conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 $conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
@@ -204,14 +204,6 @@ if (isset($content[2])) $smarty->assign('content2', $content[2]);
 if (isset($content[3])) $smarty->assign('content3', $content[3]);
 if (isset($content[4])) $smarty->assign('content4', $content[4]);
 if (!empty($contenu)) $smarty->assign('contenu', $contenu);
-
-firePHPInfo(sprintf('Passage en %s du dialogue avec la base.', $_SESSION['db']->character_set()));
-$result = $_SESSION['db']->db_interroge("SHOW VARIABLES LIKE '%character%'");
-$arr = array();
-while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-	firePhpLog($row, 'charset db');
-}
-
 
 if (isset($_SESSION['AUTHENTICATED'])) {
 	if (isset($_GET['norights'])) {
