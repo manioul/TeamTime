@@ -125,14 +125,10 @@ $checked = array();
 $uid = (empty($_GET['uid']) || empty($_SESSION['ADMIN']) ? $_SESSION['utilisateur']->uid() : (int) $_GET['uid']);
 $dateDebut = "01-10-2012";
 $dateFin = "01-01-2014";
-$nom = $_SESSION['utilisateur']->nom();
-$prenom = $_SESSION['utilisateur']->prenom();
+$nom = (empty($_GET['nom']) || empty($_SESSION['ADMIN']) ? $_SESSION['utilisateur']->nom() : $_GET['nom']);
+$prenom = (empty($_GET['nom']) || empty($_SESSION['ADMIN']) ? $_SESSION['utilisateur']->prenom() : '');
 if (!empty($_GET['d'])) $dateDebut = $_GET['d'];
 if (!empty($_GET['f'])) $dateFin = $_GET['f'];
-if (!empty($_GET['nom'])) {
-	$nom = $_GET['nom'];
-	$prenom = "";
-}
 if (!empty($_POST['dateD'])) $dateDebut = $_POST['dateD'];
 if (!empty($_POST['dateF'])) $dateFin = $_POST['dateF'];
 
@@ -156,7 +152,9 @@ while ($row = $_SESSION['db']->db_fetch_row($result)) {
 }
 mysqli_free_result($result);
 
-$smarty->assign('defaultD', '01/01/2013');
+$previousYear = (int) date('Y');
+$previousYear--;
+$smarty->assign('defaultD', '01/01/' . $previousYear);
 $smarty->assign('aDispos', $aDispos);
 $smarty->assign('checked', $checked);
 
