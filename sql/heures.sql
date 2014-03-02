@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `TBL_HEURES_A_PARTAGER` (
 	  `team` varchar(10) NOT NULL,
 	  `date` date NOT NULL,
 	  `heures` decimal(4,2) NOT NULL,
-	  `dispatched` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'POsitionné lorsque les heures ont été calculées',
+	  `dispatched` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Positionné lorsque les heures ont été calculées',
 	  `writable` tinyint(1) NOT NULL DEFAULT '1',
 	  PRIMARY KEY (`centre`,`team`,`date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Le nombre d''heures à paratager par jour';
@@ -103,8 +103,8 @@ BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE gradeFixed VARCHAR(64);
 	DECLARE typeFixed VARCHAR(64);
-	DECLARE userid, dispoid, ruleid, eleves, instructeursId, unattr, valeurFixed, didFixed, heuresLeft INT;
-	DECLARE inst, heuresEach FLOAT;
+	DECLARE userid, dispoid, ruleid, eleves, instructeursId, unattr, didFixed INT;
+	DECLARE valeurFixed, heuresLeft, inst, heuresEach FLOAT;
 	DECLARE nbInstructeurs INT DEFAULT 5; -- Nombre de personnes (moins une) qui se partageront les heures d'instruction
 	-- Recherche les dispo des utilisateurs présents
 	DECLARE curDisp CURSOR FOR SELECT uid, did
@@ -225,6 +225,7 @@ BEGIN
 	REPEAT
 	FETCH curFixed INTO ruleid, gradeFixed, typeFixed, valeurFixed, didFixed;
 	IF NOT done THEN
+		-- CALL messageSystem("Ajout des heures fixes", "DEBUG", 'dispatchOneDayHeures', NULL, CONCAT("ruleid:",ruleid,";grade:",gradeFixed,";heures:",valeurFixed,";did:",didFixed,";"));
 		IF typeFixed = 'norm' THEN
 			UPDATE tmpPresents
 			SET normales = valeurFixed
@@ -502,9 +503,9 @@ DROP PROCEDURE IF EXISTS addHeuresIndividuelles|
 CREATE PROCEDURE addHeuresIndividuelles( IN userid INT, IN dateH DATE, IN normal FLOAT, IN instruc FLOAT, IN simul FLOAT )
 BEGIN
 	REPLACE INTO TBL_HEURES
-		(uid, nom, date, normales, instruction, simulateur, statut)
+		(uid, date, normales, instruction, simulateur, statut)
 		VALUES
-		(userid, (SELECT nom FROM TBL_USERS WHERE uid = userid), dateH, normal, instruc, simul, 'unattr');
+		(userid, dateH, normal, instruc, simul, 'unattr');
 END
 |
 
