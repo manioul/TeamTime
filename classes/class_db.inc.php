@@ -96,6 +96,11 @@ class database {
 			//$this->db_interroge( sprintf("SET NAMES '%s'", $this->DSN['NAMES']) ); // Plante la bdd avec mysqli
 		}
 	}
+	public function change_user($DSN) {
+		if (mysqli_change_user($this->link, $DSN['username'], $DSN['password'], $DSN['dbname'])) {
+			$this->DSN = $DSN;
+		}
+	}
 // Interrogation
 	public function db_interroge ($query) {
 		if (! (is_resource($this->link)) ) {

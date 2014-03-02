@@ -110,8 +110,14 @@ if (!empty($requireAdmin) && empty($_SESSION['ADMIN'])) {
 
 
 # S'il n'y a pas d'objet base de données défini dans la session, on en définit un
-if (empty($_SESSION['db']) || !is_object($_SESSION['db'])) {
-	$_SESSION['db'] = new database($GLOBALS['DSN']['admin']);
+if (empty($_SESSION['db']) || !is_a($_SESSION['db'], 'database')) {
+	if (!empty($_SESSION['utilisateur']) && is_a($_SESSION['utilisateur'], 'utilisateurGrille')) {
+		$DSN = $GLOBALS['DSN']['user'];
+		$DSN['username'] = 'ttm.'.$_SESSION['utilisateur']->uid();
+		$_SESSION['db'] = new database($DSN);
+	} else {
+		$_SESSION['db'] = new database($GLOBALS['DSN']['admin']);
+	}
 }
 
 // Vérifie si le site est en maintenance

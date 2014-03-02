@@ -42,14 +42,18 @@ $conf['page']['include']['class_cycle'] = NULL; // La classe cycle est nécessai
 
 require 'required_files.inc.php';
 
+$_SESSION['db'] = new database($GLOBALS['DSN']['admin']);
+
 $sql = sprintf("
-	SELECT * FROM `TBL_USERS` AS `TU`
-	, `TBL_AFFECTATION` AS `TA`
-	, `TBL_CLASSE` AS `TC`
-	WHERE `TA`.`uid` = `TU`.`uid`
-	AND `TC`.`uid` = `TU`.`uid`
-	AND `TU`.`login` = '%s'
-	AND `TU`.`sha1` = SHA1('%s')
+	SELECT * FROM `TBL_USERS` AS `u`
+	, `TBL_AFFECTATION` AS `a`
+	, `TBL_ROLE` AS `r`
+	, `TBL_CLASSE` AS `c`
+	WHERE `a`.`uid` = `u`.`uid`
+	AND `c`.`uid` = `u`.`uid`
+	AND `r`.`uid` = `u`.`uid`
+	AND `u`.`login` = '%s'
+	AND `u`.`sha1` = SHA1('%s')
 	", $_SESSION['db']->db_real_escape_string($login)
 	, $_SESSION['db']->db_real_escape_string($login . $pwd)
 );
@@ -57,14 +61,28 @@ $result = $_SESSION['db']->db_interroge($sql);
 if (mysqli_num_rows($result) > 0) {
 	session_regenerate_id(); // Éviter les attaques par fixation de session
 	$row = $_SESSION['db']->db_fetch_assoc($result);
+	mysqli_free_result($result);
+	$DSN = $GLOBALS['DSN']['user'];
+	$DSN['username'] = 'ttm.'.$row['uid'];
+	$_SESSION['db']->change_user($DSN);
 	$_SESSION['utilisateur'] = new utilisateurGrille($row);
 	$_SESSION['AUTHENTICATED'] = true;
 	$_SESSION['centre'] = $_SESSION['utilisateur']->centre();
 	$_SESSION['team'] = $_SESSION['utilisateur']->team();
 	// Mise à jour des informations de connexion
-	$upd = sprintf("UPDATE `TBL_USERS` SET `lastlogin` = NOW(), `nblogin` = %s WHERE `login` = '%s'", $row['nblogin'] + 1, $row['login']);
+	$upd = sprintf("
+		UPDATE `TBL_USERS`
+		SET `lastlogin` = NOW()
+		, `nblogin` = %d
+		WHERE `login` = '%s'"
+		, $row['nblogin'] + 1
+		, $row['login']);
 	$_SESSION['db']->db_interroge($upd);
-	$sql = sprintf("SELECT `groupe` FROM `TBL_GROUPS` WHERE `gid` >= '%s'", $row['gid']);
+	$sql = sprintf("
+		SELECT `groupe`
+		FROM `TBL_GROUPS`
+		WHERE `gid` >= '%s'"
+		, $row['gid']);
 	$result2 = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_array($result2)) {
 		$_SESSION[strtoupper($row[0])] = true;
