@@ -180,9 +180,12 @@ if (!empty($dateDebut)) {
 	 */
 	$exclude = "";
 	if (sizeof($_POST['dispo']) > 0) {
+		// Permettre d'avoir des heures attribuées par l'utilisateur (unattr) sur des jours filtrés
 		$exclude = sprintf("
-			AND NOT FIND_IN_SET(`did`, '%s')
+			AND (NOT FIND_IN_SET(`did`, '%s')
+			OR (FIND_IN_SET(`did`, '%s') AND `statut` = 'unattr'))
 			", $_SESSION['db']->db_real_escape_string(implode(',', array_keys($_POST['dispo'])))
+			, $_SESSION['db']->db_real_escape_string(implode(',', array_keys($_POST['dispo'])))
 		);
 	}
 

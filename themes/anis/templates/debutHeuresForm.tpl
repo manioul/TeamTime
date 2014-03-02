@@ -16,7 +16,7 @@
 </li>
 <li>{* Dispos de l'agent *}
 	<fieldset>
-	<legend>Exclusions</legend>
+	<legend>Filtres</legend>
 	<ul>
 	{foreach $aDispos as $dispo => $nom_long}
 	<li>
