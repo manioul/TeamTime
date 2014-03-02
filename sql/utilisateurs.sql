@@ -21,6 +21,15 @@ BEGIN
 	FLUSH PRIVILEGES;
 END
 |
+DROP PROCEDURE IF EXISTS deleteUser|
+CREATE PROCEDURE deleteUser( IN userid INT(11) )
+BEGIN
+	CALL __deleteUtilisateurDb( userid );
+	UPDATE TBL_USERS
+	SET active = FALSE
+	WHERE uid = userid;
+END
+|
 DROP PROCEDURE IF EXISTS searchAffectation|
 CREATE PROCEDURE searchAffectation( IN userid INT(11) , IN dat DATE , OUT centr VARCHAR(50) , OUT tea VARCHAR(10) , OUT grad VARCHAR(64) )
 BEGIN
