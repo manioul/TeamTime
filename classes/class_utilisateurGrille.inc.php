@@ -30,6 +30,7 @@ require_once 'class_jourTravail.inc.php';
 require_once 'config.inc.php';
 require_once 'class_contacts.inc.php';
 require_once 'class_affectations.inc.php';
+require_once 'class_message.inc.php';
 
 
 class utilisateurGrille extends utilisateur {
@@ -52,6 +53,7 @@ class utilisateurGrille extends utilisateur {
 	private $indexPage; // L'index de la page favorite (ouverte après la connexion) dans le tableaux $availablePages
 	private $dispos; /* un tableau contenant un tableau des dispos indexées par les dates:
 			* $dispos[date] = array('dispo1', 'dispo2',... 'dispoN'); */
+	private $messages;
 	private static $label = array();
 	private static $availablePages = array(
 		1	=> array ('titre'	=> 'Cycle unique'
@@ -120,6 +122,45 @@ class utilisateurGrille extends utilisateur {
 			, 'lastlogin'	=> htmlspecialchars("Date de dernière connexion", ENT_COMPAT)
 		);
 		parent::_fieldsDefinition($correspondances, $regen);
+	}
+	public static function createUser($row) {
+		$dateD = new Date($row['dateD']);
+		$dateF = new Date($row['dateF']);
+		$sql = sprintf("CALL createUser('%s', '%s', '%s', '%s', '%s', %s, %d, %s, %s, '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+			", $_SESSION['db']->db_real_escape_string($row['nom'])
+			, $_SESSION['db']->db_real_escape_string($row['prenom'])
+			, $_SESSION['db']->db_real_escape_string($row['login'])
+			, $_SESSION['db']->db_real_escape_string($row['email'])
+			, $_SESSION['db']->db_real_escape_string($row['password'])
+			, $row['locked'] == 'on' ? 'TRUE' : 'FALSE'
+			, (int) $row['poids']
+			, $row['actif'] == 'on' ? 'TRUE' : 'FALSE'
+			, $row['showtipoftheday'] == 'on' ? 'TRUE' : 'FALSE'
+			, $_SESSION['db']->db_real_escape_string($row['page'])
+			, $GLOBALS['DSN']['user']['password']
+			, $_SESSION['db']->db_real_escape_string($row['centre'])
+			, $_SESSION['db']->db_real_escape_string($row['team'])
+			, $_SESSION['db']->db_real_escape_string($row['grade'])
+			, $dateD->date()
+			, $dateF->date()
+		);
+		$_SESSION['db']->db_interroge($sql);
+		mysqli_free_result($result);
+	}
+	// Liste les pages accessibles par tous les utilisateurs à partir des entrées de menus
+	// et retourne un tableau utilisable par un html.form.select.tpl
+	public static function listAvailablePages() {
+		$select = array('label' => 'Première page', 'name' => 'page');
+		$sql = "SELECT `titre` AS `content`, `lien` AS `value`
+			FROM `TBL_ELEMS_MENUS`
+			WHERE `allowed` = 'all'
+			AND `titre` != 'logout'";
+		$result = $_SESSION['db']->db_interroge($sql);
+		while($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$select['options'][] = $row;
+		}
+		mysqli_free_result($result);
+		return $select;
 	}
 // Constructeur
 	public function __construct ($param = NULL) {
@@ -592,13 +633,31 @@ class utilisateurGrille extends utilisateur {
 		}
 		return $this->indexPage;
 	}
+	public function messages() {
+		return $this->messages;
+	}
+	public function retrMessages() {
+		$result = $_SESSION['db']->db_interroge("SELECT *
+			FROM `TBL_MESSAGES_SYSTEME`
+			WHERE `catégorie` = 'USER'
+			AND lu IS FALSE
+			AND `utilisateur` = 'ttm." . $this->uid . "@localhost'");
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$this->messages[] = new message($row);
+		}
+		return $this->messages;
+	}
+	public function flushMessages() {
+		$this->messages = array();
+	}
 // Méthodes relatives à la base de données
 	public function setFromDb($uid) {
 		$sql = sprintf("
 			SELECT *
-		       	FROM `TBL_USERS`
-			WHERE `uid` = %d"
-			, $uid);
+			FROM `TBL_USERS`
+			WHERE `uid` = %d
+			", $uid
+		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$row = $_SESSION['db']->db_fetch_assoc($result);
 		parent::__construct($row);
@@ -824,7 +883,7 @@ class utilisateursDeLaGrille {
 			$cond = "WHERE " . implode(' AND ', $condition);
 		}
 		$sql = sprintf("
-			SELECT DISTINCT uid, *
+			SELECT *
 			FROM `TBL_USERS`
 			%s
 			%s"
@@ -833,8 +892,30 @@ class utilisateursDeLaGrille {
 		);
 		return $this->retourneUsers($sql);
 	}
-	public function getActiveUsers($centre = 'athis', $team = '9e', $condition = NULL, $order = "ORDER BY `poids` ASC") {
+	public function getActiveUsers($centre = NULL, $team = NULL, $condition = NULL, $order = "ORDER BY `poids` ASC") {
 		$cond = array("`actif` = 1");
+		if (!is_null($centre)) {
+			if (is_string($centre)) {
+				$cond[] = "`centre` = '$centre'";
+			} elseif (is_array($centre)) {
+				$co = "(";
+				foreach ($centre as $cent) {
+					$co .= "`centre` = '$cent' OR ";
+				}
+				$cond[] = substr($co, 0, -4) . ')';
+			}
+		}
+		if (!is_null($team)) {
+			if (is_string($team)) {
+				$cond[] = "`team` = '$team'";
+			} elseif (is_array($team)) {
+				$co = "(";
+				foreach ($team as $cent) {
+					$co .= "`team` = '$cent' OR ";
+				}
+				$cond[] = substr($co, 0, -4) . ')';
+			}
+		}
 		if (is_array($condition)) $cond = array_merge($cond, $condition);
 		return $this->getUsers($cond, $order);
 	}

@@ -1,7 +1,7 @@
 <?php
-// monCompte.php
+// ajoutUtilisateur.php
 //
-// Page permettant de gérer l'état civil et les informations de la carrière d'un utilisateur
+// Ajoute un utilisateur
 
 /*
 	TeamTime is a software to manage people working in team on a cyclic shift.
@@ -23,7 +23,7 @@
 
 // Require authenticated user
 // L'utilisateur doit être logué pour accéder à cette page
-$requireAuthenticatedUser = true;
+$requireAdmin = true;
 
 ob_start(); // Obligatoire pour firePHP
 
@@ -41,10 +41,11 @@ ob_start(); // Obligatoire pour firePHP
 	$conf['page']['include']['session'] = 1; // Le script utilise les sessions par session.imc
 	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
-	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
+	$conf['page']['include']['class_cycle'] = NULL; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
 	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
 	$conf['page']['compact'] = false; // Compactage des scripts javascript et css
+	$conf['page']['include']['bibliothequeMaintenance'] = false; // La bibliothèque des fonctions de maintenance est nécessaire
 /*
  * Fin de la définition des include
  */
@@ -53,7 +54,7 @@ ob_start(); // Obligatoire pour firePHP
 /*
  * Configuration de la page
  */
-        $conf['page']['titre'] = sprintf("Carrière"); // Le titre de la page
+        $conf['page']['titre'] = sprintf("Ajout d'un utilisateur"); // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -90,28 +91,22 @@ ob_start(); // Obligatoire pour firePHP
 	$conf['page']['elements']['debugMessages'] = $DEBUG;
 
 
-	// Facilite la saisie d'un intervalle de date
-	$conf['page']['elements']['intervalDate'] = true;
 
 	// Utilisation de jquery
-	$conf['page']['javascript']['jquery'] = true;
+	$conf['page']['javascript']['jquery'] = false;
 	// Utilisation de ajax
-	$conf['page']['javascript']['ajax'] = true;
+	$conf['page']['javascript']['ajax'] = false;
 	// Utilisation de grille2.js.php
 	$conf['page']['javascript']['grille2'] = false;
-	// Utilisation de grille2.js
-	$conf['page']['javascript']['grille2js'] = false;
 	// Utilisation de utilisateur.js
-	$conf['page']['javascript']['utilisateur'] = true;
-	// Utilisation de administration
-	$conf['page']['javascript']['administration'] = true;
+	$conf['page']['javascript']['utilisateur'] = false;
 
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
 	$conf['page']['stylesheet']['general'] = true;
-	$conf['page']['stylesheet']['grille'] = true;
+	$conf['page']['stylesheet']['grille'] = false;
 	$conf['page']['stylesheet']['grilleUnique'] = false;
-	$conf['page']['stylesheet']['utilisateur'] = true;
+	$conf['page']['stylesheet']['utilisateur'] = false;
 
 	// Compactage des pages
 	$conf['page']['compact'] = false;
@@ -122,85 +117,82 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
-// Les utilisateurs non admin ne peuvent accéder qu'à leurs données
-if (!empty($_SESSION['ADMIN']) && !empty($_REQUEST['uid'])) {
-	$utilisateur = new UtilisateurGrille( (int) $_REQUEST['uid']);
-} else {
-	$utilisateur = new UtilisateurGrille( $_SESSION['utilisateur']->uid());
-}
-if (!is_a($utilisateur, 'utilisateurGrille')) {
-	die("On n'a pas obtenu l'objet attendu");
-}
+// Ce script nécessite Pear::Mail et Pear::Mail_Mime
+// pear install mail
+// pear install Mail_Mime
+//
+require_once 'Mail.php';
+require_once 'Mail/mime.php';
 
-if (sizeof($_POST) > 0) {
-	if (empty($_SESSION['ADMIN'])) $_POST['uid'] = $_SESSION['utilisateur']->uid();
-	if (!empty($_POST['submitAffect'])) {
-		$utilisateur->addAffectation($_POST);
-	} else if (!empty($_POST['submitContact'])) {
-		if (!isset($_POST['actif']) && $_SESSION['ADMIN']) $_POST['actif'] = 0;
-		if (!isset($_POST['locked']) && $_SESSION['ADMIN']) $_POST['locked'] = 0;
-		if (!isset($_POST['totd']) && $_SESSION['ADMIN']) $_POST['showtipoftheday'] = 0;
+if (sizeof($_POST) > 1) {
+	utilisateurGrille::createUser($_POST);
+	// Envoi d'un mail
+	if (isset($_POST['sendmail']) && $_POST['sendmail'] == "on") {
+		$crlf = "\n";
+		$message = sprintf("Bonjour %s,
 
-		$utilisateur->setFromRow($_POST);
+Votre compte pour utiliser TeamTime a été créé.
+Vous pouvez désormais y accéder sur :
+https://teamtime.me
+à l'aide des identifiants suivants (gare aux majuscules/minuscules) :
+login : %s
+mot de passe : %s
 
-		// Ajout de la page favorite (jointe après la connexion)
-		if ($utilisateur->page($utilisateur->availablePages('uri', $_POST['read'])) === false) {
-			print "Erreur de mise à jour de la page...";
+Grâce à TeamTime, vous pouvez déposer vos congés, récup, stages où que
+vous soyez et quand vous le souhaitez.
+Vous pouvez également vérifier les prochaines vacations, et voir qui sera
+présent.
+Vous visualisez, aisément, les briefings à venir, la période de charge,
+les vacances scolaires.
+Vous suivez votre décompte de congés et de récup, à tout moment.
+Vous accédez, également, à votre décompte d'heures très facilement.
+
+Pour toute question, n'hésitez pas à contater le webmaster.
+Mail : webmaster@teamtime.me
+XMPP : manioul@teamtime.me
+Friendica : https://titoux.info/profile/teamtime
+
+Bonne utilisation.
+
+++ ;)"
+			, ucfirst($_POST['prenom'])
+			, $_POST['login']
+			, $_POST['password']
+		);
+		$hdrs = array(
+			'From'		=> "noreply@teamtime.me"
+			,'Subject'	=> 'Création de votre compte TeamTime'
+		);
+		$mime = new Mail_mime(array(
+			'eol'		=> $crlf
+			,'head_charset'	=> 'utf-8'
+			,'text_charset'	=> 'utf-8'
+		));
+		$mime->setTXTBody($message);
+		$body = $mime->get();
+		$hdrs = $mime->headers($hdrs);
+
+		$mail =& Mail::factory('mail');
+		if (TRUE === $mail->send($_POST['email'], $hdrs, $body)) {
+
+		} else {
+			$err = "Échec : le mail n'a pas été envoyé...";
 		}
-
-		// S'il y a un nouveau téléphone à ajouter
-		if (!empty($_POST['newnb'])) {
-			$newPhone = array(
-				'uid'	=> $utilisateur->uid()
-				, 'phone'		=> $_POST['newnb']
-				, 'description'	=> $_POST['newdesc']
-			);
-			if (isset($_POST['newpal'])) {
-				$newPhone['principal'] = true;
-			} else {
-				$newPhone['principal'] = false;
-			}
-			$utilisateur->addPhone($newPhone);
-		}
-
-		// S'il y a une nouvelle adresse à ajouter
-		if (!empty($_POST['newadresse']) && !empty($_POST['newville']) && !empty($_POST['newcp'])) {
-			$utilisateur->addAdresse(array(
-				'uid'	=> $utilisateur->uid()
-				, 'adresse'	=> $_POST['newadresse']
-				, 'ville'	=> $_POST['newville']
-				, 'cp'		=> $_POST['newcp']
-				)
-			);
-		}
-		$utilisateur->fullUpdateDB();
 	}
 }
 
-// Données nécessaires à la partie contact
+$centres = Affectation::listeAffectations('centre', $_SESSION['utilisateur']->centre());
+$centres['label'] = 'Centre';
+$teams = Affectation::listeAffectations('team', $_SESSION['utilisateur']->team());
+$teams['label'] = 'Équipe';
+$grades = Affectation::listeAffectations('grade');
+$grades['label'] = 'Grade';
+$smarty->assign('centres', $centres);
+$smarty->assign('teams', $teams);
+$smarty->assign('grades', $grades);
+$smarty->assign('availablePages', utilisateurGrille::listAvailablePages());
 
-$smarty->assign('centres', Affectation::listeAffectations('centre', $_SESSION['utilisateur']->centre() ));
-$smarty->assign('teams', Affectation::listeAffectations('team', $_SESSION['utilisateur']->team()));
-$smarty->assign('grades', Affectation::listeAffectations('grade', $_SESSION['utilisateur']->grade()));
-$smarty->assign('utilisateur', $utilisateur);
-$smarty->assign('locked', $utilisateur->locked());
-$smarty->assign('actif', $utilisateur->actif());
-$smarty->assign('totd', $utilisateur->showtipoftheday());
-
-// Données relatives à la carrière
-
-$smarty->assign('datas', $utilisateur->orderedAffectations());
-
-$smarty->display("monCompte.tpl");
-
-/*
- * Informations de debug
- */
-include 'debug.inc.php';
-firePhpLog($conf, '$conf');
-firePhpLog(debug::getInstance()->format(), 'format debug messages');
-firePhpLog($javascript, '$javascript');
-firePhpLog($stylesheet, '$stylesheet');
+$smarty->display('ajoutUtilisateur.tpl');
 
 // Affichage du bas de page
 $smarty->display('footer.tpl');

@@ -45,8 +45,7 @@ if ($_SESSION['ADMIN']) {
 		`team`
 		FROM `TBL_USERS`,
 		`TBL_AFFECTATION`
-		WHERE `gid` > 0
-		AND `actif` = TRUE
+		WHERE `actif` = TRUE
 		AND `TBL_USERS`.`uid` = `TBL_AFFECTATION`.`uid`
 		AND `beginning` <= '%s'
 		AND `end` >= '%s'
@@ -103,8 +102,7 @@ $(function() {
 		`poids`
 		FROM `TBL_USERS`,
 		`TBL_AFFECTATION`
-		WHERE `gid` > 0
-		AND `actif` = TRUE
+		WHERE `actif` = TRUE
 		AND `TBL_USERS`.`uid` = `TBL_AFFECTATION`.`uid`
 		AND `beginning` <= '%s'
 		AND `end` >= '%s'

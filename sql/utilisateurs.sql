@@ -1,4 +1,55 @@
+ALTER TABLE TBL_USERS DROP gid;
+-- Création d'une table pour lister les différentes affectations (centre, team, grade)
+DROP TABLE IF EXISTS TBL_CONFIG_AFFECTATIONS;
+CREATE TABLE `TBL_CONFIG_AFFECTATIONS` (
+	  `caid` int(11) NOT NULL AUTO_INCREMENT,
+	  `type` varchar(64) NOT NULL,
+	  `nom` varchar(64) NOT NULL,
+	  `description` text NOT NULL,
+	  PRIMARY KEY (`caid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+INSERT INTO TBL_CONFIG_AFFECTATIONS
+	(caid, type, nom, description)
+	VALUES
+	(NULL, 'centre', 'athis', 'CRNA Nord - Athis-Mons'),
+	(NULL, 'centre', 'Aix', 'CRNA Sud-Est - Aix-en-Provence'),
+	(NULL, 'centre', 'Reims', 'CRNA Est - Reims'),
+	(NULL, 'centre', 'Bordeaux', 'CRNA Sud-Ouest - Bordeaux'),
+	(NULL, 'centre', 'Brest', 'CRNA Ouest - Brest'),
+	(NULL, 'grade', 'C', 'Élève'),
+	(NULL, 'grade', 'Théorique', 'Élève ayant obtenu son théorique'),
+	(NULL, 'grade', 'PC', 'Premier contrôleur'),
+	(NULL, 'grade', 'FMP', 'FMPiste'),
+	(NULL, 'grade', 'Détaché', 'contrôleur détaché'),
+	(NULL, 'grade', 'CE', "Chef d'équipe"),
+	(NULL, 'grade', 'CDS', 'Chef de salle'),
+	(NULL, 'team', '1e', 'Équipe 1 Est'),
+	(NULL, 'team', '2e', 'Équipe 2 Est'),
+	(NULL, 'team', '3e', 'Équipe 3 Est'),
+	(NULL, 'team', '4e', 'Équipe 4 Est'),
+	(NULL, 'team', '5e', 'Équipe 5 Est'),
+	(NULL, 'team', '6e', 'Équipe 6 Est'),
+	(NULL, 'team', '7e', 'Équipe 7 Est'),
+	(NULL, 'team', '8e', 'Équipe 8 Est'),
+	(NULL, 'team', '9e', 'Équipe 9 Est'),
+	(NULL, 'team', '10e', 'Équipe 10 Est'),
+	(NULL, 'team', '11e', 'Équipe 11 Est'),
+	(NULL, 'team', '12e', 'Équipe 12 Est'),
+	(NULL, 'team', '1w', 'Équipe 1 Ouest'),
+	(NULL, 'team', '2w', 'Équipe 2 Ouest'),
+	(NULL, 'team', '3w', 'Équipe 3 Ouest'),
+	(NULL, 'team', '4w', 'Équipe 4 Ouest'),
+	(NULL, 'team', '5w', 'Équipe 5 Ouest'),
+	(NULL, 'team', '6w', 'Équipe 6 Ouest'),
+	(NULL, 'team', '7w', 'Équipe 7 Ouest'),
+	(NULL, 'team', '8w', 'Équipe 8 Ouest'),
+	(NULL, 'team', '9w', 'Équipe 9 Ouest'),
+	(NULL, 'team', '10w', 'Équipe 10 Ouest'),
+	(NULL, 'team', '11w', 'Équipe 11 Ouest'),
+	(NULL, 'team', '12w', 'Équipe 12 Ouest');
+
 DELIMITER |
+-- CREATION/SUPPRESSION UTILISATEURS
 DROP PROCEDURE IF EXISTS __createUtilisateurDb|
 CREATE PROCEDURE __createUtilisateurDb ( IN userid INT(11) , IN passwd VARCHAR(64) )
 BEGIN

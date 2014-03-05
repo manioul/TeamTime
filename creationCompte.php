@@ -106,7 +106,7 @@ require 'required_files.inc.php';
 
 // Recherche des infos des utilisateurs
 $infos = array();
-$sql = "SELECT `nom` FROM `TBL_USERS` WHERE `locked` = FALSE AND `actif` = TRUE AND `gid` > 0 ORDER BY `poids` ASC";
+$sql = "SELECT `nom` FROM `TBL_USERS` WHERE `locked` = FALSE AND `actif` = TRUE ORDER BY `poids` ASC";
 $result = $_SESSION['db']->db_interroge($sql);
 while ($row = $_SESSION['db']->db_fetch_array($result)) {
 	$infos[] = $row[0];

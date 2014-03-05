@@ -136,10 +136,9 @@
 </thead>
 <tbody>
 <tr>
-<td>
-<input type="text" name="centre" value="{$utilisateur->centre()}" /></td>
-<td><input type="text" name="team" value="{$utilisateur->team()}" /></td>
-<td><select name="grade"><option value="c">C</option><option value="theo">Théorique</option><option value="pc">PC</option><option value="fmp">FMP</option><option value="dtch">Détaché</option><option value="ce">CE</option><option value="cds">CDS</option></select></td>
+<td>{include file="html.form.select.tpl" select=$centres}</td>
+<td>{include file="html.form.select.tpl" select=$teams}</td>
+<td>{include file="html.form.select.tpl" select=$grades}</td>
 <td><input type="date" name="dateD" id="dateD" /></td>
 <td><input type="date" name="dateF" id="dateF" /></td>
 <td><input type="submit" class="bouton" name="submitAffect" value="Mettre à jour" /></td>

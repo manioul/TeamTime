@@ -36,6 +36,28 @@ class Affectation {
 	private $beginning;
 	private $end;
 	private $table = 'TBL_AFFECTATION'; // La table qui gère les affectations
+
+	// Recherche les affectations possibles en fonction du type (centre, team, grade)
+	// et utilise $selected pour définir la valeur par défaut
+	// Ceci est directement utilisable avec html.form.select.tpl
+	public static function listeAffectations($type, $selected = NULL) {
+		$array = array('name' => $type);
+		$index = 0;
+		$sql = sprintf("SELECT `nom`
+			FROM `TBL_CONFIG_AFFECTATIONS`
+			WHERE `type` = '%s'
+			", $_SESSION['db']->db_real_escape_string($type));
+		$result = $_SESSION['db']->db_interroge($sql);
+		while($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$array['options'][$index]['content'] = $row['nom'];
+			$array['options'][$index]['value'] = $row['nom'];
+			if (!is_null($selected) && $row['nom'] == $selected) {
+				$array['options'][$index]['selected'] = "selected";
+			}
+			$index++;
+		}		
+		return $array;
+	}
 // Consctucteur
 	public function __construct($param = NULL) {
 		if (is_null($param)) return true;

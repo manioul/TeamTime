@@ -114,15 +114,13 @@ require 'required_files.inc.php';
 
 if (empty($_POST['nom'])) { // On vérifie que des données de formulaire n'ont pas été envoyées
 	if (isset($_SESSION['ADMIN'])) {
-		$centre = 'all';
-		$team = 'all';
+		$centre = NULL;
+		$team = NULL;
 	} else {
 		$centre = $_SESSION['utilisateur']->centre();
 		$team = $_SESSION['utilisateur']->team();
 	}
-	$from = date('Y-m-d');
-	$to = (isset($_GET['all'])) ? -1 : $from;
-	$users = utilisateursDeLaGrille::getInstance()->getUsersFromTo($from, $to, $centre, $team, (int) $active);
+	$users = utilisateursDeLaGrille::getInstance()->getActiveUsers($centre, $team);
 	$usersInfos = array();
 	$form = array();
 	$header = array();
