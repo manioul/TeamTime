@@ -119,14 +119,21 @@ class elemMenu {
 	}
 // méthodes de bdd
 	public function db_setElem() {
+		$find_in_set = "";
+		foreach (array_flip(array_flip(array_merge(array('all'), $_SESSION['utilisateur']->roles(), $_SESSION['utilisateur']->classe(date('Y-m-d'))))) as $set) {
+			$find_in_set .= sprintf("FIND_IN_SET('%s', `allowed`) OR ", $_SESSION['db']->db_real_escape_string($set));
+		}
 		$requete = sprintf("
 			SELECT * FROM `TBL_ELEMS_MENUS`
 			WHERE `idx` = %d
 			AND `actif` = TRUE
 			AND (%s)"
 			, $this->idx
-			, $_SESSION['utilisateur']->db_condition_like_classe('allowed')
+			, substr($find_in_set, 0, -4)
 		);
+		/*$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "dbRetrRoles", NULL, NULL)'
+			, $requete)
+		);*/ 
 		$this->_setFromElemMenu($_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($requete)));
 	}
 	private function _db_insertDB() {
@@ -333,14 +340,21 @@ class menu {
 		return TRUE;
 	}
 	private function _db_setFromDB() {
+		$find_in_set = "";
+		foreach (array_flip(array_flip(array_merge(array('all'), $_SESSION['utilisateur']->roles(), $_SESSION['utilisateur']->classe(date('Y-m-d'))))) as $set) {
+			$find_in_set .= sprintf("FIND_IN_SET('%s', `allowed`) OR ", $_SESSION['db']->db_real_escape_string($set));
+		}
 		$requete = sprintf("
 			SELECT * FROM `TBL_MENUS`
 			WHERE `idx` = %d
 			AND `actif` = TRUE
 			AND (%s)"
 			, $this->idx
-			, $_SESSION['utilisateur']->db_condition_like_classe('allowed')
+			, substr($find_in_set, 0, -4)
 		);
+		/*$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "dbRetrRoles", NULL, NULL)'
+			, $requete)
+		);*/ 
 		return ($this->_db_setFromRow($_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($requete))));
 	}
 	private function _db_getElems() {

@@ -45,15 +45,9 @@ require 'required_files.inc.php';
 $_SESSION['db'] = new database($GLOBALS['DSN']['admin']);
 
 $sql = sprintf("
-	SELECT * FROM `TBL_USERS` AS `u`
-	, `TBL_AFFECTATION` AS `a`
-	, `TBL_ROLE` AS `r`
-	, `TBL_CLASSE` AS `c`
-	WHERE `a`.`uid` = `u`.`uid`
-	AND `c`.`uid` = `u`.`uid`
-	AND `r`.`uid` = `u`.`uid`
-	AND `u`.`login` = '%s'
-	AND `u`.`sha1` = SHA1('%s')
+	SELECT `uid`, `nblogin` FROM `TBL_USERS`
+	WHERE `login` = '%s'
+	AND `sha1` = SHA1('%s')
 	", $_SESSION['db']->db_real_escape_string($login)
 	, $_SESSION['db']->db_real_escape_string($login . $pwd)
 );
@@ -65,7 +59,7 @@ if (mysqli_num_rows($result) > 0) {
 	$DSN = $GLOBALS['DSN']['user'];
 	$DSN['username'] = 'ttm.'.$row['uid'];
 	$_SESSION['db']->change_user($DSN);
-	$_SESSION['utilisateur'] = new utilisateurGrille($row);
+	$_SESSION['utilisateur'] = new utilisateurGrille((int) $row['uid']);
 	$_SESSION['AUTHENTICATED'] = true;
 	$_SESSION['centre'] = $_SESSION['utilisateur']->centre();
 	$_SESSION['team'] = $_SESSION['utilisateur']->team();
@@ -74,15 +68,17 @@ if (mysqli_num_rows($result) > 0) {
 		UPDATE `TBL_USERS`
 		SET `lastlogin` = NOW()
 		, `nblogin` = %d
-		WHERE `login` = '%s'"
+		WHERE `uid` = %d"
 		, $row['nblogin'] + 1
-		, $row['login']);
+		, $row['uid']);
 	$_SESSION['db']->db_interroge($upd);
 	$sql = sprintf("
-		SELECT `groupe`
-		FROM `TBL_GROUPS`
-		WHERE `gid` >= '%s'"
-		, $row['gid']);
+		SELECT `role`
+		FROM `TBL_ROLES`
+		WHERE `uid` = %d
+		AND beginning <= NOW()
+		AND end >= NOW()"
+		, $row['uid']);
 	$result2 = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_array($result2)) {
 		$_SESSION[strtoupper($row[0])] = true;

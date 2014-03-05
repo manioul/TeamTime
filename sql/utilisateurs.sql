@@ -13,6 +13,32 @@ BEGIN
 	FLUSH PRIVILEGES;
 END
 |
+DROP PROCEDURE IF EXISTS createUser|
+CREATE PROCEDURE createUser( IN nom_ VARCHAR(64), IN prenom_ VARCHAR(64), IN login_ VARCHAR(15), IN email_ VARCHAR(128), IN password_ VARCHAR(255), IN locked_ BOOLEAN, IN poids_ SMALLINT(6), IN actif_ BOOLEAN, IN showtipoftheday_ BOOLEAN, IN page_ VARCHAR(255), IN dbpasswd_ VARCHAR(64), IN centre_ VARCHAR(50), IN team_ VARCHAR(10), IN grade_ VARCHAR(64), IN beginning_ DATE, IN end_ DATE )
+BEGIN
+	DECLARE userid INT(11);
+
+	-- Recherche un email ou un login identique
+	SELECT uid INTO userid FROM TBL_USERS WHERE email = email_ OR login = login_;
+
+	IF userid IS NULL THEN
+		CALL messageSystem(CONCAT("Création de l'utilisateur ", nom_), "USER", 'createUser', "Création utilissateur", CONCAT('nom:', nom_, ';prenom:', prenom_, ';login:', login_, ';email:', email_, ';via:', USER()));
+		INSERT INTO TBL_USERS
+			(nom, prenom, login, email, sha1, locked, poids, actif, showtipoftheday, page)
+			VALUES
+			(nom_, prenom_, login_, email_, SHA1(CONCAT(login_, password_)), locked_, poids_, actif_, showtipoftheday_, page_);
+		SET userid = LAST_INSERT_ID();
+		CALL __createUtilisateurDb(userid, dbpasswd_);
+		CALL addRole(userid, 'my_edit', centre_, team_, beginning_, end_, '', TRUE);
+		INSERT INTO TBL_AFFECTATION
+			(aid, uid, centre, team, grade, beginning, end, validated)
+			VALUES
+			(NULL, userid, centre_, team_, grade_, beginning_, end_, TRUE);
+	ELSE
+		CALL messageSystem("Création de l'utilisateur impossible : le login ou le mail sont déjà utilisés", "USER", 'createUser', "duplicate user info", CONCAT('nom:', nom_, ';prenom:', prenom_, ';login:', login_, ';email:', email_));
+	END IF;
+END
+|
 DROP PROCEDURE IF EXISTS __deleteUtilisateurDb|
 CREATE PROCEDURE __deleteUtilisateurDb (IN userid INT(11))
 BEGIN
@@ -26,10 +52,35 @@ CREATE PROCEDURE deleteUser( IN userid INT(11) )
 BEGIN
 	CALL __deleteUtilisateurDb( userid );
 	UPDATE TBL_USERS
-	SET active = FALSE
+	SET actif = FALSE
 	WHERE uid = userid;
+	DELETE FROM TBL_ROLES WHERE uid = userid;
 END
 |
+DROP PROCEDURE IF EXISTS reallyDeleteUser|
+CREATE PROCEDURE reallyDeleteUser( IN userid INT(11) )
+BEGIN
+	CALL deleteUser(userid);
+	DELETE FROM TBL_USERS WHERE uid = userid;
+	DELETE FROM TBL_AFFECTATION WHERE uid = userid;
+	DELETE FROM TBL_L_SHIFT_DISPO WHERE uid = userid;
+	DELETE FROM TBL_ADRESSES WHERE uid = userid;
+	DELETE FROM TBL_PHONE WHERE uid = userid;
+	DELETE FROM TBL_HEURES WHERE uid = userid;
+	DELETE FROM TBL_EVENEMENTS_SPECIAUX WHERE uid = userid;
+END
+|
+-- ROLES
+DROP PROCEDURE IF EXISTS addRole|
+CREATE PROCEDURE addRole( IN uid_ INT(11), IN role_ VARCHAR(10), IN centre_ VARCHAR(50), IN team_ VARCHAR(10), IN beginning_ DATE, IN end_ DATE, IN commentaire_ VARCHAR(150), IN confirmed_ BOOLEAN )
+BEGIN
+	REPLACE INTO TBL_ROLES
+		(uid, role, centre, team, beginning, end, commentaire, confirmed)
+		VALUES
+		(uid_, role_, centre_, team_, beginning_, end_, commentaire_, confirmed_);
+END
+|
+-- AFFECTATIONS
 DROP PROCEDURE IF EXISTS searchAffectation|
 CREATE PROCEDURE searchAffectation( IN userid INT(11) , IN dat DATE , OUT centr VARCHAR(50) , OUT tea VARCHAR(10) , OUT grad VARCHAR(64) )
 BEGIN
