@@ -211,7 +211,6 @@ BEGIN
 	DECLARE isReadOnly BOOLEAN DEFAULT 0;
 	DECLARE	congeDispo BOOLEAN DEFAULT 1;
 	DECLARE	anneeConge INT(11); -- l'année du congé
-	DECLARE	quantiteConge INT(11); -- le nombre max de congés de ce type
 	DECLARE	reliquat INT(11); -- le reliquat de congés de ce type
 	DECLARE	dateLimite VARCHAR(10); -- la date limite de dépôt des congés
 	DECLARE	debutDemiCycle DATE; -- La date de début du demi-cycle
@@ -231,13 +230,6 @@ BEGIN
 	AND (team = tea OR team = 'all');
 
 	IF NOT isReadOnly THEN
-		-- Recherche le nombre max de congés de ce type
-		SELECT quantity
-		INTO quantiteConge
-		FROM TBL_DISPO
-		WHERE did = dispoid;
-
-		CALL messageSystem(CONCAT('Quantité de congés:', quantiteConge), 'DEBUG', 'addConges', NULL, NULL);
 		-- Recherche la date limite des congés)s 
 		CALL dateLimiteConges(YEAR(dat)-1, centr, dateLimite);
 
@@ -265,7 +257,7 @@ BEGIN
 			AND v.sdid = l.sdid
 			AND uid = userid
 			AND year = YEAR(dat) - 1;
-			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat ', YEAR(dat) - 1, ' : ', reliquat));
+			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(dat) - 1, ':', reliquat, ';uid:', userid));
 			IF reliquat > 0 THEN
 				SET anneeConge = YEAR(dat) - 1;
 			ELSE
@@ -281,7 +273,7 @@ BEGIN
 				AND v.sdid = l.sdid
 				AND uid = userid
 				AND year = YEAR(dat);
-				CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat ', YEAR(dat), ' : ', reliquat));
+				CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(dat), ':', reliquat, ';uid:', userid));
 				IF reliquat > 0 THEN
 					SET anneeConge = YEAR(dat);
 				ELSE
@@ -303,7 +295,7 @@ BEGIN
 			AND v.sdid = l.sdid
 			AND uid = userid
 			AND year = YEAR(dat);
-			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat : ', reliquat));
+			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat:', reliquat, ';uid:', userid));
 			IF reliquat > 0 THEN
 				SET anneeConge = YEAR(dat);
 			ELSE
