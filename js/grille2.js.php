@@ -49,11 +49,14 @@ function getAvailableOccupations(oThis) {
 		return false;
        	}
 <?
-	$peutPoserCondition = "";
+	$find_in_set = "";
 	if (empty($_SESSION['ADMIN'])) { // Les non admins ont des restrictions sur les dispo qu'ils peuvent poser
-		$peutPoserCondition = sprintf(" AND (%s)", $_SESSION['utilisateur']->db_condition_like_classe('peut poser'));
+		foreach (array_flip(array_flip(array_merge(array('all'), $_SESSION['utilisateur']->roles(), $_SESSION['utilisateur']->classe(date('Y-m-d'))))) as $set) {
+			$find_in_set .= sprintf("FIND_IN_SET('%s', `peut poser`) OR ", $_SESSION['db']->db_real_escape_string($set));
+		}
+		$find_in_set = " AND (" . substr($find_in_set, 0, -4) . ")";
 	}
-	$sqlDispo = "SELECT `dispo`, `jours possibles` FROM `TBL_DISPO` WHERE `actif` = '1'$peutPoserCondition ORDER BY `poids`";
+	$sqlDispo = sprintf("SELECT `dispo`, `jours possibles` FROM `TBL_DISPO` WHERE `actif` = '1'%s ORDER BY `poids`", substr($find_in_set, 0, -4));
 	$resDispo = $_SESSION['db']->db_interroge($sqlDispo);
 	$sqlCycle = sprintf("SELECT `vacation` FROM `TBL_CYCLE` WHERE `vacation` != '%s'", REPOS);
 	$result = $_SESSION['db']->db_interroge($sqlCycle);
