@@ -290,7 +290,7 @@ class jourTravail extends Date {
 		$sql = sprintf("
 			REPLACE INTO `TBL_REMPLA`
 			(`uid`,`date`,`nom`,`phone`,`email`)
-			VALUES (%02d, '%s', '%s', '%s', '%s')
+			VALUES (%d, '%s', '%s', '%s', '%s')
 			"
 			, $rempla['uid']
 			, $_SESSION['db']->db_real_escape_string($rempla['date'])

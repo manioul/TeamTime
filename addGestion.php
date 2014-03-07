@@ -65,12 +65,13 @@ if (!isset($_POST['dateD']) || !isset($_POST['t']) || !isset($_POST['dateF'])) {
 		$description = $_SESSION['db']->db_real_escape_string($_POST['desc']);
 		$sql = sprintf("
 			INSERT INTO `%s`
-			(`dateD`, `dateF`, `description`)
-			VALUES ('%s', '%s', '%s')"
+			(`dateD`, `dateF`, `description`, `centre`)
+			VALUES ('%s', '%s', '%s', '%s')"
 			, $tables[$_POST['t']]
 			, $dateD->date()
 			, $dateF->date()
 			, $description
+			, $_SESSION['utilisateur']->centre()
 		);
 		$_SESSION['db']->db_interroge($sql);
 		$champs = array(
@@ -91,10 +92,12 @@ if (!isset($_POST['dateD']) || !isset($_POST['t']) || !isset($_POST['dateF'])) {
 			UPDATE `TBL_GRILLE`
 			SET `%s` = '%s'
 			WHERE `date` BETWEEN '%s' AND '%s'
+			AND `centre` = '%s'
 			", $champs[$_POST['t']][0]
 			, $champs[$_POST['t']][1]
 			, $dateD->date()
 			, $dateF->date()
+			, $_SESSION['utilisateur']->centre()
 		);
 		$_SESSION['db']->db_interroge($sql);
 	}

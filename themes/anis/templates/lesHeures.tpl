@@ -7,6 +7,7 @@
 <th>Heures normales</th>
 <th>Heures instruction</th>
 <th>Heures simulateur</th>
+<th>Heures double</th>
 </tr>
 </thead>
 <tbody>
@@ -16,6 +17,7 @@
 <td>{$totaux.normales}</td>
 <td>{$totaux.instruction}</td>
 <td>{$totaux.simulateur}</td>
+<td>{$totaux.double}</td>
 </tr>
 {/foreach}
 </tbody>

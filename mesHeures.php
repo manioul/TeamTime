@@ -188,7 +188,7 @@ if (!empty($dateDebut)) {
 	}
 
 	$sql = sprintf("
-		SELECT `date`, `normales`, `instruction`, `simulateur`
+		SELECT `date`, `normales`, `instruction`, `simulateur`, `double`
 		FROM `TBL_HEURES`
 		WHERE `uid` = %d
 		AND `date` BETWEEN '%s' AND '%s'
@@ -210,7 +210,7 @@ if (!empty($dateDebut)) {
 	 * Calcul des totaux
 	 */
 	$sql = sprintf("
-		SELECT SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`
+		SELECT SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`, SUM(`double`) AS `double`
 		FROM `TBL_HEURES`
 		WHERE `uid` = %d
 		AND `date` BETWEEN '%s' AND '%s'

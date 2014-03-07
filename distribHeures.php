@@ -23,7 +23,7 @@
 
 // Require authenticated user
 // L'utilisateur doit être logué pour accéder à cette page
-$requireAuthenticatedUser = true;
+$requireEditeur = true;
 
 ob_start(); // Obligatoire pour firePHP
 
@@ -178,13 +178,15 @@ while ($row = $_SESSION['db']->db_fetch_row($result)) {
 mysqli_free_result($result);
 
 // Recherche les différents grades possibles (dans TBL_AFFECTATION)
-$aEnum = $_SESSION['db']->db_set_enum_to_array('TBL_AFFECTATION', 'grade');
-unset($aEnum['Type']);
-$aChecked = array(	'pc'	=> 1
-			,'ce'	=> 1
-			,'cds'	=> 1
-			,'fmp'	=> 1
-		);
+$sql = "SELECT `nom`
+	FROM `TBL_CONFIG_AFFECTATIONS`
+	WHERE `type` = 'grade'
+	";
+$result = $_SESSION['db']->db_interroge($sql);
+while($row = $_SESSION['db']->db_fetch_assoc($result)) {
+	$aEnum[] = $row['nom'];
+}
+mysqli_free_result($result);
 
 // Recherche les différents grades possibles (dans TBL_AFFECTATION)
 $aType = $_SESSION['db']->db_set_enum_to_array('TBL_DISPATCH_HEURES', 'type');

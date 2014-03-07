@@ -27,7 +27,7 @@
 // L'utilisateur doit être éditeur pour accéder à cette page
 // Seuls les utilisateurs habilités à modifier librement la grille peuvent
 // (dé)locker une grille
-$requireEditeur = true;
+$requireTeamEdit = true;
 
 /*
  * Configuration de la page

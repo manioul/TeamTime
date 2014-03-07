@@ -23,7 +23,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-$requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette page
+$requireTeamEdit = true; // L'utilisateur doit être admin pour accéder à cette page
 
 ob_start(); // Obligatoire pour firePHP
 
@@ -118,23 +118,48 @@ require 'required_files.inc.php';
 $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
 
 // Recherche des dispos candidates à péréq
-$sql = "
+$dispos = array();
+$dispos['name'] = 'uid';
+$dispos['label'] = 'Dispos';
+$sql = sprintf("
 	SELECT `did`
 	, `dispo`
 	FROM `TBL_DISPO`
-	WHERE `actif` = 1
+	WHERE `actif` IS TRUE
 	AND (`type decompte` IS NOT NULL
-	    OR `need_compteur` IS TRUE)
+		OR `need_compteur` IS TRUE)
+	AND (`centre` = 'all' OR `centre` = '%s')
+	AND (`team` = 'all' OR `team` = '%s')
 	ORDER BY `poids` ASC
-	";
+	", $_SESSION['utilisateur']->centre()
+	, $_SESSION['utilisateur']->team()
+);
+$index = 0;
 $result = $_SESSION['db']->db_interroge($sql);
 while ($row = $_SESSION['db']->db_fetch_array($result)) {
-	$dispos[$row[0]] = $row[1];
+	$dispos['options'][$index]['value'] = $row[0];
+	$dispos['options'][$index]['content'] = $row[1];
+	$index++;
 }
 mysqli_free_result($result);
 $smarty->assign('users', $users);
 $smarty->assign('dispos', $dispos);
-$years = array("", date("Y")-1, date("Y"), date("Y")+1);
+$years = array(
+	'name'	=> 'year'
+	, 'label'	=> 'Année'
+	, 'options'	=> array(
+		0	=> array(
+			'value'		=> date("Y")-1
+			, 'content'	=> date("Y")-1)
+		, 1	=> array(
+			'value'		=> date("Y")
+			, 'content'	=> date("Y"))
+		, 2	=> array(
+			'value'		=> date("Y")+1
+			, 'content'	=> date("Y")+1)
+
+		)
+	);
 $smarty->assign('years', $years);
 if (isset($_POST['uid']) || isset($_POST['did']) || isset($_POST['year'])) {
 	$pereq = array();

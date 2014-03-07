@@ -1,7 +1,7 @@
 <?php
 /* administration.php
  *
- * Page squelette pour créer des pages personnalisées
+ * Ajout de briefing, période de charge, vacances scolaires
  *
  */
 
@@ -46,7 +46,7 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 /*
  * Configuration de la page
  */
-        $conf['page']['titre'] = "Administration de TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "Briefing, période de charge et vacances scolaires"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -132,24 +132,34 @@ $get = $_GET['q'];
 $titres = array();
 $datas = array();
 $arr = $forms[$get];
-		// Recherche des évènements déjà existant et postérieurs à la date courante
-		$sql = sprintf("SELECT `id`, `dateD`, `dateF`, `description` FROM `%s` WHERE `dateF` > NOW()", $arr['table']);
-		$result = $_SESSION['db']->db_interroge($sql);
-		$a = array();
-		while ($row = $_SESSION['db']->db_fetch_array($result)) {
-			$dateD = new Date($row[1]);
-			$dateF = new Date($row[2]);
-			$a[] = array(
-				'id'		=> $row[0]
-				,'dateD'	=> $dateD->formatDate('fr')
-				,'dateF'	=> $dateF->formatDate('fr')
-				,'description'	=> $row[3]
-				,'t'		=> $arr['t']
-			);
-		}
-		mysqli_free_result($result);
-		$datas = $a;
-		$titres = $arr;
+// Recherche des évènements déjà existant et postérieurs à la date courante
+$sql = sprintf("
+	SELECT `id`
+	, `dateD`
+	, `dateF`
+	, `description`
+	FROM `%s`
+	WHERE `dateF` > NOW()
+	AND `centre` = '%s'
+	", $arr['table']
+	, $_SESSION['utilisateur']->centre()
+);
+$result = $_SESSION['db']->db_interroge($sql);
+$a = array();
+while ($row = $_SESSION['db']->db_fetch_array($result)) {
+	$dateD = new Date($row[1]);
+	$dateF = new Date($row[2]);
+	$a[] = array(
+		'id'		=> $row[0]
+		,'dateD'	=> $dateD->formatDate('fr')
+		,'dateF'	=> $dateF->formatDate('fr')
+		,'description'	=> $row[3]
+		,'t'		=> $arr['t']
+	);
+}
+mysqli_free_result($result);
+$datas = $a;
+$titres = $arr;
 
 $smarty->assign('titre', $titres);
 $smarty->assign('datas', $datas);

@@ -99,6 +99,18 @@ if (!empty($requireEditeur) && empty($_SESSION['EDITEURS'])) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
+if (!empty($requireTeamEdit) && empty($_SESSION['TEAMEDIT'])) {
+	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
+	exit;
+}
+if (!empty($requireMyEdit) && empty($_SESSION['MY_EDIT'])) {
+	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
+	exit;
+}
+if (!empty($requireHeures) && empty($_SESSION['HEURES'])) {
+	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
+	exit;
+}
 if (!empty($requireVirtualAdmin) && empty($_SESSION['iAmVirtual']) && empty($_SESSION['ADMIN'])) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;

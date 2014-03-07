@@ -1,7 +1,7 @@
 <?php
 /* addMultipleDispoUser.php
  *
- * Page squelette pour créer des pages personnalisées
+ * Ajoute une même dispo sur une longue période à un utilisateur
  *
  */
 
@@ -23,7 +23,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-$requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette page
+$requireTeamEdit = true; // L'utilisateur doit être admin de l'équipe pour accéder à cette page
 
 /*
  * INCLUDES
@@ -114,15 +114,19 @@ if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) 
 	$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
 
 	// Recherche des dispos
-	$sql = "
+	$sql = sprintf("
 		SELECT `did`
 		, `dispo`
 		FROM `TBL_DISPO`
 		WHERE `jours possibles` = 'all'
 		AND `actif` = 1
 		AND `need_compteur` != TRUE
+		AND (`centre` = 'all' OR `centre` = '%s')
+		AND (`team` = 'all' OR `team` = '%s')
 		ORDER BY `poids` ASC
-	";
+		", $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+	);
 	$result = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_array($result)) {
 		$dispos[$row[0]] = $row[1];
@@ -143,11 +147,20 @@ if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) 
 			WHERE `cid` IN (
 				SELECT `cid`
 				FROM `TBL_CYCLE`
-				WHERE `vacation` != '%s')
+				WHERE `vacation` != '%s'
+				AND (`centre` = 'all' OR `centre` = '%s')
+				AND (`team` = 'all' OR `team` = '%s')
+			)
 			AND `date` BETWEEN '%s' AND '%s'
+			AND (`centre` = 'all' OR `centre` = '%s')
+			AND (`team` = 'all' OR `team` = '%s')
 			", REPOS
+			, $_SESSION['utilisateur']->centre()
+			, $_SESSION['utilisateur']->team()
 			, $dateD->date()
 			, $dateF->date()
+			, $_SESSION['utilisateur']->centre()
+			, $_SESSION['utilisateur']->team()
 		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$values = "";

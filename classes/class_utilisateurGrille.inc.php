@@ -412,39 +412,39 @@ class utilisateurGrille extends utilisateur {
 	// si beginning et end ne sont pas définis, beginning prend la valeur de la date courante et end est fixé à 2050-12-31
 	// si centre et team ne sont pas définis, on utilise l'affectation courante de l'utilisateur
 	public function addRole($param) {
-		if ( $_SESSION['utilisateur']->hasRole('admin') ) {
-			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Ajout de rôle", "DEBUG", "addRole", "Ajout de rôle", "uid:%d;role:%s;admin:%d")'
-				, $this->uid()
-				, $param['role']
-				, $_SESSION['utilisateur']->uid()
-				)
+		if (!is_array($param)) {
+			$msg = sprintf("\$param devrait être un array (%s)", $param);
+			$short = "wrong param";
+			$context = $param;
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "roles", "%s", "%s")'
+				, $msg
+				, $short
+				, $context)
 			); 
-			if (!is_array($param)) {
-				$msg = sprintf("\$param devrait être un array (%s)", $param);
-				$short = "wrong param";
-				$context = $param;
-				$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "roles", "%s", "%s")'
-					, $msg
-					, $short
-					, $context)
-				); 
-				return false;
-			}
-			if ($this->hasRole($param['role'])) {
-				return true;
-			}
-			if (!isset($param['beginning'])) {
-				$param['beginning'] = date("Y-m-d");
-			}
-			if (!isset($param['end'])) {
-				$param['end'] = '2050-12-31';
-			}
-			if (!isset($param['centre'])) {
-				$param['centre'] = $this->centre();
-			}
-			if (!isset($param['team'])) {
-				$param['team'] = $this->team();
-			}
+			return false;
+		}
+		if ($this->hasRole($param['role'])) {
+			return true;
+		}
+		if (!isset($param['beginning'])) {
+			$param['beginning'] = date("Y-m-d");
+		}
+		if (!isset($param['end'])) {
+			$param['end'] = '2050-12-31';
+		}
+		if (!isset($param['centre'])) {
+			$param['centre'] = $this->centre();
+		}
+		if (!isset($param['team'])) {
+			$param['team'] = $this->team();
+		}
+		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Ajout de rôle", "DEBUG", "addRole", "Ajout de rôle", "uid:%d;role:%s;appelant:%d")'
+			, $this->uid()
+			, $param['role']
+			, $_SESSION['utilisateur']->uid()
+			)
+		); 
+		if ( $_SESSION['utilisateur']->hasRole('admin') ) {
 			$_SESSION['db']->db_interroge(sprintf("
 				REPLACE INTO `TBL_ROLES`
 				(`uid`, `role`, `centre`, `team`, `beginning`, `end`, `confirmed`)
@@ -461,6 +461,44 @@ class utilisateurGrille extends utilisateur {
 			// Un utilisateur lambda ne doit pas avoir accès en écriture à certaines tables
 			$this->roles = array();
 			$this->dbRetrRoles();
+		} elseif ($_SESSION['utilisateur']->hasRole('editeurs')) {
+			if ($param['role'] == 'editeurs' || $param['role'] == 'teamEdit' || $param['role'] == 'my_edit' || $param['role'] == 'heures') {
+				$_SESSION['db']->db_interroge(sprintf("
+					REPLACE INTO `TBL_ROLES`
+					(`uid`, `role`, `centre`, `team`, `beginning`, `end`, `confirmed`)
+					VALUES
+					(%d, '%s', '%s', '%s', '%s', '%s', TRUE)
+					", $this->uid
+					, $param['role']
+					, $param['centre']
+					, $param['team']
+					, $param['beginning']
+					, $param['end']
+				));
+				// TODO réévaluer les privilèges de l'utilisateur sur la base de données
+				// Un utilisateur lambda ne doit pas avoir accès en écriture à certaines tables
+				$this->roles = array();
+				$this->dbRetrRoles();
+			}
+		} elseif ($_SESSION['utilisateur']->hasRole('teamEdit')) {
+			if ($param['role'] == 'teamEdit' || $param['role'] == 'my_edit' || $param['role'] == 'heures') {
+				$_SESSION['db']->db_interroge(sprintf("
+					REPLACE INTO `TBL_ROLES`
+					(`uid`, `role`, `centre`, `team`, `beginning`, `end`, `confirmed`)
+					VALUES
+					(%d, '%s', '%s', '%s', '%s', '%s', TRUE)
+					", $this->uid
+					, $param['role']
+					, $param['centre']
+					, $param['team']
+					, $param['beginning']
+					, $param['end']
+				));
+				// TODO réévaluer les privilèges de l'utilisateur sur la base de données
+				// Un utilisateur lambda ne doit pas avoir accès en écriture à certaines tables
+				$this->roles = array();
+				$this->dbRetrRoles();
+			}
 		} else {
 			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Refus ajout de rôle", "DEBUG", "addRole", "Ajout de rôle", "uid:%d;role:%s;admin:%d")'
 				, $this->uid()
@@ -484,6 +522,34 @@ class utilisateurGrille extends utilisateur {
 			// TODO réévaluer les privilèges de l'utilisateur sur la base de données
 			$this->roles = array();
 			$this->dbRetrRoles();
+		} elseif ($_SESSION['utilisateur']->hasRole('editeurs')) {
+			if ($role == 'editeurs' || $role == 'teamEdit' || $role == 'my_edit' || $role == 'heures') {
+				$sql = sprintf("
+					DELETE FROM `TBL_ROLES`
+					WHERE `uid` = %d
+					AND `role` = '%s'
+					", $this->uid
+					, $role
+				);
+				$_SESSION['db']->db_interroge($sql);
+				// TODO réévaluer les privilèges de l'utilisateur sur la base de données
+				$this->roles = array();
+				$this->dbRetrRoles();
+			}
+		} elseif ($_SESSION['utilisateur']->hasRole('teamEdit')) {
+			if ($role == 'teamEdit' || $role == 'my_edit' || $role == 'heures') {
+				$sql = sprintf("
+					DELETE FROM `TBL_ROLES`
+					WHERE `uid` = %d
+					AND `role` = '%s'
+					", $this->uid
+					, $role
+				);
+				$_SESSION['db']->db_interroge($sql);
+				// TODO réévaluer les privilèges de l'utilisateur sur la base de données
+				$this->roles = array();
+				$this->dbRetrRoles();
+			}
 		}
 	}
 	public function vismed($vismed = NULL) {
@@ -732,6 +798,7 @@ class utilisateurGrille extends utilisateur {
 			ORDER BY `end` ASC
 			", $this->uid()
 		));
+		$this->affectations = array();
 		$this->orderedAffectations = array();
 		$i = 0;
 		$today = new Date('Y-m-d'); // La date du jour pour définir le centre et la team actuels

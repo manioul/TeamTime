@@ -23,7 +23,7 @@
 
 // Require authenticated user
 // L'utilisateur doit être logué pour accéder à cette page
-$requireAdmin = true;
+$requireTeamEdit = true;
 
 ob_start(); // Obligatoire pour firePHP
 
@@ -122,13 +122,18 @@ $team = $_SESSION['utilisateur']->team();
 
 $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y-m-d'), date('Y-m-d'), $centre, $team);
 
-$roles = array(	array('content' => '')
-		, array('content' => 'admin')
-		, array('content' => 'editeurs')
-		, array('content' => 'teamEdit')
+$roles = array(	array('content' => ''));
+if ($_SESSION['ADMIN']) {
+	$roles[] = array('content'	=> 'admin');
+}
+if ($_SESSION['EDITEURS']) {
+	$roles[] = array('content'	=> 'editeurs');
+}
+$array = array( array('content' => 'teamEdit')
 		, array('content' => 'my_edit')
 		, array('content' => 'heures')
-);
+	);
+$roles = array_merge($roles, $array);
 
 if (sizeof($_POST) > 1) {
 	foreach ($users as $user) {

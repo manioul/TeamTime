@@ -239,13 +239,13 @@ function changeValue(oThis, sDispo)
 	comptePresents(oThis.id);
 }
 <?
-if (!empty($_SESSION['EDITEURS'])) {
+if (!empty($_SESSION['TEAMEDIT'])) {
 	// Ces fonctions ne doivent pas être accessible à tous
 	// Seuls les éditeurs peuvent (dé)protéger la grille
-?>
 // Effectue les actions nécessaires à la (dé)protection de la grille
 // Envoi d'une requête ajax
 // mise à jour des données de la grille (affichage...)
+?>
 function lock(sS)
 {
 	// Extrait les informations permettant de protéger la grille
@@ -663,7 +663,7 @@ function initDebug() {
 $(function() {
 		initDebug();
 		$('#dFormRemplacement').hide();
-			$(<?if (!empty($_SESSION['EDITEURS'])) {
+			$(<?if (!empty($_SESSION['TEAMEDIT'])) {
 				print "'.presence'";
 			} else {
 				printf ("'.presence[id*=u%sa]'", $_SESSION['utilisateur']->uid()); // Les utilisateurs sans droits étendus ne peuvent modifier que leur ligne
@@ -719,7 +719,7 @@ $(function() {
 <?
 	// Gestion de la configuration des cycles (E/W)
 	// TODO interdire l'édition lorsque la grille n'est pas éditable.
-	if (!empty($_SESSION['EDITEURS'])) {
+	if (!empty($_SESSION['TEAMEDIT'])) {
 ?>
 $(function() {
 	$('.conf').click(function() {

@@ -10,21 +10,13 @@
 <option value="{$user->uid()}">{$user->nom()}</option>
 {/foreach}
 </select></li>
-<li><label for="did">Dispo</label>
-<select name="did" id='sCdispo' onchange="">
-{foreach $dispos as $dispo}
-<option value="{$dispo@key}">{$dispo}</option>
-{/foreach}
-</select></li>
+<li>{include file="html.form.select.tpl" select=$dispos}
+</li>
 <li><label for="date">Date</label>
 <input type="date" name="date" placeholder="jj-mm-aaaa" />
 </li>
-<li><label for="year">Année</label>
-<select name="year" id='sCyear' onchange="">
-{foreach $years as $year}
-<option value="{$year}">{$year}</option>
-{/foreach}
-</select></li>
+<li>{include file="html.form.select.tpl" select=$years}
+</li>
 <li><label for="nb">Nombre</label>
 <input name="nb" />
 </li>

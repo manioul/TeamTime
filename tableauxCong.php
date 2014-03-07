@@ -118,32 +118,66 @@ $titre = "Congés";
 $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $_SESSION['centre'], $_SESSION['team']);
 
 $tab = array();
-$sql = "SELECT `did`
+$sql = sprintf("SELECT `did`
 	, `nom_long`
 	, `quantity`
 	FROM `TBL_DISPO`
 	WHERE `need_compteur` = TRUE
 	AND `actif` = TRUE
-	AND `type decompte` = 'conges'";
+	AND `type decompte` = 'conges'
+	AND (`centre` = 'all' OR `centre` = '%s')
+	AND (`team` = 'all' OR `team` = '%s')
+	", $_SESSION['utilisateur']->centre()
+	, $_SESSION['utilisateur']->team()
+);
 $results = $_SESSION['db']->db_interroge($sql);
+// Recherche la date limite de dépôt des congés
+$sql = sprintf("
+	SELECT `valeur`
+	FROM `TBL_CONSTANTS`
+	WHERE `nom` = 'dlCong_%d_%s'
+	UNION
+	SELECT CONCAT('%d-', `valeur`)
+	FROM `TBL_CONSTANTS`
+	WHERE `nom` = 'dlCong_default_%s'
+	LIMIT 1
+	", $year
+	, $_SESSION['utilisateur']->centre()
+	, $year + 1
+	, $_SESSION['utilisateur']->centre()
+);
+$result = $_SESSION['db']->db_interroge($sql);
+$row = $_SESSION['db']->db_fetch_row($result);
+$dlCong = $row[0];
+mysqli_free_result($result);	
 while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 	$onglets[] = array('nom'	=> htmlspecialchars($res['nom_long'], ENT_COMPAT, 'UTF-8')
 		,'quantity'		=> $res['quantity']
 		,'param'		=> $res['did']
 	);
 	// Recherche des congés de l'année en cours
-	$sql = sprintf('
-		SELECT `uid`
+	$sql = sprintf("
+		SELECT `l`.`uid`
 		, `date`
 		, `etat`
 		FROM `TBL_L_SHIFT_DISPO` `l`
-		, `TBL_VACANCES` `v`
+		, `TBL_AFFECTATION` AS `a`
+		, `TBL_VACANCES` AS `v`
 		WHERE `l`.`sdid` = `v`.`sdid`
+		AND `a`.`uid` = `l`.`uid`
+		AND `beginning` <= '%s'
+		AND `end` >= '%d-01-01'
 		AND `year` = %d
 		AND `did` = %d
+		AND `centre` = '%s'
+		AND `team` = '%s'
 		ORDER BY `date` ASC
-		', $year
+		", $dlCong
+		, $year
+		, $year
 		, $res['did']
+		, $_SESSION['centre']
+		, $_SESSION['team']
 	);
 	$result = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {

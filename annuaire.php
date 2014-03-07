@@ -41,6 +41,7 @@ $requireAuthenticatedUser = true; // L'utilisateur doit être authentifié pour 
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
 
+ob_start();
 
 /*
  * Configuration de la page
@@ -127,5 +128,7 @@ include 'debug.inc.php';
 
 // Affichage du bas de page
 $smarty->display('footer.tpl');
+
+ob_end_flush();
 
 ?>

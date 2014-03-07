@@ -125,10 +125,10 @@ $sql = sprintf("
 	WHERE `need_compteur` IS TRUE
 	AND `actif` IS TRUE
 	AND `type decompte` != 'conges'
-	AND `centre` = '%s'
-	AND `team` = '%s'
-	", $_SESSION['centre']
-	, $_SESSION['team']
+	AND (`centre` = 'all' OR `centre` = '%s')
+	AND (`team` = 'all' OR `team` = '%s')
+	", $_SESSION['utilisateur']->centre()
+	, $_SESSION['utilisateur']->team()
 );
 $results = $_SESSION['db']->db_interroge($sql);
 $index = 0;
@@ -143,14 +143,22 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 	// ainsi que le maximum (pour définir le nombre de colonnes nécessaires)
 	$sql = sprintf("
 		SELECT `l`.`uid`, COUNT(`l`.`uid`) AS `compte`
-		FROM `TBL_L_SHIFT_DISPO` `l`
-		, `TBL_USERS` `u`
+		FROM `TBL_L_SHIFT_DISPO` AS `l`
+		, `TBL_AFFECTATION` AS `a`
+		, `TBL_USERS` AS `u`
 		WHERE `did` = %d
 		AND `l`.`uid` = `u`.`uid`
+		AND `a`.`uid` = `l`.`uid`
+		AND `beginning` <= '%d-12-31'
+		AND `end` >= '%d-01-01'
 		AND `actif` IS TRUE
+		AND `centre` = '%s'
+		AND `team` = '%s'
 		GROUP BY `l`.`uid`
 		ORDER BY `compte` ASC
 		", $res['did']
+		, date('Y')
+		, date('Y')
 		, $_SESSION['centre']
 		, $_SESSION['team']
 	);

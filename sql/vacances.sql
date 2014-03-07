@@ -180,7 +180,7 @@ BEGIN
 			
 		-- Supprime l'ancienne dispo
 		IF oldDisponibilite != "" THEN
-			CALL delDispo( userid, dat, oldDisponibilite, centr, tea);
+			CALL delDispo( userid, dat, oldDisponibilite);
 		END IF;
 		-- Vérifie si la nouvelle dispo est un congé
 		SELECT did, `type decompte`
@@ -374,7 +374,7 @@ BEGIN
 
 		-- Si la dispo est un congé
 		IF typeDecompte = 'conges' THEN
-			CALL delConges( userid, dat, dispoid, perequation );
+			CALL delConges( userid, dat, dispoid, NULL, perequation );
 		ELSE
 			DELETE FROM TBL_L_SHIFT_DISPO
 			WHERE uid = userid

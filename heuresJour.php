@@ -123,22 +123,43 @@ $date = new Date($_GET['d']);
 if (!is_a($date, 'Date')) return false;
 
 $sql = sprintf("
-	SELECT `nom`, `normales`, `instruction`, `simulateur`
+	SELECT `nom`, `normales`, `instruction`, `simulateur`, `double`
 	FROM `TBL_HEURES` AS `h`,
-	`TBL_USERS` AS `u`
+	`TBL_USERS` AS `u`,
+	`TBL_AFFECTATION` AS `a`
 	WHERE `date` = '%s'
+	AND `u`.`uid` = `a`.`uid`
 	AND `h`.`uid` = `u`.`uid`
+	AND '%s' BETWEEN `beginning` AND `end`
+	AND `centre` = '%s'
+	AND `team` = '%s'
 	UNION
-	SELECT 'TOTAL',SUM(`normales`), SUM(`instruction`), SUM(`simulateur`)
+	SELECT 'TOTAL',SUM(`normales`), SUM(`instruction`), SUM(`simulateur`), SUM(`double`)
 	FROM `TBL_HEURES`
 	WHERE `date` = '%s'
+	AND `uid` IN (SELECT `uid`
+		FROM `TBL_AFFECTATION`
+		WHERE '%s' BETWEEN `beginning` AND `end`
+		AND `centre` = '%s'
+		AND `team` = '%s'
+		)
 	UNION
-	SELECT 'À partager', `heures`, NULL, NULL
+	SELECT 'À partager', `heures`, NULL, NULL, NULL
 	FROM `TBL_HEURES_A_PARTAGER`
 	WHERE `date` = '%s'
+	AND `centre` = '%s'
+	AND `team` = '%s'
 	", $date->date()
 	, $date->date()
+	, $_SESSION['utilisateur']->centre()
+	, $_SESSION['utilisateur']->team()
 	, $date->date()
+	, $date->date()
+	, $_SESSION['utilisateur']->centre()
+	, $_SESSION['utilisateur']->team()
+	, $date->date()
+	, $_SESSION['utilisateur']->centre()
+	, $_SESSION['utilisateur']->team()
 );
 $result = $_SESSION['db']->db_interroge($sql);
 while($row = $_SESSION['db']->db_fetch_assoc($result)) {

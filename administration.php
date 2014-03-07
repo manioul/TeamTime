@@ -42,6 +42,7 @@ $requireAdmin = true; // L'utilisateur doit être admin pour accéder à cette p
 	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
 	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
 
+ob_start();
 
 /*
  * Configuration de la page
@@ -126,4 +127,5 @@ firePhpLog($conf, '$conf');
 // Affichage du bas de page
 $smarty->display('footer.tpl');
 
+ob_end_flush();
 ?>

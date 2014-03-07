@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS TBL_HEURES (
 	statut ENUM('fixed', 'shared', 'unattr') DEFAULT 'unattr',
 	PRIMARY KEY (uid, date)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+ALTER TABLE `TBL_HEURES` ADD `double` DECIMAL( 4, 2  ) NOT NULL AFTER `simulateur`;
 
 CREATE TABLE IF NOT EXISTS `TBL_HEURES_A_PARTAGER` (
 	  `centre` varchar(50) NOT NULL,

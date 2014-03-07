@@ -181,21 +181,6 @@ while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 }
 mysqli_free_result($result);
 
-// Traitement des données du formulaire
-if (!empty($_POST['nom'])) {
-	$user = new utilisateurGrille($_POST);
-	if ($user->emailAlreadyExistsInDb()) print "Utilisateur déjà existant avec cet email.";
-	if ($user->loginAlreadyExistsInDb()) print "Login indisponible...";
-	// On peut rentrer les données dans la bdd
-	$affectation = array('centre'	=> (!empty($_SESSION['ADMIN']) ? $_POST['Centre'] : $_SESSION['utilisateur']->centre())
-		, 'team'	=> (!empty($_SESSION['ADMIN']) ? $_POST['Équipe'] : $_SESSION['utilisateur']->team())
-	);
-	$user->_saveIntoDb();
-	$user->addAffectation($affectation);
-	//header('Location:' . $_SERVER['REQUEST_URI']);
-	mysqli_free_result($result);
-	exit;
-}
 
 // Ajout des colonnes centre et team pour les admin
 if ($_SESSION['ADMIN']) {
@@ -219,36 +204,9 @@ if ($_SESSION['ADMIN']) {
 	}
 }
 
-// Ajoute un filtre sur les centres et les équipes pour les administrateurs
-$active = 1;
-$affectations = array();
-if ($_SESSION['ADMIN']) {
-	$affectations['all']['all'] = 1; // Permet de sélectionner tous les utilisateurs
-	$result = $_SESSION['db']->db_interroge("
-		SELECT `centre`,
-		`team`
-		FROM `TBL_AFFECTATION`
-		GROUP BY `centre`, `team`");
-	while ($row = $_SESSION['db']->db_fetch_row($result)) {
-		$affectations[$row[0]]['all'] = 1; // Permet de sélectionner toutes les équipes d'un même centre
-		$affectations[$row[0]][$row[1]] = 1;
-	}
-	mysqli_free_result($result);
-
-	if (isset($_GET['filter'])) {
-		$a = explode("-", $_GET['filter']);
-		$centre = $a[0];
-		$team = $a[1];
-	}
-	if (isset($_GET['centre'])) $centre = $_SESSION['db']->db_real_escape_string($_GET['centre']);
-	if (isset($_GET['team'])) $team = $_SESSION['db']->db_real_escape_string($_GET['team']);
-	$active = (isset($_GET['active'])) ? (int) $_GET['active'] : NULL;
-}
-$smarty->assign('affectations', $affectations);
 
 $smarty->assign('usersInfos', $usersInfos);
 
-$smarty->assign('form', $form);
 $smarty->assign('header', $header);
 
 $smarty->display('gestionUtilisateurs.tpl');

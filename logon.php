@@ -51,6 +51,11 @@ $sql = sprintf("
 	", $_SESSION['db']->db_real_escape_string($login)
 	, $_SESSION['db']->db_real_escape_string($login . $pwd)
 );
+	/*$_SESSION['db']->db_interroge(sprintf("
+		CALL messageSystem('Tentative de connexion [%s]', 'DEBUG', 'logon.php', NULL, 'sql:%s;')
+		", $_SERVER['REMOTE_ADDR']
+		, $_SESSION['db']->db_real_escape_string($sql)
+	));*/
 $result = $_SESSION['db']->db_interroge($sql);
 if (mysqli_num_rows($result) > 0) {
 	session_regenerate_id(); // Éviter les attaques par fixation de session
@@ -84,6 +89,13 @@ if (mysqli_num_rows($result) > 0) {
 		$_SESSION[strtoupper($row[0])] = true;
 	}
 	mysqli_free_result($result2);
+} else {
+	$_SESSION['db']->db_interroge(sprintf("
+		CALL messageSystem('Tentative de connexion échouée [%s]', 'DEBUG', 'logon.php', NULL, 'login:%s;password:%s;')
+		", $_SERVER['REMOTE_ADDR']
+		, $_SESSION['db']->db_real_escape_string($login)
+		, $_SESSION['db']->db_real_escape_string($pwd))
+	);
 }
 mysqli_free_result($result);
 header('Location:index.php');

@@ -165,50 +165,71 @@ if (!empty($_POST['dateD'])) {
 	$dateFin = clone $dateDebut;
 	$dateFin->addJours(365);
 }
-	/*
-	 * Gestion des exclusions
-	 */
-	$exclude = "";
-	if (sizeof($_POST['dispo']) > 0) {
-		$exclude = sprintf("
-			AND NOT FIND_IN_SET(`did`, '%s')
-			", $_SESSION['db']->db_real_escape_string(implode(',', array_keys($_POST['dispo'])))
-		);
-	}
-
-	/*
-	 * Calcul des totaux
-	 */
-	$sql = sprintf("
-		SELECT `h`.`uid`, `nom`, SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`
-		FROM `TBL_HEURES` AS `h`,
-		`TBL_USERS` AS `u`
-		WHERE `date` BETWEEN '%s' AND '%s'
-		AND `h`.`uid` = `u`.`uid`
-		%s
-		GROUP BY `h`.`uid`
-		UNION
-		SELECT 'uid', 'Total', SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`
-		FROM `TBL_HEURES`
-		WHERE `date` BETWEEN '%s' AND '%s'
-		%s
-		", $dateDebut->date()
-		, $dateFin->date()
-		, $exclude
-		, $dateDebut->date()
-		, $dateFin->date()
-		, $exclude
+/*
+ * Gestion des exclusions
+ */
+$exclude = "";
+if (sizeof($_POST['dispo']) > 0) {
+	$exclude = sprintf("
+		AND NOT FIND_IN_SET(`did`, '%s')
+		", $_SESSION['db']->db_real_escape_string(implode(',', array_keys($_POST['dispo'])))
 	);
-	$result = $_SESSION['db']->db_interroge($sql);
-	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-		$aTotaux[] = $row;
-	}
-	mysqli_free_result($result);
+}
 
-	$smarty->assign('dateDebut', $dateDebut->formatDate('fr'));
-	$smarty->assign('dateFin', $dateFin->formatDate('fr'));
-	$smarty->assign('mTotaux', $aTotaux);
-	$smarty->display('lesHeures.tpl');
+/*
+ * Calcul des totaux
+ */
+$sql = sprintf("
+	SELECT `h`.`uid`, `nom`, SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`, SUM(`double`) AS `double`
+	FROM `TBL_HEURES` AS `h`,
+	`TBL_USERS` AS `u`,
+	`TBL_AFFECTATION` AS `a`
+	WHERE `date` BETWEEN '%s' AND '%s'
+	AND `h`.`uid` = `u`.`uid`
+	AND `u`.`uid` = `a`.`uid`
+	AND `beginning` <= '%s'
+	AND `end` >= '%s'
+	AND `centre` = '%s'
+	AND `team` = '%s'
+	%s
+	GROUP BY `h`.`uid`
+	UNION
+	SELECT 'uid', 'Total', SUM(`normales`) AS `normales`, SUM(`instruction`) AS `instruction`, SUM(`simulateur`) AS `simulateur`, SUM(`double`) AS `double`
+	FROM `TBL_HEURES`
+	WHERE `date` BETWEEN '%s' AND '%s'
+	AND `uid` IN (SELECT `uid`
+		FROM `TBL_AFFECTATION`
+		WHERE `beginning` <= '%s'
+		AND `end` >= '%s'
+		AND `centre` = '%s'
+		AND `team` = '%s'
+		)
+	%s
+	", $dateDebut->date()
+	, $dateFin->date()
+	, $dateFin->date()
+	, $dateDebut->date()
+	, $_SESSION['utilisateur']->centre()
+	, $_SESSION['utilisateur']->team()
+	, $exclude
+	, $dateDebut->date()
+	, $dateFin->date()
+	, $dateFin->date()
+	, $dateDebut->date()
+	, $_SESSION['utilisateur']->centre()
+	, $_SESSION['utilisateur']->team()
+	, $exclude
+);
+$result = $_SESSION['db']->db_interroge($sql);
+while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+	$aTotaux[] = $row;
+}
+mysqli_free_result($result);
+
+$smarty->assign('dateDebut', $dateDebut->formatDate('fr'));
+$smarty->assign('dateFin', $dateFin->formatDate('fr'));
+$smarty->assign('mTotaux', $aTotaux);
+$smarty->display('lesHeures.tpl');
 
 /*
  * Informations de debug

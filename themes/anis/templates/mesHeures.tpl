@@ -8,6 +8,7 @@
 <th>Heures normales</th>
 <th>Heures instruction</th>
 <th>Heures simulateur</th>
+<th>Heures double</th>
 <th>Hide</th>
 <th>Suppr</th>
 </tr>
@@ -20,6 +21,7 @@
 <td>{$aHeure.normales}</td>
 <td>{$aHeure.instruction}</td>
 <td>{$aHeure.simulateur}</td>
+<td>{$aHeure.double}</td>
 <td></td>
 <td></td>
 </tr>
@@ -30,6 +32,7 @@
 <td>{$totaux.normales}</td>
 <td>{$totaux.instruction}</td>
 <td>{$totaux.simulateur}</td>
+<td>{$totaux.double}</td>
 <td colspan="2"></td>
 </tbody>
 </table>

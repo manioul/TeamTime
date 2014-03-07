@@ -50,6 +50,10 @@ $conf['page']['elements']['firePHP'] = true;
 
 require 'required_files.inc.php';
 
+if (!$_SESSION['teamEdit'] && $_SESSION['utilisateur']->uid() != $_POST['uid']) {
+	print "N'éditez que votre ligne, svp.";
+	return false;
+}
 
 $date = new Date();
 $date->annee($_POST['Year']);

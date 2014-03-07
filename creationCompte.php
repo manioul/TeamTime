@@ -23,7 +23,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-$requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette page
+$requireAdmin = true; // L'utilisateur doit être admin pour accéder à cette page
 
 ob_start(); // Obligatoire pour firePHP
 

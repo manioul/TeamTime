@@ -136,12 +136,27 @@ $sql = sprintf("
        		FROM `TBL_GRILLE`
 		WHERE `date` BETWEEN '%s' AND '%s'
 		AND `cid` = (
-			SELECT MAX(`cid`)
-			FROM `TBL_CYCLE`)
-		) ORDER BY `l`.`did`
-		, `nom`, `date`
+			SELECT MAX(`rang`)
+			FROM `TBL_CYCLE`
+			WHERE (`centre` = 'all' OR `centre` = '%s')
+			AND (`team` = 'all' OR `team` = '%s')
+			)
+		AND (`centre` = 'all' OR `centre` = '%s')
+		AND (`team` = 'all' OR `team` = '%s')
+		)
+	AND (`centre` = 'all' OR `centre` = '%s')
+	AND (`team` = 'all' OR `team` = '%s')
+	ORDER BY `l`.`did`
+	, `nom`, `date`
+
 		", $date1->date()
 		, $date2->date()
+		, $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+		, $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+		, $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
 	);
 $result = $_SESSION['db']->db_interroge($sql);
 $arr = array();
@@ -218,8 +233,5 @@ $titreConges->editTitres();
  */
 include 'debug.inc.php';
 firePhpLog($conf, '$conf');
-
-// Affichage du bas de page
-//$smarty->display('footer.tpl');
 
 ?>

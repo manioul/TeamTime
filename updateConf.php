@@ -24,7 +24,7 @@
 
 // Require admin
 // L'utilisateur doit être admin pour accéder à cette page
-$requireEditeur = true;
+$requireTeamEdit = true;
 
 /*
  * Configuration de la page
@@ -64,9 +64,14 @@ if (preg_match('/confa(\d{4})m(\d*)j(\d*)/', $_POST['id'], $array)) {
 		SET `conf` = '%s'
 		WHERE `readonly` = FALSE
 		AND `date` BETWEEN '%s' AND '%s'
+		AND `centre` = '%s'
+		AND `team` = '%s'
 		", $_POST['conf']
 		, $date->date()
-		, $date->addJours(Cycle::getCycleLength()-1)->date());
+		, $date->addJours(Cycle::getCycleLength()-1)->date()
+		, $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+	);
 
 	$_SESSION['db']->db_interroge($sql);
 	if ($_SESSION['db']->db_affected_rows() < Cycle::getCycleLength()) { // Le verrouillage ne verrouille pas les jours de REPOS, d'où un nombre de données affectées même lorsque la grille n'est pas modifiable

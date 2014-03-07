@@ -23,7 +23,7 @@
 
 // Require authenticated user
 // L'utilisateur doit être logué pour accéder à cette page
-$requireAuthenticatedUser = true;
+$requireHeures = true;
 
 ob_start(); // Obligatoire pour firePHP
 
