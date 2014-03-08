@@ -63,7 +63,12 @@ if (mysqli_num_rows($result) > 0) {
 	mysqli_free_result($result);
 	$DSN = $GLOBALS['DSN']['user'];
 	$DSN['username'] = 'ttm.'.$row['uid'];
-	$_SESSION['db']->change_user($DSN);
+	if (!$_SESSION['db']->change_user($DSN)) {
+		// Interdit l'accès aux utilisateurs qui n'ont pas d'identifiant sur la base de données
+		unset($_SESSION);
+		mysqli_free_result($result);
+		header('Location:index.php');
+	}
 	$_SESSION['utilisateur'] = new utilisateurGrille((int) $row['uid']);
 	$_SESSION['AUTHENTICATED'] = true;
 	$_SESSION['centre'] = $_SESSION['utilisateur']->centre();

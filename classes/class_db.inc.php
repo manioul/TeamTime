@@ -99,7 +99,9 @@ class database {
 	public function change_user($DSN) {
 		if (mysqli_change_user($this->link, $DSN['username'], $DSN['password'], $DSN['dbname'])) {
 			$this->DSN = $DSN;
+			return true;
 		}
+		return false;
 	}
 // Interrogation
 	public function db_interroge ($query) {
