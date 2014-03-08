@@ -14,7 +14,7 @@
 	<div class="{$value.periodeCharge}"></div>
 	<div class="{if !$value.briefing}no{/if}brief"{if isset($value.briefing)} title="{$value.briefing}"{/if}></div>
 	<div class="dateGrille">{$value.jds}</div>
-	<div class="dateGrille">{$value.jdm}</div>
+	<div class="dateGrille">{if $nbCycle > 1}<a href="affiche_grille.php?dateDebut={$value.date}&amp;nbCycle={$nbCycle}" title="Débuter l'affichage par ce cyle">{$value.jdm}</a>{else}{$value.jdm}{/if}</div>
 	<div class="shift">{$value.vacation}</div>{elseif isset($value.nom)}{$value.nom}{/if}{if $lines@iteration < 3}</th>{else}</td>{/if}{/foreach}
 </tr>
 {if $lines@last}</tbody>{/if}{/foreach}

@@ -50,6 +50,12 @@ div.nobrief {
 	font-size: 9pt;
 	font-weight: normal;
 }
+.dateGrille a {
+	color:rgb(0,0,0);
+}
+.dateGrille a:hover {
+	color:#333;
+}
 /*
  * Affichage des utilisateurs dans la grille
 */
