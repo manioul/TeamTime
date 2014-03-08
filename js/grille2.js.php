@@ -51,7 +51,7 @@ function getAvailableOccupations(oThis) {
 <?
 	$find_in_set = "";
 	if (empty($_SESSION['ADMIN'])) { // Les non admins ont des restrictions sur les dispo qu'ils peuvent poser
-		foreach (array_flip(array_flip(array_merge(array('all'), $_SESSION['utilisateur']->roles(), $_SESSION['utilisateur']->classe(date('Y-m-d'))))) as $set) {
+		foreach (array_flip(array_flip(array_merge(array('all', $_SESSION['utilisateur']->login()), $_SESSION['utilisateur']->roles(), $_SESSION['utilisateur']->classe(date('Y-m-d'))))) as $set) {
 			$find_in_set .= sprintf("FIND_IN_SET('%s', `peut poser`) OR ", $_SESSION['db']->db_real_escape_string($set));
 		}
 		$find_in_set = " AND (" . substr($find_in_set, 0, -4) . ")";
