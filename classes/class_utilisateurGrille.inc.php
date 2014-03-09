@@ -1117,11 +1117,17 @@ class utilisateursDeLaGrille {
 		if ($nbCycle == 1) {
 			// Récupération des compteurs
 			if ($DEBUG) debug::getInstance()->startChrono('Relève compteur'); // Début chrono
-			$sql = "SELECT `dispo`, `nom_long`
+			$sql = sprintf("
+				SELECT `dispo`, `nom_long`
 				FROM `TBL_DISPO`
 				WHERE `actif` = TRUE
 				AND `need_compteur` = TRUE
-			       	AND `type decompte` != 'conges'";
+				AND `type decompte` != 'conges'
+				AND `centre` = '%s'
+				AND `team` = '%s'
+				", $_SESSION['utilisateur']->centre()
+				, $_SESSION['utilisateur']->team()
+			);
 			$results = $_SESSION['db']->db_interroge($sql);
 			while ($res = $_SESSION['db']->db_fetch_array($results)) {
 				$evenSpec[$res[0]] = array(
@@ -1132,7 +1138,6 @@ class utilisateursDeLaGrille {
 
 			/*
 			 * Recherche le décompte des évènements spéciaux
-			 * La liste est limitée en dur
 			 */
 			$sql = sprintf("SELECT `uid`, `dispo`, COUNT(`td`.`did`), MAX(`date`)
 				FROM `TBL_L_SHIFT_DISPO` AS `tl`, `TBL_DISPO` AS `td`

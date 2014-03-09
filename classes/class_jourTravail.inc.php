@@ -55,8 +55,8 @@ class jourTravail extends Date {
 			SELECT `readOnly`
 			FROM `TBL_GRILLE`
 			WHERE `date` = '%s'
-			AND (`centre` = '%s' OR `centre` = 'all')
-			AND (`team` = '%s' OR `team` = 'all')
+			AND `centre` = '%s'
+			AND `team` = '%s'
 			"
 			, $dispo['date']
 			, $centre
