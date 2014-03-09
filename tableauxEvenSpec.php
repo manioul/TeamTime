@@ -144,21 +144,23 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 	$sql = sprintf("
 		SELECT `l`.`uid`, COUNT(`l`.`uid`) AS `compte`
 		FROM `TBL_L_SHIFT_DISPO` AS `l`
-		, `TBL_AFFECTATION` AS `a`
+		, `TBL_ANCIENNETE_EQUIPE` AS `a`
 		, `TBL_USERS` AS `u`
 		WHERE `did` = %d
 		AND `l`.`uid` = `u`.`uid`
 		AND `a`.`uid` = `l`.`uid`
-		AND `beginning` <= '%d-12-31'
-		AND `end` >= '%d-01-01'
+		AND `l`.`date` >= `a`.`beginning`
+		AND `a`.`beginning` <= '%d-12-31'
+		AND `a`.`end` >= '%d-01-01'
 		AND `actif` IS TRUE
+		AND `global` IS TRUE
 		AND `centre` = '%s'
 		AND `team` = '%s'
 		GROUP BY `l`.`uid`
 		ORDER BY `compte` ASC
 		", $res['did']
-		, date('Y')
-		, date('Y')
+		, $year
+		, $year
 		, $_SESSION['centre']
 		, $_SESSION['team']
 	);

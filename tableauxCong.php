@@ -161,10 +161,11 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 		, `date`
 		, `etat`
 		FROM `TBL_L_SHIFT_DISPO` `l`
-		, `TBL_AFFECTATION` AS `a`
+		, `TBL_ANCIENNETE_EQUIPE` AS `a`
 		, `TBL_VACANCES` AS `v`
 		WHERE `l`.`sdid` = `v`.`sdid`
 		AND `a`.`uid` = `l`.`uid`
+		AND `a`.`global` IS TRUE
 		AND `beginning` <= '%s'
 		AND `end` >= '%d-01-01'
 		AND `year` = %d

@@ -499,16 +499,18 @@ class Cycle {
 	//-----------------------------------------------
 	public function compteType($type = 'dispo') {
 		$date = clone $this->dateRef();
+		$date->subJours(1);
 		$sql = sprintf("
 			SELECT `l`.`uid`,
 			MOD(COUNT(`l`.`sdid`), 10)
-			FROM `TBL_L_SHIFT_DISPO` `l`,
-			`TBL_AFFECTATION` `a`,
-			`TBL_DISPO` `d`
+			FROM `TBL_L_SHIFT_DISPO` AS `l`,
+			`TBL_ANCIENNETE_EQUIPE` AS `a`,
+			`TBL_DISPO` AS `d`
 			WHERE `l`.`did` = `d`.`did`
 			AND `l`.`uid` = `a`.`uid`
-			AND (`a`.`centre` = '%s' OR `a`.`centre` = 'all')
-			AND (`a`.`team` = '%s' OR `a`.`team` = 'all')
+			AND `a`.`centre` = '%s'
+			AND `a`.`team` = '%s'
+			AND `a`.`global` IS TRUE
 			AND `d`.`type decompte` = '%s'
 			AND `l`.`date` <= '%s'
 			AND `l`.`date` >= `a`.`beginning`
@@ -545,12 +547,13 @@ class Cycle {
 			SELECT `l`.`uid`,
 			MOD(COUNT(DISTINCT `l`.`sdid`), 10)
 			FROM `TBL_L_SHIFT_DISPO` AS `l`,
-			`TBL_AFFECTATION` AS `a`,
+			`TBL_ANCIENNETE_EQUIPE` AS `a`,
 			`TBL_DISPO` AS `d`
 			WHERE `l`.`did` = `d`.`did`
 			AND `l`.`uid` = `a`.`uid`
-			AND (`a`.`centre` = '%s' OR `a`.`centre` = 'all')
-			AND (`a`.`team` = '%s' OR `a`.`team` = 'all')
+			AND `a`.`centre` = '%s'
+			AND `a`.`team` = '%s'
+			AND `a`.`global` IS TRUE
 			AND `d`.`type decompte` = '%s'
 			AND `l`.`date` <= '%s'
 			AND `l`.`date` >= `a`.`beginning`
