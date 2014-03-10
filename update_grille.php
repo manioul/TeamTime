@@ -50,7 +50,7 @@ $conf['page']['elements']['firePHP'] = true;
 
 require 'required_files.inc.php';
 
-if (!$_SESSION['teamEdit'] && $_SESSION['utilisateur']->uid() != $_POST['uid']) {
+if (!$_SESSION['TEAMEDIT'] && $_SESSION['utilisateur']->uid() != $_POST['uid']) {
 	print "N'éditez que votre ligne, svp.";
 	return false;
 }
