@@ -129,7 +129,9 @@ $sql = sprintf("
 	FROM `TBL_USERS` `u`
 	, `TBL_VACANCES` `v`
 	, `TBL_L_SHIFT_DISPO` `l`
+	, `TBL_ANCIENNETE_EQUIPE` AS `a`
 	WHERE `u`.`uid` = `l`.`uid`
+	AND `a`.`uid` = `u`.`uid`
 	AND `l`.`sdid` = `v`.`sdid`
 	AND `etat` = 0
 	AND `date` < (SELECT `date`
@@ -144,8 +146,8 @@ $sql = sprintf("
 		AND (`centre` = 'all' OR `centre` = '%s')
 		AND (`team` = 'all' OR `team` = '%s')
 		)
-	AND (`centre` = 'all' OR `centre` = '%s')
-	AND (`team` = 'all' OR `team` = '%s')
+	AND `centre` = '%s'
+	AND `team` = '%s'
 	ORDER BY `l`.`did`
 	, `nom`, `date`
 
