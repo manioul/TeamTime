@@ -49,11 +49,11 @@ $(function() {
 		// On retire les liens sur les dates de congés dans les tableaux pour les gérer avec jquery
 		$('td.date').children('a').replaceWith(function() { return $(this).contents(); });
 		<?php
-		if (!empty($_SESSION['EDITEURS'])) { ?>
+		if (!empty($_SESSION['TEAMEDIT'])) { ?>
 		$('#datePicker').datepicker($.datepicker.regional['fr']);
 		<? } ?>
 		<?php
-		if (!empty($_SESSION['EDITEURS'])) { ?>
+		if (!empty($_SESSION['TEAMEDIT'])) { ?>
 		$('td.filed').addClass('pointer');
 		$('td.filed').click(function() {
 			var type;
