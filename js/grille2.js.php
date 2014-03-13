@@ -56,7 +56,19 @@ function getAvailableOccupations(oThis) {
 		}
 		$find_in_set = " AND (" . substr($find_in_set, 0, -4) . ")";
 	}
-	$sqlDispo = sprintf("SELECT `dispo`, `jours possibles` FROM `TBL_DISPO` WHERE `actif` = '1'%s ORDER BY `poids`", $find_in_set);
+	$sqlDispo = sprintf("
+		SELECT `dispo`
+		, `jours possibles`
+		FROM `TBL_DISPO`
+		WHERE `actif` = '1'
+		AND (`centre` = '%s' OR `centre` = 'all')
+		AND (`team` = '%s' OR `team` = 'all')
+		%s
+		ORDER BY `poids`"
+		, $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+		, $find_in_set
+	);
 	$resDispo = $_SESSION['db']->db_interroge($sqlDispo);
 	$sqlCycle = sprintf("SELECT `vacation` FROM `TBL_CYCLE` WHERE `vacation` != '%s'", REPOS);
 	$result = $_SESSION['db']->db_interroge($sqlCycle);

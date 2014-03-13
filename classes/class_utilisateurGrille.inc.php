@@ -962,8 +962,20 @@ class utilisateursDeLaGrille {
 	public function getUsersFromTo($from = NULL, $to = NULL, $centre = NULL, $team = NULL, $active = 1) {
 		if (is_null($from)) $from = date('Y-m-d');
 		if (is_null($to)) $to = date('Y-m-d');
-		if (is_null($centre)) $centre = 'athis';
-		if (is_null($team)) $team = '9e';
+		if (is_null($centre)) {
+			if ($_SESSION['ADMIN']) {
+				$centre = 'all';
+			} else {
+				$centre = $_SESSION['utilisateur']->centre();
+			}
+		}
+		if (is_null($team)) {
+			if ($_SESSION['ADMIN']) {
+				$team = 'all';
+			} else {
+				$team = $_SESSION['utilisateur']->team();
+			}
+		}
 		if ('all' == $centre && 'all' == $team) {
 			$sql = "SELECT DISTINCT `TU`.`uid`,
 				`TU`.*,
@@ -1344,7 +1356,7 @@ class utilisateursDeLaGrille {
 		$return['nextCycle'] = $nextCycle->date();
 		$return['previousCycle'] = $previousCycle->date();
 		$return['presentCycle'] = date("Y-m-d");
-		$return['dureeCycle'] = Cycle::getCycleLengthNoRepos();
+		$return['dureeCycle'] = Cycle::getCycleLengthNoRepos($centre, $team);
 		$return['anneeCycle'] = $cycle[0]->dateRef()->annee();
 		$return['moisCycle'] = $cycle[0]->dateRef()->mois();
 		$return['grille'] = $grille;

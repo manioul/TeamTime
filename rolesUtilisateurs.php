@@ -117,14 +117,19 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
-$centre = $_SESSION['utilisateur']->centre();
-$team = $_SESSION['utilisateur']->team();
-
-$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y-m-d'), date('Y-m-d'), $centre, $team);
 
 $roles = array(	array('content' => ''));
 if ($_SESSION['ADMIN']) {
 	$roles[] = array('content'	=> 'admin');
+	if (isset($_GET['centre'])) {
+		$centre = $_GET['centre'];
+	}
+	if (isset($_GET['team'])) {
+		$team = $_GET['team'];
+	}
+} else {
+	$centre = $_SESSION['utilisateur']->centre();
+	$team = $_SESSION['utilisateur']->team();
 }
 if ($_SESSION['EDITEURS']) {
 	$roles[] = array('content'	=> 'editeurs');
@@ -134,6 +139,8 @@ $array = array( array('content' => 'teamEdit')
 		, array('content' => 'heures')
 	);
 $roles = array_merge($roles, $array);
+
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y-m-d'), date('Y-m-d'), $centre, $team);
 
 if (sizeof($_POST) > 1) {
 	foreach ($users as $user) {
