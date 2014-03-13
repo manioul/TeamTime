@@ -45,7 +45,7 @@ class jourTravail extends Date {
 	// dispo = array (uid=> , date=> , dispo => , oldDispo => , pereq => 0|1)
 	// log = TRUE => les opérations sont loguées
 	//-----------------------------------------
-	public static function addDispo($dispo, $centre = 'athis', $team = '9e', $log=false) {
+	public static function addDispo($dispo, $centre, $team, $log=false) {
 		if (isset($_SESSION['MY_EDIT']) && $dispo['uid'] != $_SESSION['utilisateur']->uid() && !isset($_SESSION['ADMIN']) && !isset($_SESSION['EDITEURS'])) {
 			return "N'éditez que votre ligne, svp.";
 		}

@@ -67,7 +67,7 @@ $dispo = array(
 );
 
 
-$err = jourTravail::addDispo($dispo);
+$err = jourTravail::addDispo($dispo, $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
 
 if ($err != "") {
 	print(nl2br(htmlspecialchars($err)));
