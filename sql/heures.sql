@@ -52,14 +52,14 @@ CREATE TABLE IF NOT EXISTS `TBL_DISPATCH_HEURES_USER` (
 
 DELIMITER |
 DROP PROCEDURE IF EXISTS dispatchAllHeures|
-CREATE PROCEDURE dispatchAllHeures ( IN centr VARCHAR(50) , IN tea VARCHAR(10) )
+CREATE PROCEDURE dispatchAllHeures ( IN centre_ VARCHAR(50) , IN team_ VARCHAR(10) )
 BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE dateTD DATE;
 	DECLARE curDatesToDispatch CURSOR FOR SELECT date
 		FROM TBL_HEURES_A_PARTAGER
-		WHERE centre = centr
-		AND team = tea
+		WHERE centre = centre_
+		AND team = team_
 		AND dispatched IS FALSE
 		AND writable IS TRUE;
 	
@@ -70,21 +70,21 @@ BEGIN
 	REPEAT
 	FETCH curDatesToDispatch INTO dateTD;
 	IF NOT done THEN
-		CALL dispatchOneDayHeures( centr , tea , dateTD );
+		CALL dispatchOneDayHeures( centre_ , team_ , dateTD );
 	END IF;
 	UNTIL done END REPEAT;
 
 	CLOSE curDatesToDispatch;
 END|
 DROP PROCEDURE IF EXISTS dispatchHeuresBetween|
-CREATE PROCEDURE dispatchHeuresBetween( IN centr CHAR(50) , IN tea CHAR(10) , IN debut DATE , IN fin DATE )
+CREATE PROCEDURE dispatchHeuresBetween( IN centre_ CHAR(50) , IN team_ CHAR(10) , IN debut DATE , IN fin DATE )
 BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE current DATE;
 	DECLARE curDate CURSOR FOR SELECT date
 		FROM TBL_HEURES_A_PARTAGER
-		WHERE centre = centr
-		AND team = tea
+		WHERE centre = centre_
+		AND team = team_
 		AND date BETWEEN debut AND fin;
 
 	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
@@ -94,14 +94,14 @@ BEGIN
 	REPEAT
 	FETCH curDate INTO current;
 	IF NOT done THEN
-		CALL dispatchOneDayHeures( centr, tea, current);
+		CALL dispatchOneDayHeures( centre_, team_, current);
 	END IF;
 	UNTIL done END REPEAT;
 
 	CLOSE curDate;
 END|
 DROP PROCEDURE IF EXISTS dispatchOneDayHeures|
-CREATE PROCEDURE dispatchOneDayHeures ( IN centr CHAR(50) , IN tea CHAR(10) , IN dat DATE )
+CREATE PROCEDURE dispatchOneDayHeures ( IN centre_ CHAR(50) , IN team_ CHAR(10) , IN date_ DATE )
 BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE gradeFixed VARCHAR(64);
@@ -126,25 +126,25 @@ BEGIN
 		AND FIND_IN_SET((SELECT cid
 				FROM TBL_GRILLE
 				WHERE date = dat
-				AND centre = centr
-				AND team = tea)
+				AND centre = centre_
+				AND team = team_)
 			, cids)
 		ORDER BY ordre ASC;
 	-- Recherche deux pc qui ont le moins d'heures d'instruction pour leur attribuer les heures disponibles
 	-- Ils doivent avoir une certaine ancienneté dans l'affectation (4 mois)
 	DECLARE curInstructeurs CURSOR FOR SELECT uid, SUM(instruction) AS instru
 		FROM TBL_HEURES
-		WHERE date BETWEEN DATE_SUB(dat, INTERVAL 4 MONTH) AND dat
+		WHERE date BETWEEN DATE_SUB(date_, INTERVAL 4 MONTH) AND dat
 		AND uid IN (SELECT uid -- utilisateur dans la bonne affectation
 			FROM TBL_AFFECTATION
-			WHERE centre = centr
-			AND team = tea
+			WHERE centre = centre_
+			AND team = team_
 			AND grade != 'dtch'
 			AND grade != 'c'
 			AND grade != 'theo'
 			AND validated IS TRUE
-			AND dat BETWEEN beginning AND end
-			AND DATE_SUB(dat, INTERVAL 4 MONTH) BETWEEN beginning AND end)
+			AND date_ BETWEEN beginning AND end
+			AND DATE_SUB(date_, INTERVAL 4 MONTH) BETWEEN beginning AND end)
 		AND did NOT IN (SELECT did
 			FROM TBL_DISPO
 			WHERE (absence IS TRUE OR dispo = 'fmp' OR dispo = 'cds'))
@@ -168,13 +168,13 @@ BEGIN
 		PRIMARY KEY (uid)
 	);
 
-	DELETE FROM tmpPresents WHERE team = tea AND centre = centr;
+	DELETE FROM tmpPresents WHERE team = team_ AND centre = centre_;
 	INSERT INTO tmpPresents
-		SELECT uid, grade, 0, 0, 0, 0, 'unattr', 0, centr, tea
+		SELECT uid, grade, 0, 0, 0, 0, 'unattr', 0, centre_, team_
 		FROM TBL_AFFECTATION
-		WHERE centre = centr
-		AND team = tea
-		AND dat BETWEEN beginning AND end
+		WHERE centre = centre_
+		AND team = team_
+		AND date_ BETWEEN beginning AND end
 		AND validated IS TRUE
 		-- Les c n'ont pas d'heure
 		AND grade != 'c'
@@ -199,7 +199,7 @@ BEGIN
 			AND uid IN (SELECT uid
 				FROM TBL_AFFECTATION
 				WHERE grade = 'cds'
-				AND dat BETWEEN beginning AND end)
+				AND date_ BETWEEN beginning AND end)
 			)
 		;
 	-- Remplit les did
@@ -219,9 +219,9 @@ BEGIN
 		WHERE date = dat
 		AND uid IN (SELECT uid
 			FROM TBL_AFFECTATION
-			WHERE centre = centr
-			AND team = tea
-			AND dat BETWEEN beginning AND end)
+			WHERE centre = centre_
+			AND team = team_
+			AND date_ BETWEEN beginning AND end)
 		AND statut != 'unattr'; -- les heures saisies par l'utilisateur ont un statut unattr
 
 	OPEN curFixed;
@@ -287,24 +287,24 @@ BEGIN
 	SELECT COUNT(uid)
 	INTO eleves
 	FROM TBL_AFFECTATION
-	WHERE centre = centr
-	AND team = tea
+	WHERE centre = centre_
+	AND team = team_
 	AND (grade = 'c' OR grade = 'theo')
-	AND dat BETWEEN beginning AND end
+	AND date_ BETWEEN beginning AND end
 	AND uid NOT IN (SELECT uid
 		FROM TBL_L_SHIFT_DISPO
 		WHERE date = dat
 		AND did IN (SELECT did
 			FROM TBL_DISPO
 			WHERE absence IS TRUE
-			AND centre = centr
-			AND team = tea));
+			AND centre = centre_
+			AND team = team_));
 	IF eleves > 0 THEN
 		SELECT SUM(instruction)
 		INTO inst
 		FROM tmpPresents
-		WHERE centre = centr
-		AND team = tea;
+		WHERE centre = centre_
+		AND team = team_;
 	END IF;
 
 	-- Sélectionne les utilisateurs ayant le moins d'heures d'instruction sur une certaine période (cf cursor)
@@ -314,18 +314,18 @@ BEGIN
 		INTO heuresLeft
 		FROM TBL_HEURES_A_PARTAGER AS p
 		, tmpPresents AS t
-		WHERE t.centre = centr
+		WHERE t.centre = centre_
 		AND t.centre = p.centre
-		AND t.team = tea
+		AND t.team = team_
 		AND t.team = p.team
-		AND p.date = dat;
+		AND p.date = date_;
 		-- Recherche le nombre de présents qui n'ont pas encore d'heures attribuées
 		SELECT COUNT(uid)
 		INTO unattr
 		FROM tmpPresents
 		WHERE statut = 'unattr'
-		AND centre = centr
-		AND team = tea;
+		AND centre = centre_
+		AND team = team_;
 
 		OPEN curInstructeurs;
 		REPEAT
@@ -347,16 +347,16 @@ BEGIN
 	INTO heuresLeft
 	FROM TBL_HEURES_A_PARTAGER AS p
 	, tmpPresents AS t
-	WHERE t.centre = centr
+	WHERE t.centre = centre_
 	AND t.centre = p.centre
-	AND t.team = tea
+	AND t.team = team_
 	AND t.team = p.team
-	AND p.date = dat;
+	AND p.date = date_;
 
 	SELECT heuresLeft / (SELECT COUNT(uid) FROM tmpPresents
 			WHERE statut = 'unattr'
-			AND centre = centr
-			AND team = tea
+			AND centre = centre_
+			AND team = team_
 		) INTO heuresEach;
 	
 	-- On ne peut avoir 0 heure sur une journée
@@ -365,32 +365,32 @@ BEGIN
 		SET normales = .25
 		, statut = 'shared'
 		WHERE statut = 'unattr'
-		AND centre = centr
-		AND team = tea;
+		AND centre = centre_
+		AND team = team_;
 	ELSE
 		UPDATE tmpPresents
 		SET normales = (SELECT ROUND(heuresEach * 4) / 4)
 		, statut = 'shared'
 		WHERE statut = 'unattr'
-		AND centre = centr
-		AND team = tea;
+		AND centre = centre_
+		AND team = team_;
 	END IF;
 
 	REPLACE INTO TBL_HEURES
-		(SELECT uid, did, dat, normales, instruction, simulateur, statut
+		(SELECT uid, did, date_, normales, instruction, simulateur, statut
 		FROM tmpPresents
-		WHERE centre = centr
-		AND team = tea);
+		WHERE centre = centre_
+		AND team = team_);
 
 	UPDATE TBL_HEURES_A_PARTAGER
 	SET dispatched = TRUE
-	WHERE centre = centr
-	AND team = tea
-	AND date = dat;
+	WHERE centre = centre_
+	AND team = team_
+	AND date = date_;
 END
 |
 DROP PROCEDURE IF EXISTS addDispatchSchema|
-CREATE PROCEDURE addDispatchSchema( IN cycles VARCHAR(64) , IN centr VARCHAR(50) , IN tea VARCHAR(10) , IN grad VARCHAR(64) , IN dispos VARCHAR(128) , IN typ VARCHAR(64) , IN statu VARCHAR(64) , IN nbHeures DECIMAL(4,2) )
+CREATE PROCEDURE addDispatchSchema( IN cycles VARCHAR(64) , IN centre_ VARCHAR(50) , IN team_ VARCHAR(10) , IN grade_ VARCHAR(64) , IN dispos VARCHAR(128) , IN typ VARCHAR(64) , IN statu VARCHAR(64) , IN nbHeures DECIMAL(4,2) )
 BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE dids VARCHAR(64);
@@ -450,12 +450,12 @@ BEGIN
 	INSERT INTO TBL_DISPATCH_HEURES
 	(rid, cids, centre, team, grades, dids, type, statut, heures)
 	VALUES
-	(NULL, cids, centr, tea, grad, dids, typ, statu, nbHeures);
+	(NULL, cids, centre_, team_, grade_, dids, typ, statu, nbHeures);
 
 	INSERT INTO TBL_DISPATCH_HEURES_USER
 	(rid, cycles, centre, team, grades, dispos, type, statut, heures)
 	VALUES
-	(LAST_INSERT_ID(), cycles, centr, tea, UPPER(grad), dispos, typ, statu, nbHeures);
+	(LAST_INSERT_ID(), cycles, centre_, team_, UPPER(grade_), dispos, typ, statu, nbHeures);
 
 	-- SELECT * FROM TBL_DISPATCH_HEURES;
 	-- SELECT * FROM TBL_DISPATCH_HEURES_USER;
@@ -470,9 +470,9 @@ BEGIN
 	DECLARE pivot VARCHAR(64);
 	DECLARE cycls VARCHAR(64);
 	DECLARE cyclids VARCHAR(64);
-	DECLARE centr VARCHAR(50);
-	DECLARE tea VARCHAR(10);
-	DECLARE grad VARCHAR(64);
+	DECLARE centre_ VARCHAR(50);
+	DECLARE team_ VARCHAR(10);
+	DECLARE grade_ VARCHAR(64);
 	DECLARE disp VARCHAR(64);
 	DECLARE typ VARCHAR(64);
 	DECLARE statu VARCHAR(64);
@@ -497,7 +497,7 @@ BEGIN
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
 	SELECT centre, team, grades, type, statut, heures
-		INTO centr, tea, grad, typ, statu, heur
+		INTO centre_, team_, grade_, typ, statu, heur
 		FROM TBL_DISPATCH_HEURES
 		WHERE rid = ruleid;
 
@@ -525,7 +525,7 @@ BEGIN
 	REPLACE INTO TBL_DISPATCH_HEURES_USER
 	(rid, cycles, centre, team, grades, dispos, type, statut, heures)
 	VALUES
-	(ruleid, cycls, centr, tea, UPPER(grad), disp, typ, statu, heur);
+	(ruleid, cycls, centre_, team_, UPPER(grade_), disp, typ, statu, heur);
 END
 |
 DROP PROCEDURE IF EXISTS addHeuresIndividuelles|
