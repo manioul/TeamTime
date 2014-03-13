@@ -379,6 +379,20 @@ class utilisateurGrille extends utilisateur {
 		$this->classe[$classe['classe']][$index]['beginning'] = $classe['beginning'];
 		$this->classe[$classe['classe']][$index]['end'] = $classe['end'];
 	}
+	protected function _dbAddClasse($classe) {
+		$sql = sprintf("
+			INSERT INTO `TBL_CLASSE`
+			(`clid`, `uid`, `classe`, `beginning`, `end`, `commentaire`)
+			VALUES
+			(NULL, %d, '%s', '%s', '%s', '%s')
+			", $this->uid()
+			, $classe['classe']
+			, $classe['beginning']
+			, $classe['end']
+			, $classe['comment']
+		);
+		$_SESSION['db']->db_interroge($sql);
+	}
 	// retourne les rôles (sous forme de tableau)
 	public function roles() {
 		if (sizeof($this->roles) < 1) $this->dbRetrRoles();
@@ -565,6 +579,10 @@ class utilisateurGrille extends utilisateur {
 		if (!is_array($row)) return false;
 		$row['uid'] = $this->uid();
 		$affectation = new Affectation($row);
+		$row['classe'] = strtolower($row['grade']);
+		$this->_dbAddClasse($row);
+		$this->classe = array();
+		$this->_getClassesFromDb();
 		$aid = $affectation->insert();
 		$this->retrieveAffectations();
 		return true;

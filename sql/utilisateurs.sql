@@ -57,6 +57,10 @@ BEGIN
 			(aid, uid, centre, team, grade, beginning, end, validated)
 			VALUES
 			(NULL, uid_, centre_, team_, grade_, beginning_, end_, TRUE);
+		INSERT INTO TBL_CLASSE
+			(clid, uid, classe, beginning, end)
+			VALUES
+			(NULL, uid_, LOWER(grade_), beginning_, end_);
 	ELSE
 		CALL messageSystem("Création de l'utilisateur impossible : le login ou le mail sont déjà utilisés", "USER", 'createUser', "duplicate user info", CONCAT('nom:', nom_, ';prenom:', prenom_, ';login:', login_, ';email:', email_));
 	END IF;
