@@ -512,14 +512,14 @@ class utilisateurGrille extends utilisateur {
 				// Un utilisateur lambda ne doit pas avoir accès en écriture à certaines tables
 				$this->roles = array();
 				$this->dbRetrRoles();
-			}
-		} else {
-			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Refus ajout de rôle", "DEBUG", "addRole", "Ajout de rôle", "uid:%d;role:%s;admin:%d")'
-				, $this->uid()
-				, $param['role']
-				, $_SESSION['utilisateur']->uid()
+			} else {
+				$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Refus ajout de rôle", "DEBUG", "addRole", "Ajout de rôle", "uid:%d;role:%s;admin:%d")'
+					, $this->uid()
+					, $param['role']
+					, $_SESSION['utilisateur']->uid()
 				)
 			); 
+			}
 		}
 	}
 	// Retire un rôle à l'utilsiateur
@@ -955,55 +955,6 @@ class utilisateursDeLaGrille {
 	public function flushUsers() {
 		$this->users = array();
 	}
-	// Retourne une table d'utilisateurGrille
-	// $condition est une chaîne de caractère contenant la condition ou
-	// un tableau définissant les conditions de recherche des utilisateurs :
-	// $condition = array("`field` = 'value'", ...)
-	// Les conditions sont liées par AND
-	public function getUsers($condition = NULL, $order = "ORDER BY `poids` ASC") {
-		// Ajoute la condition
-		$cond = "";
-		if (is_string($condition)) $cond = "WHERE " . $condition;
-		if (is_array($condition)) {
-			$cond = "WHERE " . implode(' AND ', $condition);
-		}
-		$sql = sprintf("
-			SELECT *
-			FROM `TBL_USERS`
-			%s
-			%s"
-			, $cond
-			, $order
-		);
-		return $this->retourneUsers($sql);
-	}
-	public function getActiveUsers($centre = NULL, $team = NULL, $condition = NULL, $order = "ORDER BY `poids` ASC") {
-		$cond = array("`actif` = 1");
-		if (!is_null($centre)) {
-			if (is_string($centre)) {
-				$cond[] = "`centre` = '$centre'";
-			} elseif (is_array($centre)) {
-				$co = "(";
-				foreach ($centre as $cent) {
-					$co .= "`centre` = '$cent' OR ";
-				}
-				$cond[] = substr($co, 0, -4) . ')';
-			}
-		}
-		if (!is_null($team)) {
-			if (is_string($team)) {
-				$cond[] = "`team` = '$team'";
-			} elseif (is_array($team)) {
-				$co = "(";
-				foreach ($team as $cent) {
-					$co .= "`team` = '$cent' OR ";
-				}
-				$cond[] = substr($co, 0, -4) . ')';
-			}
-		}
-		if (is_array($condition)) $cond = array_merge($cond, $condition);
-		return $this->getUsers($cond, $order);
-	}
 	// Retourne une table d'utilisateurGrille d'utilisateurs actifs pour une affectation précise
 	public function getActiveUsersFromTo($from = NULL, $to = NULL, $centre = NULL, $team = NULL) {
 		return $this->getUsersFromTo($from, $to, $centre, $team, 1);
@@ -1068,10 +1019,6 @@ class utilisateursDeLaGrille {
 			$array[] = $user->userCell($dateDebut);
 		}
 		return $array;
-	}
-	public function getUsersCell($dateDebut, $condition = NULL, $order = "ORDER BY `poids` ASC") {
-		$this->getUsers($condition, $order);
-		return $this->usersCell($dateDebut);
 	}
 	public function getActiveUsersCell($from, $to, $centre = 'athis', $team = '9e') {
 		$this->getActiveUsersFromTo($from, $to, $centre, $team);
