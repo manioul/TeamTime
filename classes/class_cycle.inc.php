@@ -38,8 +38,16 @@ class Cycle {
 	private $team = NULL;
 	public function __construct($date=NULL, $centre = NULL, $team = NULL) {
 		if (is_null($date)) return false;
-		$this->centre($_SESSION['centre']); // FIXME Supporter réellement le multicentre en ne limitant pas l'usage aux valeurs de la session
-		$this->team($_SESSION['team']);
+		if (is_null($centre)) {
+			$this->centre($_SESSION['centre']);
+		} else {
+			$this->centre($centre);
+		}
+		if (is_null($team)) {
+			$this->team($_SESSION['team']);
+		} else {
+			$this->team($team);
+		}
 		return $this->loadCycle($date);
 	}
 	public function __destruct() { // TODO Supprimer l'objet de la liste $_definedCycles
@@ -273,7 +281,7 @@ class Cycle {
 			, $this->team
 		);
 		$result = $_SESSION['db']->db_interroge($sql);
-		if (mysqli_num_rows($result) != self::getCycleLength($this->centre, $this->team)) genCycleIntoDb($dateDebut);
+		if (mysqli_num_rows($result) != self::getCycleLength($this->centre, $this->team)) $this->genCycleIntoDb($dateDebut);
 		mysqli_free_result($result);
 		return true;
 	}
@@ -290,20 +298,13 @@ class Cycle {
 		$dateDebut->addJours(self::getCycleLength($this->centre, $this->team)); // On veut s'assurer que le cycle complet contenant la date est généré
 		// Recherche la dernière entrée de cycle dans la base
 		$sql = sprintf("
-			SELECT `date`,
+			SELECT MAX(`date`),
 				`cid`,
 				`conf`
 			FROM `TBL_GRILLE`
-			WHERE `date` = (SELECT MAX(`date`)
-				FROM `TBL_GRILLE`
-				WHERE (`centre` = '%s' OR `centre` = 'all')
-				AND (`team` = '%s' OR `team` = 'all')
-			)
-			AND (`centre` = '%s' OR `centre` = 'all')
-			AND (`team` = '%s' OR `team` = 'all')
+			WHERE `centre` = '%s'
+			AND `team` = '%s'
 			"
-			, $this->centre
-			, $this->team
 			, $this->centre
 			, $this->team
 		);
@@ -371,18 +372,18 @@ class Cycle {
 		$this->genCycleIntoDb($dateMaxS);
 		$sql = sprintf("
 			SELECT `date`,
-			`TBL_GRILLE`.`cid`,
-			`TBL_GRILLE`.`vsid`,
-			`TBL_GRILLE`.`pcid`,
-			`TBL_GRILLE`.`briefing`,
-			`TBL_GRILLE`.`conf`,
-			`TBL_GRILLE`.`readOnly`,
-			`TBL_GRILLE`.`ferie`,
-			`TBL_CYCLE`.`vacation`
-			FROM `TBL_GRILLE`,
-		       		`TBL_CYCLE`
-			WHERE `TBL_CYCLE`.`cid` = `TBL_GRILLE`.`cid`
-			AND `TBL_CYCLE`.`vacation` <> 'Repos'
+			`g`.`cid`,
+			`g`.`vsid`,
+			`g`.`pcid`,
+			`g`.`briefing`,
+			`g`.`conf`,
+			`g`.`readOnly`,
+			`g`.`ferie`,
+			`c`.`vacation`
+			FROM `TBL_GRILLE` AS `g`,
+		       		`TBL_CYCLE` AS `c`
+			WHERE `c`.`cid` = `g`.`cid`
+			AND `c`.`vacation` != '%s'
 			AND `date` BETWEEN
 				(SELECT `date`
 				FROM `TBL_GRILLE`
@@ -408,9 +409,12 @@ class Cycle {
 				AND `date` BETWEEN '%s' AND '%s'
 				LIMIT 0,1
 				)
-			AND (`TBL_CYCLE`.`centre` = '%s' OR `TBL_CYCLE`.`centre` = 'all')
-			AND (`TBL_CYCLE`.`team` = '%s' OR `TBL_CYCLE`.`team` = 'all')
+			AND (`g`.`centre` = '%s' OR `g`.`centre` = 'all')
+			AND (`g`.`team` = '%s' OR `g`.`team` = 'all')
+			AND (`c`.`centre` = '%s' OR `c`.`centre` = 'all')
+			AND (`c`.`team` = '%s' OR `c`.`team` = 'all')
 			ORDER BY `date` ASC"
+			, REPOS
 			, $this->centre
 			, $this->team
 			, $dateMin->date()
@@ -419,6 +423,8 @@ class Cycle {
 			, $this->team	// Ce qui est logique sauf si le cycle est ultérieurement modifié
 			, $dateDebut->date()
 			, $dateMaxS->date()
+			, $this->centre
+			, $this->team
 			, $this->centre
 			, $this->team
 		);
@@ -475,6 +481,8 @@ class Cycle {
 					LIMIT 0,1
 				)
 			AND `TD`.`did` = `TL`.`did`
+			AND `TG`.`centre` = '%s'
+			AND `TG`.`team` = '%s'
 			ORDER BY date ASC"
 			, REPOS
 			, $this->centre
@@ -484,7 +492,10 @@ class Cycle {
 			, $this->centre // On suppose ici que les `cid` d'une même entité croissent avec le `rang`
 			, $this->team	// Ce qui est logique sauf si le cycle est ultérieurement modifié
 			, $dateDebut->date()
-			, $dateMaxS->date());
+			, $dateMaxS->date()
+			, $this->centre
+			, $this->team
+		);
 		//debug::getInstance()->postMessage($sql);
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_row($result)) {
