@@ -12,8 +12,8 @@
 </select></li>
 <li>{include file="html.form.select.tpl" select=$dispos}
 </li>
-<li><label for="date">Date</label>
-<input type="date" name="date" placeholder="jj-mm-aaaa" />
+<li><label for="dateD">Date</label>
+<input type="date" name="dateD" id="dateD" placeholder="jj-mm-aaaa" value="{date('d-m-Y')}"/>
 </li>
 <li>{include file="html.form.select.tpl" select=$years}
 </li>

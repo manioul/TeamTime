@@ -385,12 +385,21 @@ function search_orphan_l() {
 function liste_pereq($year = 0) {
 	$results = array();
 	$sql = sprintf("
-		SELECT * FROM `VIEW_LIST_DISPO`
+		SELECT *
+		FROM `VIEW_LIST_DISPO` AS `v`
+		, `TBL_AFFECTATION` AS `a`
 		WHERE `pereq` = TRUE
 		AND (YEAR(`date`) >= %d
 		  OR `year` >= %d)		
+		  AND `v`.`uid` = `a`.`uid`
+		  AND `a`.`centre` = '%s'
+		  AND `a`.`team` = '%s'
+		  AND '%s' BETWEEN `beginning` AND `end`
 		  ", $year
 		  , $year
+		  , $_SESSION['utilisateur']->centre()
+		  , $_SESSION['utilisateur']->team()
+		  , date('Y-m-d')
 	);
 	$result = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {

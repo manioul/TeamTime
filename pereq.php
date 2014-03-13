@@ -87,7 +87,7 @@ ob_start(); // Obligatoire pour firePHP
 
 
 	// Gestion des briefings
-	$conf['page']['elements']['formulaireBriefing'] = true;
+	$conf['page']['elements']['intervalDate'] = true;
 
 	// Utilisation de jquery
 	$conf['page']['javascript']['jquery'] = true;
@@ -168,8 +168,8 @@ if (isset($_POST['uid']) || isset($_POST['did']) || isset($_POST['year'])) {
 	} else {
 		$pereq['nb'] = (int) abs($_POST['nb']);
 	}
-	if (isset($_POST['date'])) {
-		$date = new Date($_POST['date']);
+	if (isset($_POST['dateD'])) {
+		$date = new Date($_POST['dateD']);
 		if ($date) $pereq['date'] = $date->date();
 	}	
 	if ($_POST['did'] != (int) $_POST['did'] || $_POST['uid'] != (int) $_POST['uid'] || $_POST['year'] != (int) $_POST['year'] || $_POST['did'] != abs($_POST['did']) || $_POST['uid'] != abs($_POST['uid']) || $_POST['year'] != abs($_POST['year'])) {
