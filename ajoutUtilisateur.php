@@ -89,6 +89,8 @@ ob_start(); // Obligatoire pour firePHP
 	$conf['page']['elements']['lastErrorMessage'] = $DEBUG;
 	// Affichage des messages de debug
 	$conf['page']['elements']['debugMessages'] = $DEBUG;
+	// Utilisation de intervalDate (formulaire de choix d'intervalle de dates)
+	$conf['page']['elements']['intervalDate'] = true;
 
 
 
