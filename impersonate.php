@@ -53,7 +53,7 @@ ob_start(); // Obligatoire pour firePHP
 /*
  * Configuration de la page
  */
-        $titrePage = "Impersonate"; // Le titre de la page
+        $conf['page']['titre'] = "Impersonate"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -131,6 +131,7 @@ if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
 	unset($_SESSION['EDITEURS']);
 	unset($_SESSION['centre']);
 	unset($_SESSION['team']);
+	printf ("Vous êtes %s et vous devenez %d avec un virtuel %d", $_SESSION['utilisateur']->login(), $_POST['uid'], $_SESSION['utilisateur']->uid());
 	// Attribue une valeur spéciale pour savoir que l'on est devenu un utilisateur virtuel
 	$_SESSION['iAmVirtual'] = $_SESSION['utilisateur']->uid();
 	$sql = sprintf("
@@ -161,8 +162,10 @@ if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
 		mysqli_free_result($result2);
 	}
 	mysqli_free_result($result);
+	?><pre><?php
+	var_dump($_SESSION);
+	?></pre><?php
 } elseif (!empty($_GET['iWantMyselfBack']) && !empty($_SESSION['iAmVirtual'])) { // On reprend sa personnalité
-	unset($_SESSION['iAmVirtual']);
 	$sql = sprintf("
 		SELECT * FROM `TBL_USERS` AS `TU`
 		, `TBL_AFFECTATION` AS `TA`
@@ -172,6 +175,7 @@ if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
 		AND `TU`.`uid` = '%s'
 		", $_SESSION['db']->db_real_escape_string($_SESSION['iAmVirtual'])
 	);
+	unset($_SESSION['iAmVirtual']);
 	$result = $_SESSION['db']->db_interroge($sql);
 	if (mysqli_num_rows($result) > 0) {
 		session_regenerate_id(); // Éviter les attaques par fixation de session
@@ -189,6 +193,9 @@ if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
 		mysqli_free_result($result2);
 	}
 } else {
+	?><pre><?php
+	var_dump($_SESSION);
+	?></pre><?php
 }
 
 /*

@@ -61,7 +61,7 @@ $err = "";
 $dateOK = FALSE;
 $userOK = FALSE;
 
-if ($cycle = new Cycle($_REQUEST['date'], $_SESSION['centre'], $_SESSION['team'])) {
+if ($cycle = new Cycle($_REQUEST['date'], $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team())) {
 	$dateOK = TRUE;
 } else {
 	$err .= "Je ne comprends pas la date de base pour (dé)protéger la grille.\n";
