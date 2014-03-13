@@ -117,11 +117,10 @@ ob_start(); // Obligatoire pour firePHP
 
 $dir = "titresConges";
 
-print $_GET['f'];
-if (preg_match('/^\d{14}\.pdf$/', $_GET['f'])) {
-	print '\o/';
-}
-if (!empty($_GET['f']) && preg_match('/^\d{14}\.pdf$/', $_GET['f']) && file_exists($dir . "/" . $_GET['f'])) {
+require 'required_files.inc.php';
+
+$regex = sprintf('/^%s_%s_(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})_.{32}\.pdf$/', $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
+if (!empty($_GET['f']) && preg_match($regex, $_GET['f']) && file_exists($dir . "/" . $_GET['f'])) {
 	$file = $_SERVER['DOCUMENT_ROOT'] . "/$dir/" . $_GET['f'];
 	header('Content-Description: File Transfer');
 	header('Content-Type: application/octet-stream');
@@ -136,7 +135,6 @@ if (!empty($_GET['f']) && preg_match('/^\d{14}\.pdf$/', $_GET['f']) && file_exis
 	readfile($file);
 	exit;
 }
-require 'required_files.inc.php';
 
 $titres = array();
 
@@ -144,7 +142,7 @@ if (is_dir($dir)) {
 	if ($dh = opendir($dir)) {
 		while (($file = readdir($dh)) !== false) {
 			$matches = array();
-			if (preg_match('/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\.pdf$/', $file, $matches) === 1) {
+			if (preg_match($regex, $file, $matches) === 1) {
 				$fileF = $_SERVER['DOCUMENT_ROOT'] . "/$dir/$file";
 				$index = sprintf("%s%s%s%s%s%s", $matches[1], $matches[2], $matches[3], $matches[4], $matches[5], $matches[6]);
 				$titres[$index] = array(

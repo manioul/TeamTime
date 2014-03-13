@@ -222,7 +222,7 @@ foreach (array_keys($arr) as $uid) {
 				$nbCong = (string) $nbCong / 6;
 				$nbCong = preg_replace('/\./', ',', $nbCong);
 			}
-			$titreConges->editTitreConges($arr[$uid][$date]['nom'], $arr[$uid][$date]['did'], $nbCong, $dateDebut->formatDate(), $dateFin->formatDate(), $dateReprise, $dateTitre, '9E');
+			$titreConges->editTitreConges($arr[$uid][$date]['nom'], $arr[$uid][$date]['did'], $nbCong, $dateDebut->formatDate(), $dateFin->formatDate(), $dateReprise, $dateTitre, $_SESSION['team']);
 		}
 	}
 }

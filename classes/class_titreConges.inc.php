@@ -123,7 +123,7 @@ class TitreConges extends tFPDF {
 		$this->SetFont('DejaVu', '', 10);
 	}
 
-	public function editTitreConges($nom, $typeCong, $nbCong, $dateDebut, $dateFin, $dateReprise, $dateTitre, $team = '9E', $motifVex = NULL, $commentaire = NULL, $maxlength = 28) {
+	public function editTitreConges($nom, $typeCong, $nbCong, $dateDebut, $dateFin, $dateReprise, $dateTitre, $team, $motifVex = NULL, $commentaire = NULL, $maxlength = 28) {
 		$this->AddPage();
 
 		if ($typeCong != 1) {
@@ -153,7 +153,7 @@ class TitreConges extends tFPDF {
 		if (isset($this->cteam[$typeCong])) {
 			foreach ($this->cteam[$typeCong] as $coord) {
 				$this->SetXY($coord[0], $coord[1]);
-				$this->Cell(0, 0, $team);
+				$this->Cell(0, 0, strtoupper($team));
 			}
 		}
 		// Nom
@@ -219,7 +219,7 @@ class TitreConges extends tFPDF {
 	}
 
 	public function editTitres() {
-		$titre = $_SERVER['DOCUMENT_ROOT'] . "/titresConges/" . date('YmdHis') . '.pdf';
+		$titre = sprintf("%s/titresConges/%s_%s_%s_%s.pdf", $_SERVER['DOCUMENT_ROOT'], $_SESSION['centre'], $_SESSION['team'], date('YmdHis'), md5($_SESSION['utilisateur']->login() . date('YmdHis')));
 		$this->Output($titre, 'F');
 		$this->Output('titres.pdf', 'D');
 	}
