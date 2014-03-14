@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS TBL_VACANCES_A_ANNULER (
 
 DELIMITER |
 DROP PROCEDURE IF EXISTS attribAnneeConge|
-CREATE PROCEDURE attribAnneeConge( IN userid INT(11) , IN date_ DATE , IN anne INT )
+CREATE PROCEDURE attribAnneeConge( IN userid INT(11) , IN date_ DATE , IN annee_ INT )
 BEGIN
 	DECLARE shiftDid INT(11);
 	DECLARE dispoid INT(11);
@@ -48,23 +48,23 @@ BEGIN
 			AND uid = userid;
 			IF dispoid = 1 THEN
 				-- Attribue l'année du congé
-				CALL __attribAnneeConge(shiftDid, anne);
+				CALL __attribAnneeConge(shiftDid, annee_);
 			ELSE
 				-- Le did n'est pas celui attendu : le type de congé ne correspond pas.
-				CALL messageSystem('Le type de congé ne correspond pas : on attendait un did de 1', 'ERREUR', 'attribAnneeConge', 'erreur de did', NULL, CONCAT('userid:', userid, ';date:', date_, ';anne:', anne, ';dispoid:', dispoid));
+				CALL messageSystem('Le type de congé ne correspond pas : on attendait un did de 1', 'ERREUR', 'attribAnneeConge', 'erreur de did', NULL, CONCAT('userid:', userid, ';date:', date_, ';annee_:', annee_, ';dispoid:', dispoid));
 			END IF;
 			SET date_ = DATE_ADD(date_, INTERVAL 1 DAY);
 		UNTIL date_ > finDemiCycle END REPEAT;
 	ELSE
-		CALL __attribAnneeConge(shiftDid, anne);
+		CALL __attribAnneeConge(shiftDid, annee_);
 	END IF;
 END
 |
 DROP PROCEDURE IF EXISTS __attribAnneeConge|
-CREATE PROCEDURE __attribAnneeConge( IN shiftDid INT(11) , IN anne INT )
+CREATE PROCEDURE __attribAnneeConge( IN shiftDid INT(11) , IN annee_ INT )
 BEGIN
 	UPDATE TBL_VACANCES
-	SET year = anne
+	SET year = annee_
 	WHERE sdid = shiftDid;
 END
 |
