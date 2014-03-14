@@ -24,6 +24,16 @@
 $messages = array();
 $index = 0;
 
+if (empty($_SESSION['iAmVirtual'])) {
+	if ($_SESSION['ADMIN']) {
+		$messages[$index]['message'] = "Connecté en tant que " . $_SESSION['utilisateur']->login();
+	}
+} else {
+	$messages[$index]['message'] = "Connecté en tant que " . $_SESSION['utilisateur']->login() . " (" . $_SESSION['iAmVirtual'] . ")";
+}
+$messages[$index]['lien'] = "";
+$messages[$index]['classe'] = "warn";
+$index++;
 if (!empty($_SESSION['ADMIN']) && !get_sql_globals_constant('online')) {
 	$messages[$index]['message'] = "Le site est actuellement hors-ligne.";
 	$messages[$index]['lien'] = "administration.php";
@@ -36,6 +46,12 @@ if (!empty($_SESSION['iAmVirtual'])) {// && empty($_SESSION['ADMIN'])) {
 	$messages[$index]['classe'] = "warn";
 	$index++;
 }
+foreach ($_SESSION['utilisateur']->retrMessages() as $message) {
+	$messages[$index]['message'] = $message->message();
+	$message->setRead();
+	$index++;
+}
+$_SESSION['utilisateur']->flushMessages();
 
 $smarty->assign('messages', $messages);
 $smarty->display('messages.tpl');
