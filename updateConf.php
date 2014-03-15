@@ -39,7 +39,7 @@ $requireTeamEdit = true;
 	$conf['page']['include']['class_db'] = 1; // Le script utilise class_db.inc.php
 	$conf['page']['include']['session'] = 1; // Le script utilise les sessions par session.imc
 	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
-	$conf['page']['include']['class_utilisateurGrille'] = NULL; // Le sript utilise la classe utilisateurGrille
+	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['smarty'] = NULL; // Smarty sera utilisé sur cette page
 /*
@@ -75,7 +75,14 @@ if (preg_match('/confa(\d{4})m(\d*)j(\d*)/', $_POST['id'], $array)) {
 
 	$_SESSION['db']->db_interroge($sql);
 	if ($_SESSION['db']->db_affected_rows() < Cycle::getCycleLength()) { // Le verrouillage ne verrouille pas les jours de REPOS, d'où un nombre de données affectées même lorsque la grille n'est pas modifiable
-		$err = "Modification impossible....";
+		$err = "Modification impossible...";
+		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Modification de la configuration impossible.", "DEBUG", "updateConf.php", "mod failed", "affected_rows:%d;shouldBe:%d;POST:%s;SESSION:%s")'
+			, $_SESSION['db']->db_affected_rows()
+			, Cycle::getCycleLength()
+			, $_SESSION['db']->db_real_escape_string(json_encode($_POST))
+			, $_SESSION['db']->db_real_escape_string(json_encode($_SESSION))
+			)
+		);
 	} else {
 		$err = mysql_error();
 	}
