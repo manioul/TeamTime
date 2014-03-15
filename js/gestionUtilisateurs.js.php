@@ -23,7 +23,7 @@ require_once('../globals_db.inc.php');
 require_once('../classes/class_db.inc.php');
 require_once('../session.inc.php');
 
-if ($_SESSION['ADMIN']) {
+if (!empty($_SESSION['ADMIN'])) {
 	$affectations = array();
 ?>
 affectations = new Array();

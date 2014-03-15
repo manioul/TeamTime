@@ -145,7 +145,6 @@ class utilisateurGrille extends utilisateur {
 			, $dateF->date()
 		);
 		$_SESSION['db']->db_interroge($sql);
-		mysqli_free_result($result);
 	}
 	// Liste les pages accessibles par tous les utilisateurs à partir des entrées de menus
 	// et retourne un tableau utilisable par un html.form.select.tpl
@@ -963,14 +962,14 @@ class utilisateursDeLaGrille {
 		if (is_null($from)) $from = date('Y-m-d');
 		if (is_null($to)) $to = date('Y-m-d');
 		if (is_null($centre)) {
-			if ($_SESSION['ADMIN']) {
+			if (!empty($_SESSION['ADMIN'])) {
 				$centre = 'all';
 			} else {
 				$centre = $_SESSION['utilisateur']->centre();
 			}
 		}
 		if (is_null($team)) {
-			if ($_SESSION['ADMIN']) {
+			if (!empty($_SESSION['ADMIN'])) {
 				$team = 'all';
 			} else {
 				$team = $_SESSION['utilisateur']->team();

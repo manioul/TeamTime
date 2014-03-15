@@ -119,7 +119,7 @@ require 'required_files.inc.php';
 
 
 $roles = array(	array('content' => ''));
-if ($_SESSION['ADMIN']) {
+if (!empty($_SESSION['ADMIN'])) {
 	$roles[] = array('content'	=> 'admin');
 	if (isset($_GET['centre'])) {
 		$centre = $_GET['centre'];
@@ -131,7 +131,7 @@ if ($_SESSION['ADMIN']) {
 	$centre = $_SESSION['utilisateur']->centre();
 	$team = $_SESSION['utilisateur']->team();
 }
-if ($_SESSION['EDITEURS']) {
+if (!empty($_SESSION['EDITEURS'])) {
 	$roles[] = array('content'	=> 'editeurs');
 }
 $array = array( array('content' => 'teamEdit')

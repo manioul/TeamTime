@@ -25,7 +25,7 @@ $messages = array();
 $index = 0;
 
 if (empty($_SESSION['iAmVirtual'])) {
-	if ($_SESSION['ADMIN']) {
+	if (!empty($_SESSION['ADMIN'])) {
 		$messages[$index]['message'] = "Connecté en tant que " . $_SESSION['utilisateur']->login();
 	}
 } else {

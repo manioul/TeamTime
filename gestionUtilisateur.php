@@ -191,7 +191,7 @@ mysqli_free_result($result);
 
 
 // Ajout des colonnes centre et team pour les admin
-if ($_SESSION['ADMIN']) {
+if (!empty($_SESSION['ADMIN'])) {
 	$usersInfos[0]['centre'] = "Centre";
 	$usersInfos[0]['team'] = htmlspecialchars("Équipe", ENT_COMPAT, 'utf-8');;
 	$header[$j] = $usersInfos[0]['centre'];

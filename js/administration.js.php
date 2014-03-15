@@ -30,7 +30,7 @@ $colonnes = array();
 while ($row = $_SESSION['db']->db_fetch_array($result)) {
        $colonnes[] = $row[0];
 }
-if ($_SESSION['ADMIN']) {
+if (!empty($_SESSION['ADMIN'])) {
 	$colonnes[] = 'centre';
 	$colonnes[] = 'team';
 	$sql = sprintf("
