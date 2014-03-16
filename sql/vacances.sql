@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS TBL_VACANCES_A_ANNULER (
 
 DELIMITER |
 DROP PROCEDURE IF EXISTS attribAnneeConge|
-CREATE PROCEDURE attribAnneeConge( IN userid INT(11) , IN date_ DATE , IN annee_ INT )
+CREATE PROCEDURE attribAnneeConge( IN userid INT(11) , IN date_ DATE , IN annee_ SMALLINT(6) )
 BEGIN
 	DECLARE shiftDid INT(11);
 	DECLARE dispoid INT(11);
@@ -61,7 +61,7 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS __attribAnneeConge|
-CREATE PROCEDURE __attribAnneeConge( IN shiftDid INT(11) , IN annee_ INT )
+CREATE PROCEDURE __attribAnneeConge( IN shiftDid INT(11) , IN annee_ SMALLINT(6) )
 BEGIN
 	UPDATE TBL_VACANCES
 	SET year = annee_
@@ -69,7 +69,7 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS dateLimiteConges|
-CREATE PROCEDURE dateLimiteConges( IN year INT(11) , IN centre_ VARCHAR(50) , OUT dateLimite DATE )
+CREATE PROCEDURE dateLimiteConges( IN year SMALLINT(6) , IN centre_ VARCHAR(50) , OUT dateLimite DATE )
 BEGIN
 	-- Recherche la date limite de dépôt des congés
 
