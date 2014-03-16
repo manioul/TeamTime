@@ -106,6 +106,8 @@ $requireTeamEdit = true; // L'utilisateur doit être admin de l'équipe pour acc
  * Fin de la configuration de la page
  */
 
+ob_start();
+
 require 'required_files.inc.php';
 
 
@@ -189,5 +191,7 @@ include 'debug.inc.php';
 
 // Affichage du bas de page
 $smarty->display('footer.tpl');
+
+ob_end_flush();
 
 ?>
