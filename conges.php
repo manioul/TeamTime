@@ -45,51 +45,11 @@ $requireEditeur = true; // L'utilisateur doit être authentifié pour accéder �
 /*
  * Configuration de la page
  */
-        $conf['page']['titre'] = "TeamTime"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
 	$DEBUG = true;
 	$conf['page']['elements']['firePHP'] = true;
-
-	/*
-	 * Choix des éléments à afficher
-	 */
-	
-	// Affichage du menu horizontal
-	$conf['page']['elements']['menuHorizontal'] = !empty($_SESSION['AUTHENTICATED']); // Le menu est affiché aux seules personnes loguées
-	// Affichage du choix du thème
-	$conf['page']['elements']['choixTheme'] = false;
-	// Affichage du menu d'administration
-	$conf['page']['elements']['menuAdmin'] = false;
-	
-	// éléments de debug
-	
-	// Affichage des timeInfos
-	$conf['page']['elements']['timeInfo'] = false;
-	// Affichage de l'utilisation mémoire
-	$conf['page']['elements']['memUsage'] = false;
-	// Affichage des WherewereU
-	$conf['page']['elements']['whereWereU'] = false;
-	// Affichage du lastError
-	$conf['page']['elements']['lastError'] = false;
-	// Affichage du lastErrorMessage
-	$conf['page']['elements']['lastErrorMessage'] = false;
-	// Affichage des messages de debug
-	$conf['page']['elements']['debugMessages'] = false;
-
-
-
-	// Utilisation de jquery
-	$conf['page']['javascript']['jquery'] = false;
-	// Utilisation de ajax
-	$conf['page']['javascript']['ajax'] = false;
-	// Utilisation de grille2.js.php
-	$conf['page']['javascript']['grille2'] = false;
-
-	// Feuilles de styles
-	// Utilisation de la feuille de style general.css
-	$conf['page']['stylesheet']['general'] = false;
 
 	// Compactage des pages
 	$conf['page']['compact'] = false;
@@ -99,19 +59,6 @@ $requireEditeur = true; // L'utilisateur doit être authentifié pour accéder �
 
 require 'required_files.inc.php';
 require 'classes/class_titreConges.inc.php';
-
-
-// Affichage des en-têtes de page
-//$smarty->display('header.tpl');
-
-// Ajout du menu horizontal
-if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
-
-// Ajout du choix du thème
-if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
-
-// Affichage du menu d'administration
-if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
 
 $date = (isset($_POST['datePicker']) ? $_POST['datePicker'] : date('Y-m-d'));
 
