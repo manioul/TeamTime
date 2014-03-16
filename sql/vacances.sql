@@ -161,14 +161,6 @@ BEGIN
 	-- oldDisponibilite est systématiquement dixé à NULL dans la mesure où l'on n'utilise pas de dispo multiples
 	SET oldDisponibilite = NULL;
 
-	-- Vérifie si la date est éditable
-	SELECT readOnly
-	INTO isReadOnly
-	FROM TBL_GRILLE
-	WHERE date = date_
-	AND centre = centre_
-	AND team = team_;
-
 	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
 	IF NOT perequation THEN
 		SELECT vacation
@@ -182,7 +174,7 @@ BEGIN
 		AND (c.centre = centre_ OR c.centre = 'all')
 		AND (c.team = team_ OR c.team = 'all');
 		IF vac = 'Repos' THEN
-			SET isReadOnly = 0;
+			SET isReadOnly = 1;
 		END IF;
 	ELSE
 		-- De même si il s'agit d'une péréquation, on vérifie que la date est un jour de repos
@@ -197,12 +189,21 @@ BEGIN
 		AND (c.centre = centre_ OR c.centre = 'all')
 		AND (c.team = team_ OR c.team = 'all');
 		IF vac != 'Repos' THEN
-			SET isReadOnly = 0;
+			SET isReadOnly = 1;
 		END IF;
 	END IF;
 
+	-- Vérifie si la date est éditable
 	IF NOT isReadOnly THEN
-			
+		SELECT readOnly
+		INTO isReadOnly
+		FROM TBL_GRILLE
+		WHERE date = date_
+		AND centre = centre_
+		AND team = team_;
+	END IF;
+
+	IF NOT isReadOnly THEN
 		IF oldDisponibilite IS NULL THEN
 			SELECT dispo
 			INTO oldDisponibilite
@@ -256,16 +257,51 @@ BEGIN
 	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
 	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
 	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+	DECLARE vac VARCHAR(8);
 
 	CALL searchAffectation(userid, date_, centre_, team_, grad);
 
+	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
+	IF NOT perequation THEN
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac = 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	ELSE
+		-- De même si il s'agit d'une péréquation, on vérifie que la date est un jour de repos
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac != 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	END IF;
+
 	-- Vérifie si la date est éditable
-	SELECT readOnly
-	INTO isReadOnly
-	FROM TBL_GRILLE
-	WHERE date = date_
-	AND (centre = centre_ OR centre = 'all')
-	AND (team = team_ OR team = 'all');
+	IF NOT isReadOnly THEN
+		SELECT readOnly
+		INTO isReadOnly
+		FROM TBL_GRILLE
+		WHERE date = date_
+		AND centre = centre_
+		AND team = team_;
+	END IF;
 
 	IF NOT isReadOnly THEN
 		-- Recherche la date limite des congés)s 
@@ -346,13 +382,19 @@ BEGIN
 		IF congeDispo IS TRUE THEN
 			-- Traitement du cas particulier des congés en demi-cycle
 			IF dispoid = 1 THEN
-				CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
-				SET date_ = debutDemiCycle;
-				REPEAT
+				IF NOT perequation THEN
+					CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
+					SET date_ = debutDemiCycle;
+					REPEAT
 					-- Ajout des congés dans la table
 					CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
 					SET date_ = DATE_ADD(date_, INTERVAL 1 DAY);
-				UNTIL date_ > finDemiCycle END REPEAT;
+					UNTIL date_ > finDemiCycle END REPEAT;
+				ELSE
+					CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
+					CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
+					CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
+				END IF;
 			ELSE
 				-- Ajout des congés dans la table
 				CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
@@ -390,8 +432,41 @@ BEGIN
 	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
 	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
 	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+	DECLARE vac VARCHAR(8);
 
 	CALL searchAffectation(userid, date_, centre_, team_, grad);
+
+	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
+	IF NOT perequation THEN
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac = 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	ELSE
+		-- De même si il s'agit d'une péréquation, on vérifie que la date est un jour de repos
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac != 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	END IF;
 
 	-- Vérifie si la date est éditable
 	SELECT readOnly
@@ -418,7 +493,7 @@ BEGIN
 			WHERE uid = userid
 			AND did = dispoid
 			AND date = date_
-			AND pereq IS FALSE
+			AND pereq = perequation
 			LIMIT 1;
 		END IF;
 	ELSE -- La date n'est pas éditable
@@ -441,8 +516,41 @@ BEGIN
 	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
 	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
 	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+	DECLARE vac VARCHAR(8);
 
 	CALL searchAffectation(userid, date_, centre_, team_, grad);
+
+	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
+	IF NOT perequation THEN
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac = 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	ELSE
+		-- De même si il s'agit d'une péréquation, on vérifie que la date est un jour de repos
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac != 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	END IF;
 
 	IF NOT perequation THEN
 		-- Vérifie si la date est éditable
@@ -545,6 +653,9 @@ BEGIN
 			SET year = YEAR(date_) - 1
 			WHERE sdid = congeBougeable;
 		END IF;
+	ELSE
+		DELETE FROM TBL_L_SHIFT_DISPO
+		WHERE sdid = shiftDid;
 	END IF;
 	-- Supprime le congé de la table des congés
 	DELETE FROM TBL_VACANCES
