@@ -240,7 +240,7 @@ BEGIN
 			END IF;
 		END IF;
 	ELSE -- La date n'est pas éditable
-		CALL messageSystem("La date n'est pas éditable", 'USER', 'addDispo', 'read only', NULL);
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'addDispo', 'read only', CONCAT("userid:", userid, ";date:", date_, ";dipo:", disponibilite, ";"));
 	END IF;
 END
 |
@@ -331,7 +331,7 @@ BEGIN
 			AND v.sdid = l.sdid
 			AND uid = userid
 			AND year = YEAR(date_) - 1;
-			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_) - 1, ':', reliquat, ';uid:', userid));
+			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_) - 1, ':', reliquat, ';uid:', userid, ';did:', dispoid));
 			IF reliquat > 0 THEN
 				SET anneeConge = YEAR(date_) - 1;
 			ELSE
@@ -347,13 +347,13 @@ BEGIN
 				AND v.sdid = l.sdid
 				AND uid = userid
 				AND year = YEAR(date_);
-				CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_), ':', reliquat, ';uid:', userid));
+				CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_), ':', reliquat, ';uid:', userid, ';did:', dispoid));
 				IF reliquat > 0 THEN
 					SET anneeConge = YEAR(date_);
 				ELSE
 					-- Plus de congé de ce type disponible
 					SET congeDispo = FALSE;
-					CALL messageSystem('Plus de congé de ce type disponible', 'USER', 'addConges', 'Plus de congé', NULL);
+					CALL messageSystem('Plus de congé de ce type disponible', 'USER', 'addConges', 'Plus de congé', CONCAT('uid:', userid, ';reliquat_', YEAR(date_), ':', reliquat, ';did:', dispoid));
 				END IF;
 			END IF;
 		ELSE
@@ -369,13 +369,13 @@ BEGIN
 			AND v.sdid = l.sdid
 			AND uid = userid
 			AND year = YEAR(date_);
-			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat:', reliquat, ';uid:', userid));
+			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat:', reliquat, ';uid:', userid, ';did:', dispoid));
 			IF reliquat > 0 THEN
 				SET anneeConge = YEAR(date_);
 			ELSE
 				-- Plus de congé de ce type disponible
 				SET congeDispo = FALSE;
-				CALL messageSystem('Plus de congé de ce type disponible', 'USER', 'addConges', 'Plus de congé', NULL);
+				CALL messageSystem('Plus de congé de ce type disponible', 'USER', 'addConges', 'Plus de congé', CONCAT('reliquat_', YEAR(date_), ':', reliquat, ';uid:', userid, ';did:', dispoid));
 			END IF;
 		END IF;
 
@@ -401,7 +401,7 @@ BEGIN
 			END IF;
 		END IF;
 	ELSE -- La date n'est pas éditable
-		CALL messageSystem("La date n'est pas éditable", 'USER', 'addConges', 'read only', NULL);
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'addConges', 'read only', CONCAT("userid:", userid, ";date:", date_, ";dipoid:", dispoid, ";"));
 	END IF;
 END
 |
@@ -497,7 +497,7 @@ BEGIN
 			LIMIT 1;
 		END IF;
 	ELSE -- La date n'est pas éditable
-		CALL messageSystem("La date n'est pas éditable", 'USER', 'addConges', 'read only', NULL);
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'delDispo', 'read only', CONCAT("userid:", userid, ";date:", date_, ";dipo:", disponibilite, ";"));
 	END IF;
 END
 |
@@ -586,7 +586,7 @@ BEGIN
 			CALL __delConges(userid, date_, dispoid, anneeConge, perequation);
 		END IF;
 	ELSE -- La date n'est pas éditable
-		CALL messageSystem("La date n'est pas éditable", 'USER', 'addConges', 'read only', NULL);
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'delConges', 'read only', CONCAT("userid:", userid, ";date:", date_, ";dipoid:", dispoid, ";"));
 	END IF;
 END
 |
