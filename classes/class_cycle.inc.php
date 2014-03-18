@@ -111,6 +111,9 @@ class Cycle {
 		mysqli_free_result($result);
 		return $array;
 	}
+	/*
+	 * Fin des fonctions statiques
+	 */
 
 	//-----------
 	// Accesseurs
@@ -149,142 +152,7 @@ class Cycle {
 			return $this->dispos[$date];
 		}
 	}
-	//--------------------------------------------------------------
-	// Vérifie que la grille existe pour une année, sinon, la génère
-	//
-	// Pour cela, on recherche si la table TBL_GRILLE a des données
-	// correspondant au 31 décembre de l'année passée en paramètre
-	//--------------------------------------------------------------
-	private static function grilleExists($annee, $centre = 'athis', $team = '9e') {
-		$requete = sprintf("
-			SELECT *
-			FROM `TBL_GRILLE`
-			WHERE `date` = '%4d-12-31'
-			AND (`centre` = '%s' OR `centre` = 'all')
-			AND (`team` = '%s' OR `team` = 'all')"
-			, $annee
-			, $centre
-			, $team
-		);
-		$result = $_SESSION['db']->db_interroge($requete);
-		$row = $_SESSION['db']->db_fetch_assoc($result);
-		mysqli_free_result($result);
-		if (!is_array($row) && $annee >= date('Y')) { // On a les conditions remplies pour générer une nouvelle grille
-			$requete = sprintf("
-				SELECT *
-				FROM `TBL_GRILLE`
-				WHERE `date` = '%4d-12-31'
-				AND (`centre` = '%s' OR `centre` = 'all')
-				AND (`team` = '%s' OR `team` = 'all')"
-				, $annee-1
-				, $centre
-				, $team
-			);
-			$result = $_SESSION['db']->db_interroge($requete);
-			$row = $_SESSION['db']->db_fetch_assoc($result);
-			mysqli_free_result($result);
-			if (!is_array($row)) {
-				self::grilleExists($annee-1, $centre, $team);
-				$requete = sprintf("
-					SELECT *
-					FROM `TBL_GRILLE`
-					WHERE `date` = '%4d-12-31'
-					AND (`centre` = '%s' OR `centre` = 'all')
-					AND (`team` = '%s' OR `team` = 'all'"
-					, $annee-1
-					, $centre
-					, $team
-				);
-				$result = $_SESSION['db']->db_interroge($requete);
-				$row = $_SESSION['db']->db_fetch_assoc($result);
-				mysqli_free_result($result);
-			}
-			//echo "Génère la grille pour $annee";
-			$jourTravail = new jourTravail($row, $centre, $team);
-			self::genere_grille($jourTravail);
-			return true;
-		} else if (is_array($row)) {
-			return true;
-		} else {
-			debug::getInstance()->lastError(ERR_DB_NORESULT);
-			return false;
-		}
-	}
-	//--------------------------------
-	// Construit la grille dans la bdd
-	//--------------------------------
-	private static function genere_grille($jourTravail) {
-		// $jourTravail est un objet jourTravail
 
-		// L'année de la grille que l'on va créer
-		$an = $jourTravail->annee();
-		// Si le mois du jour de référence est en fin d'année on crée la grille de l'année suivante
-		if ($jourTravail->mois() >= 11) { $an++; }
-		// Le dernier jour de la grille à créer est le 31 décembre de l'année $an
-		$cpt = 1; // Un compteur de sécurité
-		//  TODO Ouch ! Ça va être un peu long gare au timeExceeded
-		while ($jourTravail->annee() <= $an && $cpt++ < 430) {
-			$jourTravail->incDate();
-			$jourTravail->cid((string)$jourTravail->nextCid());
-			$jourTravail->dbSafeInsert();
-		}
-	}
-	//-------------------------------
-	// Charge le planning d'une année
-	//-------------------------------
-	public static function load_planning($annee, $centre = 'athis', $team = '9e') { // Retourne un tableau de la forme $planning[mois][jourDuMois] = jourDuCycle
-		// On doit d'abord créer la grille de l'année si elle n'existe pas
-		self::grilleExists($annee, $centre, $team);
-		$sql = sprintf("
-			SELECT *
-			FROM `TBL_GRILLE`
-			WHERE YEAR(`date`) = '%s'
-			AND (`centre` = '%s' OR `centre` ='all')
-			AND (`team` = '%s' OR `team` = 'all')"
-			, $annee
-			, $centre
-			, $team
-		);
-		$result = $_SESSION['db']->db_interroge($sql);
-		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$planning[] = new jourTravail($row, $centre, $team);
-		}
-		mysqli_free_result($result);
-		return $planning;
-	}
-	/*
-	 * Fin des fonctions statiques
-	 */
-
-	//----------------------------------
-	// Vérifie que le cycle
-	// débutant à $dateDebut
-	// est défini dans TBL_GRILLE de la bdd 
-	//
-	//  FIXME INUTILISÉ et NON TESTÉ
-	//----------------------------------
-	private function cycleExistsInDb($dateDebut) {
-		if (!is_a($dateDebut, 'Date')) { // On teste si le paramètre est un objet de la classe Date
-			$dateDebut = new Date($dateDebut);
-			if (!$dateDebut) return false;
-		}
-		$sql = sprintf("
-			SELECT COUNT(`date`)
-			FROM `TBL_GRILLE`
-			WHERE `date` BETWEEN '%s' AND '%s'
-			AND (`centre` = '%s' OR `centre` = 'all')
-			AND (`team` = '%s' OR `team` = 'all')
-			"
-			, $dateDebut->date()
-			, $dateDebut->addJours(self::getCycleLength($this->centre, $this->team)-1)->date()
-			, $this->centre
-			, $this->team
-		);
-		$result = $_SESSION['db']->db_interroge($sql);
-		if (mysqli_num_rows($result) != self::getCycleLength($this->centre, $this->team)) $this->genCycleIntoDb($dateDebut);
-		mysqli_free_result($result);
-		return true;
-	}
 	//----------------------------------
 	// Génère les cycles dans TBL_GRILLE
 	// jusqu'au cycle contenant $dateDebut
@@ -298,12 +166,14 @@ class Cycle {
 		$dateDebut->addJours(self::getCycleLength($this->centre, $this->team)); // On veut s'assurer que le cycle complet contenant la date est généré
 		// Recherche la dernière entrée de cycle dans la base
 		$sql = sprintf("
-			SELECT MAX(`date`),
+			SELECT `date`,
 				`cid`,
 				`conf`
 			FROM `TBL_GRILLE`
 			WHERE `centre` = '%s'
 			AND `team` = '%s'
+			ORDER BY `date` DESC
+			LIMIT 1
 			"
 			, $this->centre
 			, $this->team
