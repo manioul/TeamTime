@@ -41,6 +41,7 @@ $requireEditeur = true; // L'utilisateur doit être authentifié pour accéder �
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['smarty'] = NULL; // Smarty sera utilisé sur cette page
 
+ob_start();
 
 /*
  * Configuration de la page
@@ -60,11 +61,13 @@ $requireEditeur = true; // L'utilisateur doit être authentifié pour accéder �
 require 'required_files.inc.php';
 require 'classes/class_titreConges.inc.php';
 
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+
 $date = (isset($_POST['datePicker']) ? $_POST['datePicker'] : date('Y-m-d'));
 
 $date1 = new Date($date);
 $date2 = clone $date1;
-$date2->addJours(Cycle::getCycleLength()); // FIXME génère une erreur 500 si $date2 est une date vide
+$date2->addJours(Cycle::getCycleLength($affectation['centre'], $affectation['team'])); // FIXME génère une erreur 500 si $date2 est une date vide
 
 // Recherche les congés qui doivent être déposés
 $sql = sprintf("
@@ -90,22 +93,23 @@ $sql = sprintf("
 			WHERE (`centre` = 'all' OR `centre` = '%s')
 			AND (`team` = 'all' OR `team` = '%s')
 			)
-		AND (`centre` = 'all' OR `centre` = '%s')
-		AND (`team` = 'all' OR `team` = '%s')
+		AND `centre` = '%s'
+		AND `team` = '%s'
 		)
+	AND '%s' BETWEEN `beginning` AND `end`
 	AND `centre` = '%s'
 	AND `team` = '%s'
 	ORDER BY `l`.`did`
 	, `nom`, `date`
-
-		", $date1->date()
-		, $date2->date()
-		, $_SESSION['utilisateur']->centre()
-		, $_SESSION['utilisateur']->team()
-		, $_SESSION['utilisateur']->centre()
-		, $_SESSION['utilisateur']->team()
-		, $_SESSION['utilisateur']->centre()
-		, $_SESSION['utilisateur']->team()
+	", $date1->date()
+	, $date2->date()
+	, $affectation['centre']
+	, $affectation['team']
+	, $affectation['centre']
+	, $affectation['team']
+	, $date1->date()
+	, $affectation['centre']
+	, $affectation['team']
 	);
 $result = $_SESSION['db']->db_interroge($sql);
 $arr = array();
@@ -118,7 +122,7 @@ while ($row = $_SESSION['db']->db_fetch_array($result)) {
 }
 mysqli_free_result($result);
 if (sizeof($arr) == 0) { // Il n'y a pas de congé à poser...
-	exit;
+	die ("Aucun congé à poser.");
 }
 $dateTitre = date('d-m-Y');
 
@@ -130,7 +134,7 @@ foreach (array_keys($arr) as $uid) {
 			$dateDebut = new Date($date);
 			$nbCong = 0;
 			// On doit vérifier si le jour travaillé suivant est un congé et de même type
-			$prochainJt = new jourTravail($date, $_SESSION['centre'], $_SESSION['team']);
+			$prochainJt = new jourTravail($date, $affectation['centre'], $affectation['team']);
 			//$dateDepart = $prochainJt->previousWorkingDay()->date(); // La date de départ en congé est la dernière date travaillée
 			do {
 				$nbCong++;
@@ -169,7 +173,7 @@ foreach (array_keys($arr) as $uid) {
 				$nbCong = (string) $nbCong / 6;
 				$nbCong = preg_replace('/\./', ',', $nbCong);
 			}
-			$titreConges->editTitreConges($arr[$uid][$date]['nom'], $arr[$uid][$date]['did'], $nbCong, $dateDebut->formatDate(), $dateFin->formatDate(), $dateReprise, $dateTitre, $_SESSION['team']);
+			$titreConges->editTitreConges($arr[$uid][$date]['nom'], $arr[$uid][$date]['did'], $nbCong, $dateDebut->formatDate(), $dateFin->formatDate(), $dateReprise, $dateTitre, $affectation['team']);
 		}
 	}
 }
@@ -182,5 +186,7 @@ $titreConges->editTitres();
  */
 include 'debug.inc.php';
 firePhpLog($conf, '$conf');
+
+ob_end_flush();
 
 ?>

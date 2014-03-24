@@ -119,7 +119,9 @@ $dir = "titresConges";
 
 require 'required_files.inc.php';
 
-$regex = sprintf('/^%s_%s_(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})_.{32}\.pdf$/', $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+
+$regex = sprintf('/^%s_%s_(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})_.{32}\.pdf$/', $affectation['centre'], $affectation['team']);
 if (!empty($_GET['f']) && preg_match($regex, $_GET['f']) && file_exists($dir . "/" . $_GET['f'])) {
 	$file = $_SERVER['DOCUMENT_ROOT'] . "/$dir/" . $_GET['f'];
 	header('Content-Description: File Transfer');

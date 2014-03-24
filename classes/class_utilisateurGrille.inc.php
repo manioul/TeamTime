@@ -1022,6 +1022,12 @@ class utilisateursDeLaGrille {
 		$dateFin = new Date($dateDebut);
 		$dateFin->addJours(Cycle::getCycleLength($centre, $team) * $nbCycle - 1);
 
+		// Si l'utilisateur change d'affectation avant la date de fin,
+		// on limite la date de fin à la date de changement d'affectation
+		if ($dateFin->compareDate($endAffectation) > 0) {
+			$dateFin = new Date($endAffectation);
+		}
+
 		// Chargement des propriétés des dispos
 		$proprietesDispos = jourTravail::proprietesDispo(1, $centre, $team);
 
@@ -1302,7 +1308,21 @@ class utilisateursDeLaGrille {
 								mysqli_free_result($result);
 							}
 						} else {
-							$classe .= " present";
+							// Cas des affectations en cours
+							$sql = sprintf("
+								SELECT `centre`, `team`, `beginning`, `end`
+								FROM `TBL_AFFECTATION`
+								WHERE `uid` = %d
+								AND '%s' BETWEEN `beginning` AND `end`
+								", $user['uid']
+								, $dateVacation
+							);
+							$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+							if ($row['centre'] == $centre && $row['team'] == $team) {
+								$classe .= " present";
+							} else {
+								$classe .= " absent";
+							}
 						}
 						/*
 						 * Affichage remplacements
