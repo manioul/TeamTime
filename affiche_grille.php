@@ -143,7 +143,7 @@ if ($dateDebut != DATE_ERR_INVALID_FORMAT) {
 	$dateDebut = date("Y-m-d");
 }
 
-$return = utilisateursDeLaGrille::getInstance()->getGrilleActiveUsers($dateDebut, $nbCycle, $_SESSION['centre'], $_SESSION['team']);
+$return = utilisateursDeLaGrille::getInstance()->getGrilleActiveUsers($dateDebut, $nbCycle);
 
 /*
  * Début des appels d'affichage Smarty

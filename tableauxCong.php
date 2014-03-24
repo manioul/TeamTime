@@ -115,7 +115,9 @@ require 'required_files.inc.php';
 $year = (!empty($_GET['year']) ? sprintf("%04d", $_GET['year']) : date('Y'));
 $titre = "Congés";
 
-$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $_SESSION['centre'], $_SESSION['team']);
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y') . '-01-01');
+
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $affectation['centre'], $affectation['team']);
 
 $tab = array();
 $sql = sprintf("SELECT `did`
@@ -127,8 +129,8 @@ $sql = sprintf("SELECT `did`
 	AND `type decompte` = 'conges'
 	AND (`centre` = 'all' OR `centre` = '%s')
 	AND (`team` = 'all' OR `team` = '%s')
-	", $_SESSION['utilisateur']->centre()
-	, $_SESSION['utilisateur']->team()
+	", $affectation['centre']
+	, $affectation['team']
 );
 $results = $_SESSION['db']->db_interroge($sql);
 // Recherche la date limite de dépôt des congés
@@ -142,9 +144,9 @@ $sql = sprintf("
 	WHERE `nom` = 'dlCong_default_%s'
 	LIMIT 1
 	", $year
-	, $_SESSION['utilisateur']->centre()
+	, $affectation['centre']
 	, $year + 1
-	, $_SESSION['utilisateur']->centre()
+	, $affectation['centre']
 );
 $result = $_SESSION['db']->db_interroge($sql);
 $row = $_SESSION['db']->db_fetch_row($result);
@@ -177,8 +179,8 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 		, $year
 		, $year
 		, $res['did']
-		, $_SESSION['centre']
-		, $_SESSION['team']
+		, $affectation['centre']
+		, $affectation['team']
 	);
 	$result = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {

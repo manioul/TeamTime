@@ -129,6 +129,9 @@ $forms = array(
 // Choix des éléments à gérer (vacances, charge, briefing)
 $get = $_GET['q'];
 
+
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+
 $titres = array();
 $datas = array();
 $arr = $forms[$get];
@@ -142,7 +145,7 @@ $sql = sprintf("
 	WHERE `dateF` > NOW()
 	AND `centre` = '%s'
 	", $arr['table']
-	, $_SESSION['utilisateur']->centre()
+	, $affectation['centre']
 );
 $result = $_SESSION['db']->db_interroge($sql);
 $a = array();

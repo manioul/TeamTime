@@ -71,8 +71,6 @@ if (mysqli_num_rows($result) > 0) {
 	}
 	$_SESSION['utilisateur'] = new utilisateurGrille((int) $row['uid']);
 	$_SESSION['AUTHENTICATED'] = true;
-	$_SESSION['centre'] = $_SESSION['utilisateur']->centre();
-	$_SESSION['team'] = $_SESSION['utilisateur']->team();
 	// Mise à jour des informations de connexion
 	$upd = sprintf("
 		UPDATE `TBL_USERS`

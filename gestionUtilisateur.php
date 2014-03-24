@@ -125,10 +125,11 @@ if (empty($_POST['nom'])) { // On vérifie que des données de formulaire n'ont 
 			$team = NULL;
 		}
 	} else {
-		$centre = $_SESSION['utilisateur']->centre();
-		$team = $_SESSION['utilisateur']->team();
+		$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+		$centre = $affectation['centre'];
+		$team = $affectation['team'];
 	}
-	$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y-m-d'), date('Y-m-d'), $centre, $team);
+	$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo($dateD, $dateF, $centre, $team);
 	$usersInfos = array();
 	$form = array();
 	$header = array();
@@ -206,8 +207,9 @@ if (!empty($_SESSION['ADMIN'])) {
 	);
 	$i = 1;
 	foreach ($users as $user) {
-		$usersInfos[$i]['centre'] = $user->centre();
-		$usersInfos[$i]['team'] = $user->team();
+		$affectation = $user->affectationOnDate($dateD); 
+		$usersInfos[$i]['centre'] = $affectation['centre'];
+		$usersInfos[$i]['team'] = $affectation['team'];
 		$i++;
 	}
 }

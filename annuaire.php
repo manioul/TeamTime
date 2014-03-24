@@ -104,7 +104,9 @@ ob_start();
 
 require 'required_files.inc.php';
 
-$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y-m-d'), date('Y-m-d'), $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y-m-d'), date('Y-m-d'), $affectation['centre'], $affectation['team']);
 
 $arr = array( array('nom', 'prenom', 'email', 'phone') );
 $mailto = array_search('email', $arr[0]);

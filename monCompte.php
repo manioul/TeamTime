@@ -178,10 +178,11 @@ if (sizeof($_POST) > 0) {
 }
 
 // Données nécessaires à la partie contact
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 
-$smarty->assign('centres', Affectation::listeAffectations('centre', $_SESSION['utilisateur']->centre() ));
-$smarty->assign('teams', Affectation::listeAffectations('team', $_SESSION['utilisateur']->team()));
-$smarty->assign('grades', Affectation::listeAffectations('grade', $_SESSION['utilisateur']->grade()));
+$smarty->assign('centres', Affectation::listeAffectations('centre', $affectation['centre'] ));
+$smarty->assign('teams', Affectation::listeAffectations('team', $affectation['team']));
+$smarty->assign('grades', Affectation::listeAffectations('grade', $affectation['grade']));
 $smarty->assign('utilisateur', $utilisateur);
 $smarty->assign('locked', $utilisateur->locked());
 $smarty->assign('actif', $utilisateur->actif());

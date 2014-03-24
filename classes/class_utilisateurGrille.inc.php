@@ -1055,14 +1055,13 @@ class utilisateursDeLaGrille {
 		// Recherche des jours de travail
 		//
 		$cycle = array();
-		$dateIni = new Date($dateDebut);
-		if ($DEBUG) debug::getInstance()->startChrono('load_planning_duree_norepos'); // Début chrono
+		if (isset($DEBUG)) debug::getInstance()->startChrono('load_planning_duree_norepos'); // Début chrono
 		for ($i=0; $i<$nbCycle; $i++) {
 			$cycle[$i] = new Cycle($dateIni, $centre, $team);
 			$dateIni->addJours(Cycle::getCycleLength($centre, $team));
 			$cycle[$i]->cycleId($i);
 		}
-		if ($DEBUG) debug::getInstance()->stopChrono('load_planning_duree_norepos'); // Fin chrono
+		if (isset($DEBUG)) debug::getInstance()->stopChrono('load_planning_duree_norepos'); // Fin chrono
 
 		// Lorsque l'on n'affiche qu'un cycle, on ajoute des compteurs en fin de tableau
 		$evenSpec = array();
@@ -1283,10 +1282,15 @@ class utilisateursDeLaGrille {
 											AND `uid` = %d
 											AND `did` IN (SELECT `did`
 													FROM `TBL_DISPO`
-													WHERE `type decompte` = 'conges')
-										)
+													WHERE `type decompte` = 'conges'
+													AND (`centre` = 'all' OR `centre` = '%s')
+													AND (`team` = 'all' OR `team` = '%s')
+												)
+											)
 									", $dateVacation
 									, $user['uid']
+									, $centre
+									, $team
 								));
 								if (mysqli_num_rows($result) < 1) {
 									$classe .= " erreur";

@@ -219,7 +219,8 @@ class TitreConges extends tFPDF {
 	}
 
 	public function editTitres() {
-		$titre = sprintf("%s/titresConges/%s_%s_%s_%s.pdf", $_SERVER['DOCUMENT_ROOT'], $_SESSION['centre'], $_SESSION['team'], date('YmdHis'), md5($_SESSION['utilisateur']->login() . date('YmdHis')));
+		$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+		$titre = sprintf("%s/titresConges/%s_%s_%s_%s.pdf", $_SERVER['DOCUMENT_ROOT'], $affectation['centre'], $affectation['team'], date('YmdHis'), md5($_SESSION['utilisateur']->login() . date('YmdHis')));
 		$this->Output($titre, 'F');
 		$this->Output('titres.pdf', 'D');
 	}

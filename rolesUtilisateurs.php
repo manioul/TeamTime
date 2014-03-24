@@ -128,8 +128,9 @@ if (!empty($_SESSION['ADMIN'])) {
 		$team = $_GET['team'];
 	}
 } else {
-	$centre = $_SESSION['utilisateur']->centre();
-	$team = $_SESSION['utilisateur']->team();
+	$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+	$centre = $affectation['centre'];
+	$team = $affectation['team'];
 }
 if (!empty($_SESSION['EDITEURS'])) {
 	$roles[] = array('content'	=> 'editeurs');

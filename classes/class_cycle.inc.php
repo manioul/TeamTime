@@ -37,14 +37,15 @@ class Cycle {
 	private $centre = NULL;
 	private $team = NULL;
 	public function __construct($date=NULL, $centre = NULL, $team = NULL) {
-		if (is_null($date)) return false;
+		if (!is_a($date, 'Date')) return false;
+		$row = $_SESSION['utilisateur']->affectationOnDate($date);
 		if (is_null($centre)) {
-			$this->centre($_SESSION['centre']);
+			$this->centre($row['centre']);
 		} else {
 			$this->centre($centre);
 		}
 		if (is_null($team)) {
-			$this->team($_SESSION['team']);
+			$this->team($row['team']);
 		} else {
 			$this->team($team);
 		}
@@ -94,7 +95,10 @@ class Cycle {
 	}
 	// La liste des jours de travail d'un cycle
 	public static function jtCycle($centre = NULL) {
-		if (is_null($centre)) $centre = $_SESSION['centre'];
+		if (is_null($centre)) {
+			$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+			$centre = $affectation['centre'];
+		}
 		$array = array();
 		$sql = sprintf("
 			SELECT `rang`, `vacation`, `horaires`
@@ -162,8 +166,9 @@ class Cycle {
 			$dateDebut = new Date($dateDebut);
 			if (!$dateDebut) return false;
 		}
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($dateDebut);
 		$confTab = array('E' => 'W', 'W' => 'E');
-		$dateDebut->addJours(self::getCycleLength($this->centre, $this->team)); // On veut s'assurer que le cycle complet contenant la date est généré
+		$dateDebut->addJours(self::getCycleLength($affectation['centre'], $affectation['team'])); // On veut s'assurer que le cycle complet contenant la date est généré
 		// Recherche la dernière entrée de cycle dans la base
 		$sql = sprintf("
 			SELECT `date`,
@@ -175,8 +180,8 @@ class Cycle {
 			ORDER BY `date` DESC
 			LIMIT 1
 			"
-			, $this->centre
-			, $this->team
+			, $affectation['centre']
+			, $affectation['team']
 		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$row = $_SESSION['db']->db_fetch_row($result);
@@ -212,8 +217,8 @@ class Cycle {
 				, $startDate->date()
 				, $cid
 				, $conf
-				, $this->centre
-				, $this->team
+				, $affectation['centre']
+				, $affectation['team']
 			);
 		}
 		if ($sql != "") {
@@ -233,11 +238,12 @@ class Cycle {
 			$dateDebut = new Date($dateDebut);
 			if (!$dateDebut) return false;
 		}
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($dateDebut);
 		// On va chercher le cycle qui contient la date $dateDebut
 		$dateMin = clone $dateDebut;
-		$dateMin->subJours(self::getCycleLength($this->centre, $this->team)-1);
+		$dateMin->subJours(self::getCycleLength($affectation['centre'], $affectation['team'])-1);
 		$dateMaxS = clone $dateDebut;
-		$dateMaxS->addJours(self::getCycleLength($this->centre, $this->team)-1);
+		$dateMaxS->addJours(self::getCycleLength($affectation['centre'], $affectation['team'])-1);
 		// D'abord s'assurer que la grille existe pour le cycle demandé
 		$this->genCycleIntoDb($dateMaxS);
 		$sql = sprintf("
@@ -265,6 +271,8 @@ class Cycle {
 						AND (`team` = '%s' OR `team` = 'all')
 					)
 				AND `date` BETWEEN '%s' AND '%s'
+				AND (`centre` = '%s' OR `centre` = 'all')
+				AND (`team` = '%s' OR `team` = 'all')
 				LIMIT 0,1
 				)
 			AND
@@ -277,6 +285,8 @@ class Cycle {
 						AND (`team` = '%s' OR `team` = 'all')
 					)
 				AND `date` BETWEEN '%s' AND '%s'
+				AND (`centre` = '%s' OR `centre` = 'all')
+				AND (`team` = '%s' OR `team` = 'all')
 				LIMIT 0,1
 				)
 			AND (`g`.`centre` = '%s' OR `g`.`centre` = 'all')
@@ -285,24 +295,28 @@ class Cycle {
 			AND (`c`.`team` = '%s' OR `c`.`team` = 'all')
 			ORDER BY `date` ASC"
 			, REPOS
-			, $this->centre
-			, $this->team
+			, $affectation['centre']
+			, $affectation['team']
 			, $dateMin->date()
 			, $dateDebut->date()
-			, $this->centre // On suppose ici que les `cid` d'une même entité croissent avec le `rang`
-			, $this->team	// Ce qui est logique sauf si le cycle est ultérieurement modifié
+			, $affectation['centre']
+			, $affectation['team']
+			, $affectation['centre'] // On suppose ici que les `cid` d'une même entité croissent avec le `rang`
+			, $affectation['team']	// Ce qui est logique sauf si le cycle est ultérieurement modifié
 			, $dateDebut->date()
 			, $dateMaxS->date()
-			, $this->centre
-			, $this->team
-			, $this->centre
-			, $this->team
+			, $affectation['centre']
+			, $affectation['team']
+			, $affectation['centre']
+			, $affectation['team']
+			, $affectation['centre']
+			, $affectation['team']
 		);
 		//debug::getInstance()->postMessage($sql);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$check = true;
 		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$this->dispos[$row['date']]['jourTravail'] = new jourTravail($row, $this->centre, $this->team); // $dispo[date]['jourTravail'] = jourTravail
+			$this->dispos[$row['date']]['jourTravail'] = new jourTravail($row, $affectation['centre'], $affectation['team']); // $dispo[date]['jourTravail'] = jourTravail
 			if ($check) { // la date de référence est la première date du cycle
 				$this->dateRef = new Date($row['date']);
 				$this->moisAsHTML = $this->dispos[$row['date']]['jourTravail']->moisAsHTML();
@@ -336,6 +350,8 @@ class Cycle {
 						AND (`team` = '%s' OR `team` = 'all')
 					)
 					AND `date` BETWEEN '%s' AND '%s'
+					AND (`centre` = '%s' OR `centre` = 'all')
+					AND (`team` = '%s' OR `team` = 'all')
 				      	LIMIT 0,1
 				)
 				AND
@@ -348,6 +364,8 @@ class Cycle {
 						AND (`team` = '%s' OR `team` = 'all')
 					)
 					AND `date` BETWEEN '%s' AND '%s'
+					AND (`centre` = '%s' OR `centre` = 'all')
+					AND (`team` = '%s' OR `team` = 'all')
 					LIMIT 0,1
 				)
 			AND `TD`.`did` = `TL`.`did`
@@ -355,16 +373,20 @@ class Cycle {
 			AND `TG`.`team` = '%s'
 			ORDER BY date ASC"
 			, REPOS
-			, $this->centre
-			, $this->team
+			, $affectation['centre']
+			, $affectation['team']
 			, $dateMin->date()
 			, $dateDebut->date()
-			, $this->centre // On suppose ici que les `cid` d'une même entité croissent avec le `rang`
-			, $this->team	// Ce qui est logique sauf si le cycle est ultérieurement modifié
+			, $affectation['centre']
+			, $affectation['team']
+			, $affectation['centre'] // On suppose ici que les `cid` d'une même entité croissent avec le `rang`
+			, $affectation['team']	// Ce qui est logique sauf si le cycle est ultérieurement modifié
 			, $dateDebut->date()
 			, $dateMaxS->date()
-			, $this->centre
-			, $this->team
+			, $affectation['centre']
+			, $affectation['team']
+			, $affectation['centre']
+			, $affectation['team']
 		);
 		//debug::getInstance()->postMessage($sql);
 		$result = $_SESSION['db']->db_interroge($sql);
@@ -380,6 +402,7 @@ class Cycle {
 	//-----------------------------------------------
 	public function compteType($type = 'dispo') {
 		$date = clone $this->dateRef();
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
 		$date->subJours(1);
 		$sql = sprintf("
 			SELECT `l`.`uid`,
@@ -397,8 +420,8 @@ class Cycle {
 			AND `l`.`date` >= `a`.`beginning`
 			AND '%s' BETWEEN `a`.`beginning` AND `a`.`end`
 			GROUP BY `uid`"
-			, $this->centre
-			, $this->team
+			, $affectation['centre']
+			, $affectation['team']
 			, $type
 			, $date->date()
 			, $date->date()
@@ -423,6 +446,7 @@ class Cycle {
 	//-----------------------------------------------
 	public function compteTypeFin($type = 'dispo') {
 		$date = clone $this->dateRef();
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
 		$date->addJours(self::getCycleLength()-1);
 		$sql = sprintf("
 			SELECT `l`.`uid`,
@@ -441,8 +465,8 @@ class Cycle {
 			AND `a`.`beginning` <= '%s'
 			AND `a`.`end` >= '%s'
 			GROUP BY `uid`"
-			, $this->centre
-			, $this->team
+			, $affectation['centre']
+			, $affectation['team']
 			, $type
 			, $date->date()
 			, $date->date()

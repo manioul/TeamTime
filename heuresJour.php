@@ -122,6 +122,8 @@ $tableau = array();
 $date = new Date($_GET['d']);
 if (!is_a($date, 'Date')) return false;
 
+$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
+
 $sql = sprintf("
 	SELECT `nom`, `normales`, `instruction`, `simulateur`, `double`
 	FROM `TBL_HEURES` AS `h`,
@@ -151,15 +153,15 @@ $sql = sprintf("
 	AND `team` = '%s'
 	", $date->date()
 	, $date->date()
-	, $_SESSION['utilisateur']->centre()
-	, $_SESSION['utilisateur']->team()
+	, $affectation['centre']
+	, $affectation['team']
 	, $date->date()
 	, $date->date()
-	, $_SESSION['utilisateur']->centre()
-	, $_SESSION['utilisateur']->team()
+	, $affectation['centre']
+	, $affectation['team']
 	, $date->date()
-	, $_SESSION['utilisateur']->centre()
-	, $_SESSION['utilisateur']->team()
+	, $affectation['centre']
+	, $affectation['team']
 );
 $result = $_SESSION['db']->db_interroge($sql);
 while($row = $_SESSION['db']->db_fetch_assoc($result)) {

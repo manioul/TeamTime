@@ -183,9 +183,10 @@ Bonne utilisation.
 	}
 }
 
-$centres = Affectation::listeAffectations('centre', $_SESSION['utilisateur']->centre());
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+$centres = Affectation::listeAffectations('centre', $affectation['centre']);
 $centres['label'] = 'Centre';
-$teams = Affectation::listeAffectations('team', $_SESSION['utilisateur']->team());
+$teams = Affectation::listeAffectations('team', $affectation['team']);
 $teams['label'] = 'Équipe';
 $grades = Affectation::listeAffectations('grade');
 $grades['label'] = 'Grade';

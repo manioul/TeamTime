@@ -62,6 +62,7 @@ if (!isset($_POST['dateD']) || !isset($_POST['t']) || !isset($_POST['dateF'])) {
 	if (false === $dateD || false === $dateF || $_POST['t'] != (int) $_POST['t']) {
 		$err = "Paramètre incorrect... :o";
 	} elseif ($_POST['t'] <= sizeof($tables)) {
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($dateD);
 		$description = $_SESSION['db']->db_real_escape_string($_POST['desc']);
 		$sql = sprintf("
 			INSERT INTO `%s`
@@ -71,7 +72,7 @@ if (!isset($_POST['dateD']) || !isset($_POST['t']) || !isset($_POST['dateF'])) {
 			, $dateD->date()
 			, $dateF->date()
 			, $description
-			, $_SESSION['utilisateur']->centre()
+			, $affectation['centre']
 		);
 		$_SESSION['db']->db_interroge($sql);
 		$champs = array(
@@ -97,7 +98,7 @@ if (!isset($_POST['dateD']) || !isset($_POST['t']) || !isset($_POST['dateF'])) {
 			, $champs[$_POST['t']][1]
 			, $dateD->date()
 			, $dateF->date()
-			, $_SESSION['utilisateur']->centre()
+			, $affectation['centre']
 		);
 		$_SESSION['db']->db_interroge($sql);
 	}

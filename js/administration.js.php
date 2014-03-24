@@ -92,6 +92,7 @@ $(function() {
 });
 <?	
 } else {
+	$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 	$sql = sprintf("
 		SELECT
 		`nom`,
@@ -110,8 +111,8 @@ $(function() {
 		AND (`team` = '%s' OR `team` = 'all');
 		", date('Y-m-d')
 		, date('Y-m-d')
-		, $_SESSION['centre']
-		, $_SESSION['team']
+		, $affectation['centre']
+		, $affectation['team']
 	);
 }
 $result = $_SESSION['db']->db_interroge($sql);

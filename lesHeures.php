@@ -123,6 +123,8 @@ $aHeures = array();
 $aTotaux = array();
 $checked = array();
 
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+
 /*
  * Recherche des dispo pour créer une liste d'exclusion
  */
@@ -133,8 +135,8 @@ $sql = sprintf("
 	AND absence IS NOT TRUE
 	AND (`centre` = '%s' OR `centre` = 'all')
 	AND (`team` = '%s' OR `team` = 'all')
-	", $_SESSION['centre']
-	, $_SESSION['team']
+	", $affectation['centre']
+	, $affectation['team']
 );
 $result = $_SESSION['db']->db_interroge($sql);
 while ($row = $_SESSION['db']->db_fetch_row($result)) {
@@ -165,6 +167,9 @@ if (!empty($_POST['dateD'])) {
 	$dateFin = clone $dateDebut;
 	$dateFin->addJours(365);
 }
+
+$affectation = $_SESSION['utilisateur']->affectationOnDate($dateDebut);
+
 /*
  * Gestion des exclusions
  */
@@ -209,15 +214,15 @@ $sql = sprintf("
 	, $dateFin->date()
 	, $dateFin->date()
 	, $dateDebut->date()
-	, $_SESSION['utilisateur']->centre()
-	, $_SESSION['utilisateur']->team()
+	, $affectation['centre']
+	, $affectation['team']
 	, $exclude
 	, $dateDebut->date()
 	, $dateFin->date()
 	, $dateFin->date()
 	, $dateDebut->date()
-	, $_SESSION['utilisateur']->centre()
-	, $_SESSION['utilisateur']->team()
+	, $affectation['centre']
+	, $affectation['team']
 	, $exclude
 );
 $result = $_SESSION['db']->db_interroge($sql);

@@ -114,8 +114,10 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y') . '-01-01');
+
 // Recherche des utilisateurs
-$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $affectation['centre'], $affectation['team']);
 
 // Recherche des dispos candidates à péréq
 $dispos = array();
@@ -131,8 +133,8 @@ $sql = sprintf("
 	AND (`centre` = 'all' OR `centre` = '%s')
 	AND (`team` = 'all' OR `team` = '%s')
 	ORDER BY `poids` ASC
-	", $_SESSION['utilisateur']->centre()
-	, $_SESSION['utilisateur']->team()
+	", $affectation['centre']
+	, $affectation['team']
 );
 $index = 0;
 $result = $_SESSION['db']->db_interroge($sql);

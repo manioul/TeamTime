@@ -132,6 +132,8 @@ if (!empty($_GET['f'])) $dateFin = $_GET['f'];
 if (!empty($_POST['dateD'])) $dateDebut = $_POST['dateD'];
 if (!empty($_POST['dateF'])) $dateFin = $_POST['dateF'];
 
+$affectation = $_SESSION['utilisateur']->affectationOnDate($dateDebut);
+
 /*
  * Recherche des dispo pour créer une liste d'exclusion
  */
@@ -142,8 +144,8 @@ $sql = sprintf("
 	AND absence IS NOT TRUE
 	AND (`centre` = '%s' OR `centre` = 'all')
 	AND (`team` = '%s' OR `team` = 'all')
-	", $_SESSION['centre']
-	, $_SESSION['team']
+	", $affectation['centre']
+	, $affectation['team']
 );
 $result = $_SESSION['db']->db_interroge($sql);
 while ($row = $_SESSION['db']->db_fetch_row($result)) {

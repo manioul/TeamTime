@@ -111,7 +111,9 @@ require 'required_files.inc.php';
 $year = date('Y');
 $titre = "Évènements";
 
-$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $_SESSION['centre'], $_SESSION['team']);
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y') . '-01-01');
+
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $affectation['centre'], $affectation['team']);
 $uids = array(); // Un tableau des uid des utilisateurs
 foreach ($users as $user) {
 	$uids[] = $user->uid();
@@ -127,8 +129,8 @@ $sql = sprintf("
 	AND `type decompte` != 'conges'
 	AND (`centre` = 'all' OR `centre` = '%s')
 	AND (`team` = 'all' OR `team` = '%s')
-	", $_SESSION['utilisateur']->centre()
-	, $_SESSION['utilisateur']->team()
+	", $affectation['centre']
+	, $affectation['team']
 );
 $results = $_SESSION['db']->db_interroge($sql);
 $index = 0;
@@ -161,8 +163,8 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 		", $res['did']
 		, $year
 		, $year
-		, $_SESSION['centre']
-		, $_SESSION['team']
+		, $affectation['centre']
+		, $affectation['team']
 	);
 	$i = 0;
 	$result = $_SESSION['db']->db_interroge($sql);

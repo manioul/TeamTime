@@ -57,6 +57,7 @@ if (!isset($_GET['id']) || !isset($_GET['t'])) {
 } else if ($_GET['id'] != (int) $_GET['id'] || $_GET['t'] != (int) $_GET['t']) {
 	$err = "Paramètre incorrect... :o";
 } else {
+	$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 	$tables =  array('TBL_BRIEFING', 'TBL_VACANCES_SCOLAIRES', 'TBL_PERIODE_CHARGE');
 	$champs = array(
 		array(
@@ -89,7 +90,7 @@ if (!isset($_GET['id']) || !isset($_GET['t'])) {
 		, $_GET['id']
 		, $tables[$_GET['t']]
 		, $_GET['id']
-		, $_SESSION['utilisateur']->centre()
+		, $affectation['centre']
 	);
 	$_SESSION['db']->db_interroge($sql1);
 	$_SESSION['db']->db_interroge($sql2);

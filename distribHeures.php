@@ -23,7 +23,7 @@
 
 // Require authenticated user
 // L'utilisateur doit être logué pour accéder à cette page
-$requireEditeur = true;
+$requireHeures = true;
 
 ob_start(); // Obligatoire pour firePHP
 
@@ -119,12 +119,14 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+
 if (sizeof($_POST) > 0) {
 	$sql = sprintf("
 		CALL addDispatchSchema('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
 		", $_SESSION['db']->db_real_escape_string(implode(',', array_keys($_POST['cycle'])))
-		, $_SESSION['centre']
-		, $_SESSION['team']
+		, $affectation['centre']
+		, $affectation['team']
 		, $_SESSION['db']->db_real_escape_string(implode(',', array_keys($_POST['grade'])))
 		, $_SESSION['db']->db_real_escape_string(implode(',', array_keys($_POST['dispo'])))
 		, $_SESSION['db']->db_real_escape_string($_POST['type'])
@@ -150,8 +152,8 @@ $sql = sprintf("
 	FROM `TBL_DISPATCH_HEURES_USER`
 	WHERE `centre` = '%s'
 	AND `team` = '%s'
-	", $_SESSION['centre']
-	, $_SESSION['team']
+	", $affectation['centre']
+	, $affectation['team']
 );
 $result = $_SESSION['db']->db_interroge($sql);
 while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
@@ -168,8 +170,8 @@ $sql = sprintf("
 	AND absence IS NOT TRUE
 	AND (`centre` = '%s' OR `centre` = 'all')
 	AND (`team` = '%s' OR `team` = 'all')
-	", $_SESSION['centre']
-	, $_SESSION['team']
+	", $affectation['centre']
+	, $affectation['team']
 );
 $result = $_SESSION['db']->db_interroge($sql);
 while ($row = $_SESSION['db']->db_fetch_row($result)) {
@@ -192,7 +194,7 @@ mysqli_free_result($result);
 $aType = $_SESSION['db']->db_set_enum_to_array('TBL_DISPATCH_HEURES', 'type');
 unset($aType['Type']);
 
-$array = Cycle::jtCycle($_SESSION['centre']);
+$array = Cycle::jtCycle($affectation['centre']);
 foreach ($array as $cycle) {
 	$aCycle[$cycle['rang']] = $cycle['vacation'];
 }

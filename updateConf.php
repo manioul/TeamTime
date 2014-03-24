@@ -60,6 +60,7 @@ if ($_POST['conf'] != 'W' && $_POST['conf'] != 'E') {
 if (preg_match('/confa(\d{4})m(\d*)j(\d*)/', $_POST['id'], $array)) {
 	firePhpLog($array, 'arr');
 	$date = new Date(sprintf("%04d-%02d-%02d", $array[1], $array[2], $array[3]));
+	$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
 	$sql = sprintf("UPDATE `TBL_GRILLE`
 		SET `conf` = '%s'
 		WHERE `readonly` = FALSE
@@ -69,8 +70,8 @@ if (preg_match('/confa(\d{4})m(\d*)j(\d*)/', $_POST['id'], $array)) {
 		", $_POST['conf']
 		, $date->date()
 		, $date->addJours(Cycle::getCycleLength()-1)->date()
-		, $_SESSION['utilisateur']->centre()
-		, $_SESSION['utilisateur']->team()
+		, $affectation['centre']
+		, $affectation['team']
 	);
 
 	$_SESSION['db']->db_interroge($sql);

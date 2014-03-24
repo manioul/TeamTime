@@ -127,6 +127,8 @@ $dHeures = NULL;
 $fHeures = NULL;
 
 // Saisie des heures
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+
 if (!empty($_POST['tableau'])) {
 	if (preg_match_all('/([\.\d]+)\s+([,\d]+)/', $_POST['tableau'], $array, PREG_PATTERN_ORDER)) {
 		$aDates = preg_replace('/(\d{2})\.(\d{2})\.(\d{2})/', '${1}/${2}/20${3}', $array[1]);
@@ -138,8 +140,8 @@ if (!empty($_POST['tableau'])) {
 					(`centre`, `team`, `date`, `heures`, `dispatched`, `writable`)
 					VALUES
 					('%s', '%s', '%s', %02d, 0, 1)
-					", $_SESSION['centre']
-					, $_SESSION['team']
+					", $affectation['centre']
+					, $affectation['team']
 					, $_SESSION['db']->db_real_escape_string($oDate->date())
 					, $aHeures[$i]
 				);
@@ -156,8 +158,8 @@ if (!empty($_POST['tableau'])) {
 				}
 				/*$sql = sprintf("
 					CALL dispatchOneDayHeures('%s', '%s', '%s')
-					", $_SESSION['centre']
-					, $_SESSION['team']
+					", $affectation['centre']
+					, $affectation['team']
 					, $_SESSION['db']->db_real_escape_string($oDate->date())
 				);
 				$_SESSION['db']->db_interroge($sql);
@@ -168,8 +170,8 @@ if (!empty($_POST['tableau'])) {
 		}
 		$sql = sprintf ("
 			CALL dispatchHeuresBetween('%s', '%s', '%s', '%s');
-			", $_SESSION['centre']
-			, $_SESSION['team']
+			", $affectation['centre']
+			, $affectation['team']
 			, $dHeures->date()
 			, $fHeures->date()
 		);
@@ -184,8 +186,8 @@ if (!empty($_POST['dateD']) && !empty($_POST['dateF'])) {
 	$dateF = new Date($_POST['dateF']);
 	$sql = sprintf("
 		CALL dispatchHeuresBetween('%s', '%s', '%s', '%s');
-		", $_SESSION['centre']
-		, $_SESSION['team']
+		", $affectation['centre']
+		, $affectation['team']
 		, $dateD->date()
 		, $dateF->date()
 	);
@@ -194,8 +196,8 @@ if (!empty($_POST['dateD']) && !empty($_POST['dateF'])) {
 if (!empty($_POST['calcAll'])) {
 	$sql = sprintf("
 		CALL dispatchAllHeures('%s', '%s')
-		", $_SESSION['centre']
-		, $_SESSION['team']
+		", $affectation['centre']
+		, $affectation['team']
 	);
 	$_SESSION['db']->db_interroge($sql);
 }
@@ -220,8 +222,8 @@ $sql = sprintf("
 	WHERE `centre` = '%s'
 	AND `team` = '%s'
 	AND `date` BETWEEN '%s' AND '%s'
-	", $_SESSION['centre']
-	, $_SESSION['team']
+	", $affectation['centre']
+	, $affectation['team']
 	, $dateFrom->date()
 	, $dateTo->date()
 );

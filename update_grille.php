@@ -65,9 +65,10 @@ $dispo = array(
 	,'dispo'	=> $_SESSION['db']->db_real_escape_string($_POST['dispo'])
 	,'oldDispo'	=> $_SESSION['db']->db_real_escape_string($_POST['oldDispo'])
 );
+$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
 
 
-$err = jourTravail::addDispo($dispo, $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
+$err = jourTravail::addDispo($dispo, $affectation['centre'], $affectation['team']);
 
 if ($err != "") {
 	print(nl2br(htmlspecialchars($err)));

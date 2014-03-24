@@ -383,6 +383,7 @@ function search_orphan_l() {
  * Liste les péréq à partir de l'année $year
  */
 function liste_pereq($year = 0) {
+	$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d')); 
 	$results = array();
 	$sql = sprintf("
 		SELECT *
@@ -397,8 +398,8 @@ function liste_pereq($year = 0) {
 		  AND '%s' BETWEEN `beginning` AND `end`
 		  ", $year
 		  , $year
-		  , $_SESSION['utilisateur']->centre()
-		  , $_SESSION['utilisateur']->team()
+		  , $affectation['centre']
+		  , $affectation['team']
 		  , date('Y-m-d')
 	);
 	$result = $_SESSION['db']->db_interroge($sql);

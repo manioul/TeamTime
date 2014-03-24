@@ -56,6 +56,7 @@ function getAvailableOccupations(oThis) {
 		}
 		$find_in_set = " AND (" . substr($find_in_set, 0, -4) . ")";
 	}
+	$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 	$sqlDispo = sprintf("
 		SELECT `dispo`
 		, `jours possibles`
@@ -65,8 +66,8 @@ function getAvailableOccupations(oThis) {
 		AND (`team` = '%s' OR `team` = 'all')
 		%s
 		ORDER BY `poids`"
-		, $_SESSION['utilisateur']->centre()
-		, $_SESSION['utilisateur']->team()
+		, $affectation['centre']
+		, $affectation['team']
 		, $find_in_set
 	);
 	$resDispo = $_SESSION['db']->db_interroge($sqlDispo);

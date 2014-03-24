@@ -112,8 +112,9 @@ require 'required_files.inc.php';
 
 
 if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) || !isset($_POST['did'])) {
+	$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 	// Recherche des utilisateurs
-	$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $_SESSION['utilisateur']->centre(), $_SESSION['utilisateur']->team());
+	$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $affectation['centre'], $affectation['team']);
 
 	// Recherche des dispos
 	$sql = sprintf("
@@ -126,8 +127,8 @@ if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) 
 		AND (`centre` = 'all' OR `centre` = '%s')
 		AND (`team` = 'all' OR `team` = '%s')
 		ORDER BY `poids` ASC
-		", $_SESSION['utilisateur']->centre()
-		, $_SESSION['utilisateur']->team()
+		", $affectation['centre']
+		, $affectation['team']
 	);
 	$result = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_array($result)) {
@@ -142,6 +143,7 @@ if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) 
 	if (false === $dateD || false === $dateF || $_POST['did'] != (int) $_POST['did'] || $_POST['uid'] != (int) $_POST['uid']) {
 		$err = "Paramètre incorrect... :o";
 	} else {
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($dateD);
 		// Recherche les dates qui sont dans l'intervalle choisi par l'utilisateur et ne correspondent pas à des jours de repos du cycle
 		$sql = sprintf("
 			SELECT `date`
@@ -157,12 +159,12 @@ if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) 
 			AND (`centre` = 'all' OR `centre` = '%s')
 			AND (`team` = 'all' OR `team` = '%s')
 			", REPOS
-			, $_SESSION['utilisateur']->centre()
-			, $_SESSION['utilisateur']->team()
+			, $affectation['centre']
+			, $affectation['team']
 			, $dateD->date()
 			, $dateF->date()
-			, $_SESSION['utilisateur']->centre()
-			, $_SESSION['utilisateur']->team()
+			, $affectation['centre']
+			, $affectation['team']
 		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$values = "";
