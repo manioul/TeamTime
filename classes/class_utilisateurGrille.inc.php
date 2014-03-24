@@ -45,6 +45,13 @@ class utilisateurGrille extends utilisateur {
 	private $adresse; // adresse
 	private $affectations = array(); // tableau des affectations
 	private $orderedAffectations = array(); // tableau des affectations rangées en ordre croissant
+	private $cacheAffectation = array(); // Une variable pour garder en cache les affectations
+       					// précédemment recherchées afin d'éviter d'interroger la base de données à chaque fois
+	// '2000-01-01'	=> array('centre'	=>
+	// 			'team'		=>
+	// 			'beginning'	=>
+	// 			'end'		=>
+	// 			)
 	private $centre = NULL; // centre actuel
 	private $team = NULL; // team actuelle
 	private $grade = NULL; // grade actuel
@@ -445,11 +452,12 @@ class utilisateurGrille extends utilisateur {
 		if (!isset($param['end'])) {
 			$param['end'] = '2050-12-31';
 		}
+		$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 		if (!isset($param['centre'])) {
-			$param['centre'] = $this->centre();
+			$param['centre'] = $affectation['centre']();
 		}
 		if (!isset($param['team'])) {
-			$param['team'] = $this->team();
+			$param['team'] = $affectation['team']();
 		}
 		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Ajout de rôle", "DEBUG", "addRole", "Ajout de rôle", "uid:%d;role:%s;appelant:%d")'
 			, $this->uid()
@@ -583,7 +591,6 @@ class utilisateurGrille extends utilisateur {
 		$this->classe = array();
 		$this->_getClassesFromDb();
 		$aid = $affectation->insert();
-		$this->retrieveAffectations();
 		return true;
 	}
 	/*
@@ -614,32 +621,42 @@ class utilisateurGrille extends utilisateur {
 		$this->affectations[$aid]->delete();
 		unset($this->affectations[$aid]);
 	}
-	public function affectations($param = NULL) {
-		if (sizeof($this->affectations) < 1) $this->retrieveAffectations();
-		if (is_int($param)) return $this->affectations[$param];
-		if (is_array($param)) { // Si $param est un tableau, il contient les infos d'une(e) nouvelle(s) affectation(s)
-			$this->addAffectationsTableau($param);
+	public function affectationOnDate($date) {
+		if (!is_a($date, 'Date')) {
+			$date = new Date($date);
 		}
-		return $this->affectations;
-	}
-	public function centre () {
-		if (is_null($this->centre)) $this->getPresentAffectationFromDb();
-		return $this->centre;
+		if (isset($this->cacheAffectation[$date->date()]) && is_array($this->cacheAffectation[$date->date()])) {
+			return $this->cacheAffectation[$date->date()];
+		}
+		$sql = sprintf("
+			SELECT `centre`, `team`, `grade`, `beginning`, `end`
+			FROM `TBL_AFFECTATION`
+			WHERE `uid` = %d
+			AND '%s' BETWEEN `beginning` AND `end`
+			", $this->uid()
+			, $date->date()
+		);
+		$this->cacheAffectation[$date->date()] = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+		return $this->cacheAffectation[$date->date()];
 	}
 	/*
 	 * Retourne un tableau des affectations en ordre croissant
 	 */
 	public function orderedAffectations() {
-		if (sizeof($this->orderedAffectations) < 1) $this->retrieveAffectations();
-		return $this->orderedAffectations;
-	}
-	public function team () {
-		if (is_null($this->team)) $this->getPresentAffectationFromDb();
-		return $this->team;
-	}
-	public function grade() {
-		if (is_null($this->grade)) $this->getPresentAffectationFromDb();
-		return $this->grade;
+		$result = $_SESSION['db']->db_interroge(sprintf("
+			SELECT *
+		       	FROM `TBL_AFFECTATION`
+			WHERE `uid` = %d
+			ORDER BY `end` ASC
+			", $this->uid()
+		));
+		$orderedAffectations = array();
+		$i = 0;
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$orderedAffectations[$i++] = new Affectation($row);
+		}
+		mysqli_free_result($result);
+		return $orderedAffectations;
 	}
 	public function poids($poids = NULL) {
 		if (!is_null($poids)) {
@@ -747,7 +764,6 @@ class utilisateurGrille extends utilisateur {
 		$this->setFromRow($row);
 		$this->dbRetrRoles();
 		$this->_retrieveContact();
-		$this->retrieveAffectations();
 	}
 	// Vérifie si l'utilisateur existe déjà dans la base de données
 	// Pour cela, on vérifie si l'email est déjà présent dans la bdd
@@ -784,56 +800,6 @@ class utilisateurGrille extends utilisateur {
 		if (mysqli_num_rows($result) > 0) $return = $_SESSION['db']->db_fetch_assoc($result);
 		mysqli_free_result($result);
 		return $return;
-	}
-	// Remplit les champs centre, team et grade avec les valeurs actuelles
-	public function getPresentAffectationFromDb() {
-		if (is_null($this->centre) || is_null($this->team) || is_null($this->grade)) {
-			$result = $_SESSION['db']->db_interroge(sprintf("
-				SELECT *
-				FROM `TBL_AFFECTATION`
-				WHERE `uid` = %d
-				AND `beginning` < DATE(NOW())
-				AND `end` > DATE(NOW())"
-				, $this->uid()
-			));
-			if (mysqli_num_rows($result) != 1) return false;
-			$row = $_SESSION['db']->db_fetch_assoc($result);
-			$this->centre = $row['centre'];
-			$this->team = $row['team'];
-			$this->grade = $row['grade'];
-			$this->affectations[$row['aid']] = new Affectation($row);
-			mysqli_free_result($result);
-			return $this->affectations[$row['aid']];
-		}
-	}
-	// Recherche l'historique des affectations
-	public function retrieveAffectations($index = NULL) {
-		$result = $_SESSION['db']->db_interroge(sprintf("
-			SELECT *
-		       	FROM `TBL_AFFECTATION`
-			WHERE `uid` = %d
-			ORDER BY `end` ASC
-			", $this->uid()
-		));
-		$this->affectations = array();
-		$this->orderedAffectations = array();
-		$i = 0;
-		$today = new Date('Y-m-d'); // La date du jour pour définir le centre et la team actuels
-		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$this->affectations[$row['aid']] = new Affectation($row);
-			$this->orderedAffectations[$i] = $this->affectations[$row['aid']];
-			$i++;
-			// Rempli l'affectation du jour
-			if ($this->affectations[$row['aid']]->beginning()->compareDate($today) > 0 && $this->affectations[$row['aid']]->end()->compareDate($today) < 0) {
-				$this->centre($this->affectations[$row['aid']]->centre());
-				$this->team($this->affectations[$row['aid']]->team());
-				$this->grade($this->affectations[$row['aid']]->grade());
-			}
-		}
-		mysqli_free_result($result);
-		if (is_null($index)) return $this->affectations;
-		if (isset($this->affectations[$index])) return $this->affectations[$index];
-		return NULL;
 	}
 	/************************
 	 * Gestion des contacts *
@@ -961,18 +927,19 @@ class utilisateursDeLaGrille {
 	public function getUsersFromTo($from = NULL, $to = NULL, $centre = NULL, $team = NULL, $active = 1) {
 		if (is_null($from)) $from = date('Y-m-d');
 		if (is_null($to)) $to = date('Y-m-d');
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($from);
 		if (is_null($centre)) {
 			if (!empty($_SESSION['ADMIN'])) {
 				$centre = 'all';
 			} else {
-				$centre = $_SESSION['utilisateur']->centre();
+				$centre = $affectation['centre'];
 			}
 		}
 		if (is_null($team)) {
 			if (!empty($_SESSION['ADMIN'])) {
 				$team = 'all';
 			} else {
-				$team = $_SESSION['utilisateur']->team();
+				$team = $affectation['team'];
 			}
 		}
 		if ('all' == $centre && 'all' == $team) {
@@ -1035,7 +1002,16 @@ class utilisateursDeLaGrille {
 		$this->getActiveUsersFromTo($from, $to, $centre, $team);
 		return $this->usersCell($from);
 	}
-	public function getGrilleActiveUsers($dateDebut, $nbCycle = 1, $centre = 'athis', $team = '9e') {
+	public function getGrilleActiveUsers($dateDebut, $nbCycle = 1) {
+		$dateIni = new Date($dateDebut);
+		
+		// Détermination du centre et de l'équipe de l'utilisateur
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($dateIni);
+		$centre = $affectation['centre'];
+		$team = $affectation['team'];
+		$beginningAffectation = $affectation['beginning'];
+		$endAffectation = $affectation['end'];
+
 		// Recherche des infos de date pour créer un navigateur
 		$nextCycle = new Date($dateDebut);
 		$previousCycle = new Date($dateDebut);
@@ -1093,17 +1069,15 @@ class utilisateursDeLaGrille {
 		if ($nbCycle == 1) {
 			// Récupération des compteurs
 			if ($DEBUG) debug::getInstance()->startChrono('Relève compteur'); // Début chrono
-			$sql = sprintf("
+			$sql = "
 				SELECT `dispo`, `nom_long`
 				FROM `TBL_DISPO`
 				WHERE `actif` = TRUE
 				AND `need_compteur` = TRUE
 				AND `type decompte` != 'conges'
-				AND `centre` = '%s'
-				AND `team` = '%s'
-				", $_SESSION['utilisateur']->centre()
-				, $_SESSION['utilisateur']->team()
-			);
+				AND (`centre` = 'all' OR `centre` = '$centre')
+				AND (`team` = 'all' OR `team` = '$team')
+				";
 			$results = $_SESSION['db']->db_interroge($sql);
 			while ($res = $_SESSION['db']->db_fetch_array($results)) {
 				$evenSpec[$res[0]] = array(
@@ -1122,8 +1096,26 @@ class utilisateursDeLaGrille {
 				AND `date` <= '%s'
 				AND `need_compteur` = TRUE
 				AND `type decompte` != 'conges'
+				AND `uid` IN (SELECT `uid`
+						FROM `TBL_AFFECTATION`
+						WHERE `centre` = '%s'
+						AND `team` = '%s'
+						AND '%s' BETWEEN `beginning` AND `end`
+					)
+				AND `td`.`did` IN (SELECT `did`
+						FROM `TBL_DISPO`
+						WHERE (`centre` = 'all' OR `centre` = '%s')
+						AND (`team` = 'all' OR `team` = '%s')
+					)
 				GROUP BY `td`.`did`, `uid`"
-				, $cycle[0]->dateRef()->date());
+				, $cycle[0]->dateRef()->date()
+				, $centre
+				, $team
+				, $cycle[0]->dateRef()->date()
+				, $centre
+				, $team
+				, $cycle[0]->dateRef()->date()
+			);
 
 			$results = $_SESSION['db']->db_interroge($sql);
 			while ($res = $_SESSION['db']->db_fetch_array($results)) {
