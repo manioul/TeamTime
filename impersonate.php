@@ -129,8 +129,6 @@ if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
 	// Nettoie la variable de session
 	unset($_SESSION['ADMIN']);
 	unset($_SESSION['EDITEURS']);
-	unset($_SESSION['centre']);
-	unset($_SESSION['team']);
 	printf ("Vous êtes %s et vous devenez %d avec un virtuel %d", $_SESSION['utilisateur']->login(), $_POST['uid'], $_SESSION['utilisateur']->uid());
 	// Attribue une valeur spéciale pour savoir que l'on est devenu un utilisateur virtuel
 	$_SESSION['iAmVirtual'] = $_SESSION['utilisateur']->uid();
@@ -149,8 +147,6 @@ if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
 		$row = $_SESSION['db']->db_fetch_assoc($result);
 		$row['sha1'] = NULL; // Le sha1 n'a pas vocation à apparaître
 		$_SESSION['utilisateur'] = new utilisateurGrille($row);
-		$_SESSION['centre'] = $_SESSION['utilisateur']->centre();
-		$_SESSION['team'] = $_SESSION['utilisateur']->team();
 		// Mise à jour des informations de connexion
 		$upd = sprintf("UPDATE `TBL_USERS` SET `lastlogin` = NOW(), `nblogin` = %s WHERE `login` = '%s'", $row['nblogin'] + 1, $row['login']);
 		$_SESSION['db']->db_interroge($upd);
@@ -183,8 +179,6 @@ if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
 		$row['sha1'] = NULL; // Le sha1 n'a pas vocation à apparaître
 		$_SESSION['utilisateur'] = new utilisateurGrille($row);
 		$_SESSION['AUTHENTICATED'] = true;
-		$_SESSION['centre'] = $_SESSION['utilisateur']->centre();
-		$_SESSION['team'] = $_SESSION['utilisateur']->team();
 		$sql = sprintf("SELECT `groupe` FROM `TBL_GROUPS` WHERE `gid` >= '%s'", $row['gid']);
 		$result2 = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_array($result2)) {
