@@ -209,6 +209,7 @@ if (isset($_SESSION['AUTHENTICATED'])) {
 	if (isset($_GET['norights'])) {
 		$smarty->assign('erreur', "Droits insuffisants... Déloguez-vous et reconnectez-vous avec un compte ayant des droits suffisants.");
 		$smarty->display('erreur.tpl');
+		$smarty->assign('salt', mt_rand());
 	} else {
 	}
 } else { // Présente le formulaire de login en pleine page

@@ -140,7 +140,7 @@ if ($dateDebut != DATE_ERR_INVALID_FORMAT) {
 	$vacation = $_SESSION['db']->db_fetch_row($_SESSION['db']->db_interroge($sql));
 	$dateDebut = $vacation[0];
 } else {
-	$dateDebut = date("Y-m-d");
+	die ("Erreur de date");
 }
 
 $return = utilisateursDeLaGrille::getInstance()->getGrilleActiveUsers($dateDebut, $nbCycle);

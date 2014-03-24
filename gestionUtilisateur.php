@@ -112,6 +112,22 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
+// Filtre
+// date de début et de fin
+if (isset($_GET['debut'])) {
+	$dateD = new Date($_GET['debut']);
+	$dateD = $dateD->date();
+} else {
+	$dateD = date('Y-m-d');
+}
+if (isset($_GET['fin'])) {
+	$dateF = new Date($_GET['fin']);
+	$dateF = $dateF->date();
+} else {
+	$dateF = $dateD;
+}
+
+
 if (empty($_POST['nom'])) { // On vérifie que des données de formulaire n'ont pas été envoyées
 	if (isset($_SESSION['ADMIN'])) {
 		if (isset($_GET['centre'])) {
@@ -192,7 +208,7 @@ mysqli_free_result($result);
 
 
 // Ajout des colonnes centre et team pour les admin
-if (!empty($_SESSION['ADMIN'])) {
+if (isset($_SESSION['ADMIN'])) {
 	$usersInfos[0]['centre'] = "Centre";
 	$usersInfos[0]['team'] = htmlspecialchars("Équipe", ENT_COMPAT, 'utf-8');;
 	$header[$j] = $usersInfos[0]['centre'];
@@ -227,5 +243,7 @@ include 'debug.inc.php';
 
 // Affichage du bas de page
 $smarty->display('footer.tpl');
+
+ob_end_flush();
 
 ?>

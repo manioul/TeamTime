@@ -57,14 +57,14 @@ $smarty->assign('VERSION', VERSION);
 
 // Définition des notes de version
 $notesversion = "<strong>TeamTime v" . VERSION . "</strong>"; 
-if ($DEBUG) {
+if (isset($DEBUG)) {
 	$notesversion .= " (Debug On";
-	if ($GLOBALS['firePHP_OK']) {
+	if (isset($GLOBALS['firePHP_OK'])) {
 		$notesversion .= " - firePHP On)";
 	} else {
 		$notesversion .= ")";
 	}
-} elseif ($GLOBALS['firePHP_OK']) {
+} elseif (isset($GLOBALS['firePHP_OK'])) {
 		$notesversion .= " (firePHP On)";
 }
 $smarty->assign('notesversion', $notesversion); 
