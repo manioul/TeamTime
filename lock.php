@@ -78,9 +78,11 @@ if ($cycle = new Cycle($date, $affectation['centre'], $affectation['team'])) {
 if ($dateOK) {
 	if ($_REQUEST['lock'] === 'bloque') {
 		$cycle->lockCycle();
+		print("Cycle verrouillé");
 	}
 	if ($_REQUEST['lock'] === 'ouvre') {
 		$cycle->unlockCycle();
+		print("Cycle déverrouillé");
 	}
 }
 
