@@ -206,20 +206,29 @@ class jourTravail extends Date {
 	/*
 	 * constructeur
 	 */
-	public function __construct($row=false, $centre = 'athis', $team = '9e') {
+	public function __construct($row=false, $centre = NULL, $team = NULL) {
+		if (is_null($centre) || is_null($team)) {
+			$date = isset($row['date']) ? $row['date'] : date('Y-m-d');
+			$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
+			$this->centre($affectation['centre']);
+			$this->team($affectation['team']);
+		}
+		if (isset($_SESSION['ADMIN']) && !is_null($centre)) {
+			$this->centre($centre);
+		}
+		if (isset($_SESSION['ADMIN']) && !is_null($team)) {
+			$this->team($team);
+		}
 		if ($row) {
 			$check = 0;
 			if (is_string($row)) { // si $row est une chaîne...
 				if (parent::__construct($row)) { // ... au format date
-					$affectation = $_SESSION['utilisateur']->affectationOnDate($this->date());
-					$this->centre($affectation['centre']);
-					$this->team($affectation['team']);
 					$sql = sprintf("
 						SELECT *
 						FROM `TBL_GRILLE`
 						WHERE `date` = '%s'
-						AND (`centre` = '%s' OR `centre` = 'all')
-						AND (`team` = '%s' OR `team` = 'all')
+						AND `centre` = '%s'
+						AND `team` = '%s'
 						"
 						, $this->date()
 						, $this->centre
@@ -482,8 +491,8 @@ class jourTravail extends Date {
 			UPDATE `TBL_GRILLE`
 			SET `readOnly` = '%s'
 			WHERE `date` = '%s'
-			AND (`centre` = '%s' OR `centre` = 'all')
-			AND (`team` = '%s' OR `team` = 'all')
+			AND `centre` = '%s'
+			AND `team` = '%s'
 			"
 			, $this->readOnly()
 			, $this->date()
