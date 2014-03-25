@@ -452,10 +452,10 @@ class utilisateurGrille extends utilisateur {
 				CALL addRole(%d, '%s', '%s', '%s', '%s', '%s', '%s', TRUE)
 				", $this->uid
 				, $param['role']
-				, isset($param['centre']) ? : $param['centre'] : $affectation['centre']
-				, isset($param['team']) ? : $param['team'] : $affectation['team']
-				, isset($param['beginning']) ? : $param['beginning'] : date('Y-m-d')
-				, isset($param['end']) ? : $param['end'] : $affectation['end']
+				, isset($param['centre']) ? $param['centre'] : $affectation['centre']
+				, isset($param['team']) ? $param['team'] : $affectation['team']
+				, isset($param['beginning']) ? $param['beginning'] : date('Y-m-d')
+				, isset($param['end']) ? $param['end'] : $affectation['end']
 				, isset($param['comment']) ? $param['comment'] : ''
 			));
 			// TODO réévaluer les privilèges de l'utilisateur sur la base de données
