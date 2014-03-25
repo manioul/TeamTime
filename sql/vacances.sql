@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS TBL_VACANCES_A_ANNULER (
 	date DATE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+ALTER TABLE TBL_VACANCES_A_ANNULER ADD edited BOOLEAN NOT NULL DEFAULT FALSE;
+
 DELIMITER |
 DROP PROCEDURE IF EXISTS attribAnneeConge|
 CREATE PROCEDURE attribAnneeConge( IN userid INT(11) , IN date_ DATE , IN annee_ SMALLINT(6) )
@@ -158,7 +160,7 @@ BEGIN
 
 	CALL searchAffectation(userid, date_, centre_, team_, grad);
 
-	-- oldDisponibilite est systématiquement dixé à NULL dans la mesure où l'on n'utilise pas de dispo multiples
+	-- oldDisponibilite est systématiquement fixé à NULL dans la mesure où l'on n'utilise pas de dispo multiples
 	SET oldDisponibilite = NULL;
 
 	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
@@ -386,6 +388,18 @@ BEGIN
 					CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
 					SET date_ = debutDemiCycle;
 					REPEAT
+					-- Suppression des anciennes occupations
+					CALL delDispo(userid, date_, 
+								(SELECT dispo
+								FROM TBL_L_SHIFT_DISPO AS l
+								, TBL_DISPO AS d
+								WHERE date = date_
+								AND uid = userid
+								AND l.did = d.did
+								AND (centre = centre_ OR centre = 'all')
+								AND (team = team_ OR team = 'all')
+								LIMIT 1)
+							, FALSE);
 					-- Ajout des congés dans la table
 					CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
 					SET date_ = DATE_ADD(date_, INTERVAL 1 DAY);

@@ -203,7 +203,23 @@ $smarty->assign('tab', $tab);
 
 $smarty->display('tableauxCong.tpl');
 
-if (isset($_SESSION['EDITEURS'])) $smarty->display('depotConges.tpl');
+if (isset($_SESSION['EDITEURS'])) {
+	$sql = sprintf("SELECT *
+		FROM `TBL_VACANCES_A_ANNULER`
+		WHERE `edited` IS FAlSE
+		AND `uid` IN (SELECT `uid`
+			FROM `TBL_ANCIENNETE_EQUIPE`
+			WHERE `centre` = '%s'
+			AND `team` = '%s'
+			AND NOW() BETWEEN `beginning` AND `end`)
+			", $affectation['centre']
+			, $affectation['team']
+		);
+	if (mysqli_num_rows($_SESSION['db']->db_interroge($sql)) > 0) {
+		$smarty->assign('annulation', TRUE);
+	}
+	$smarty->display('depotConges.tpl');
+}
 
 /*
  * Informations de debug

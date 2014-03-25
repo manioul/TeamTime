@@ -5,4 +5,5 @@
 <input type="text" name='datePicker' id='datePicker' />
 <input type='submit' />
 </form>
+{if isset($annulation)}<div class="bouton"><a href="annulationConges.php">Annulation congés</a></div>{/if}
 </div>

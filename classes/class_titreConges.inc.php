@@ -28,14 +28,14 @@ class TitreConges extends tFPDF {
 	// var $nom = iconv('UTF-8', 'ISO-8859-1', 'Forest Agnès'); // Si la police n'est pas utf8
 	// $maxlength; Longueur maximale du motif de congé
 	private $imageFond = array(
-		1	=> 'tfpdf/titreConges.png' // V
-		,2	=> 'tfpdf/titreConges.png' // F
-		,3	=> 'tfpdf/titreConges.png' // W
-		,8	=> 'tfpdf/titreConges.png' // Rcup
-		,30	=> 'tfpdf/titreVro.png' // Vro
-		,32	=> 'tfpdf/titreConges.png' // Vex
+		1	=> 'tfpdf/titreConges' // V
+		,2	=> 'tfpdf/titreConges' // F
+		,3	=> 'tfpdf/titreConges' // W
+		,8	=> 'tfpdf/titreConges' // Rcup
+		,30	=> 'tfpdf/titreVro' // Vro
+		,32	=> 'tfpdf/titreConges' // Vex
 	);
-	private $imageAnnulation = 'tfpdf/annulation.png';
+	private $imageAnnulation = 'Annulation';
 	private $cteam = array(
 		1	=> array( 1 => array(123, 60), 2 => array(245, 115))
 		,2	=> array( 1 => array(123, 60), 2 => array(245, 115))
@@ -146,8 +146,14 @@ class TitreConges extends tFPDF {
 			}
 		}
 		// Image de fond
-		if (isset($this->imageFond[$typeCong])) {
-			$this->Image($this->imageFond[$typeCong]);
+		if ($this->annulation) {
+			if (isset($this->imageFond[$typeCong])) {
+				$this->Image($this->imageFond[$typeCong] . $this->imageAnnulation . '.png');
+			}
+		} else {
+			if (isset($this->imageFond[$typeCong])) {
+				$this->Image($this->imageFond[$typeCong] . '.png');
+			}
 		}
 		// N° équipe
 		if (isset($this->cteam[$typeCong])) {
@@ -212,9 +218,6 @@ class TitreConges extends tFPDF {
 				$this->Cell(0, 0, substr($commentaire, 0, $maxlength));
 				// $this->Cell(0, 0, substr(iconv('UTF-8', 'ISO-8859-1', $commentaire), 0, $maxlength)); // Si la police n'est pas utf8
 			}
-		}
-		if ($this->annulation) {
-			$this->Image($this->imageAnnulation);
 		}
 	}
 
