@@ -366,14 +366,14 @@ function attribUnprotect(oThis)
 // Ajoute un texte pour le verrouillage de la grille
 function definitVerrouillage()
 {
+	return; // TODO on reçoit une erreur 500 : dépassement de mémoire autorisé dans class_date.php sur la méthode calendrier()
 	var aDecSep = $('td[id*="lock"]');
 	for (var iCpt=0; iCpt<aDecSep.length; iCpt++)
 	{
 		var sS =  aDecSep[iCpt].id;
-		var aLinks = $('#'+sS).children('a');
+		var aLinks = $('#'+sS).find('a');
 		var sUri = aLinks[0];
-		return; // TODO
-		var aMatches = sUri.val().match(/lock=(.+)&/);
+		var aMatches = sUri.href.match(/lock=(.+)&/);
 		var sLockOrNot = aMatches[1];
 		$('#'+sS).children('a').remove(); // On supprime le lien (il ne doit pas être suivi si js est activé
 	       	// Sauvegarde du lien pour récupérer l'état de lock (ouvre ou bloque)
