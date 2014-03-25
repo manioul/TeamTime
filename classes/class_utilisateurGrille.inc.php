@@ -428,15 +428,15 @@ class utilisateurGrille extends utilisateur {
 	}
 	// Ajoute un rôle à l'utilisateur
 	// $param est un tableau :
-	// ('role' => role, 'beginning' => beginning, 'end' => end, 'centre' => centre, 'team' => team )
+	// ('role' => role, 'beginning' => beginning, 'end' => end, 'centre' => centre, 'team' => team, 'comment' => comment )
 	// si beginning et end ne sont pas définis, beginning prend la valeur de la date courante et end est fixé à 2050-12-31
 	// si centre et team ne sont pas définis, on utilise l'affectation courante de l'utilisateur
 	public function addRole($param) {
-		if (!is_array($param)) {
-			$msg = sprintf("\$param devrait être un array (%s)", $param);
+		if (!is_array($param) || !isset($param['role'])) {
+			$msg = sprintf("\$param devrait être un array (%s) et \$param['role'] doit être défini", $param);
 			$short = "wrong param";
 			$context = $param;
-			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "roles", "%s", "%s")'
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "addRole", "%s", "%s")'
 				, $msg
 				, $short
 				, $context)
@@ -446,92 +446,40 @@ class utilisateurGrille extends utilisateur {
 		if ($this->hasRole($param['role'])) {
 			return true;
 		}
-		if (!isset($param['beginning'])) {
-			$param['beginning'] = date("Y-m-d");
-		}
-		if (!isset($param['end'])) {
-			$param['end'] = '2050-12-31';
-		}
 		$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
-		if (!isset($param['centre'])) {
-			$param['centre'] = $affectation['centre']();
-		}
-		if (!isset($param['team'])) {
-			$param['team'] = $affectation['team']();
-		}
-		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Ajout de rôle", "DEBUG", "addRole", "Ajout de rôle", "uid:%d;role:%s;appelant:%d")'
-			, $this->uid()
-			, $param['role']
-			, $_SESSION['utilisateur']->uid()
-			)
-		); 
-		if ( $_SESSION['utilisateur']->hasRole('admin') ) {
+		if ( $_SESSION['utilisateur']->hasRole($param['role']) ) {
 			$_SESSION['db']->db_interroge(sprintf("
-				REPLACE INTO `TBL_ROLES`
-				(`uid`, `role`, `centre`, `team`, `beginning`, `end`, `confirmed`)
-				VALUES
-				(%d, '%s', '%s', '%s', '%s', '%s', TRUE)
+				CALL addRole(%d, '%s', '%s', '%s', '%s', '%s', '%s', TRUE)
 				", $this->uid
 				, $param['role']
-				, $param['centre']
-				, $param['team']
-				, $param['beginning']
-				, $param['end']
+				, isset($param['centre']) ? : $param['centre'] : $affectation['centre']
+				, isset($param['team']) ? : $param['team'] : $affectation['team']
+				, isset($param['beginning']) ? : $param['beginning'] : date('Y-m-d')
+				, isset($param['end']) ? : $param['end'] : $affectation['end']
+				, isset($param['comment']) ? $param['comment'] : ''
 			));
 			// TODO réévaluer les privilèges de l'utilisateur sur la base de données
 			// Un utilisateur lambda ne doit pas avoir accès en écriture à certaines tables
 			$this->roles = array();
 			$this->dbRetrRoles();
-		} elseif ($_SESSION['utilisateur']->hasRole('editeurs')) {
-			if ($param['role'] == 'editeurs' || $param['role'] == 'teamEdit' || $param['role'] == 'my_edit' || $param['role'] == 'heures') {
-				$_SESSION['db']->db_interroge(sprintf("
-					REPLACE INTO `TBL_ROLES`
-					(`uid`, `role`, `centre`, `team`, `beginning`, `end`, `confirmed`)
-					VALUES
-					(%d, '%s', '%s', '%s', '%s', '%s', TRUE)
-					", $this->uid
-					, $param['role']
-					, $param['centre']
-					, $param['team']
-					, $param['beginning']
-					, $param['end']
-				));
-				// TODO réévaluer les privilèges de l'utilisateur sur la base de données
-				// Un utilisateur lambda ne doit pas avoir accès en écriture à certaines tables
-				$this->roles = array();
-				$this->dbRetrRoles();
-			}
-		} elseif ($_SESSION['utilisateur']->hasRole('teamEdit')) {
-			if ($param['role'] == 'teamEdit' || $param['role'] == 'my_edit' || $param['role'] == 'heures') {
-				$_SESSION['db']->db_interroge(sprintf("
-					REPLACE INTO `TBL_ROLES`
-					(`uid`, `role`, `centre`, `team`, `beginning`, `end`, `confirmed`)
-					VALUES
-					(%d, '%s', '%s', '%s', '%s', '%s', TRUE)
-					", $this->uid
-					, $param['role']
-					, $param['centre']
-					, $param['team']
-					, $param['beginning']
-					, $param['end']
-				));
-				// TODO réévaluer les privilèges de l'utilisateur sur la base de données
-				// Un utilisateur lambda ne doit pas avoir accès en écriture à certaines tables
-				$this->roles = array();
-				$this->dbRetrRoles();
-			} else {
-				$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Refus ajout de rôle", "DEBUG", "addRole", "Ajout de rôle", "uid:%d;role:%s;admin:%d")'
-					, $this->uid()
-					, $param['role']
-					, $_SESSION['utilisateur']->uid()
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Ajout de rôle", "DEBUG", "addRole", "Ajout de rôle", "uid:%d;role:%s;appelant:%d")'
+				, $this->uid()
+				, $param['role']
+				, $_SESSION['utilisateur']->uid()
 				)
 			); 
-			}
+		} else {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Tentative d\'ajout de rôle refusée", "DEBUG", "addRole", "operation rejected", "uid:%d;role:%s;appelant:%d")'
+				, $this->uid()
+				, $param['role']
+				, $_SESSION['utilisateur']->uid()
+				)
+			); 
 		}
 	}
 	// Retire un rôle à l'utilsiateur
 	public function dropRole($role) {
-		if ( $_SESSION['utilisateur']->hasRole('admin') ) {
+		if ( $_SESSION['utilisateur']->hasRole($role) ) {
 			$sql = sprintf("
 				DELETE FROM `TBL_ROLES`
 				WHERE `uid` = %d
@@ -543,34 +491,6 @@ class utilisateurGrille extends utilisateur {
 			// TODO réévaluer les privilèges de l'utilisateur sur la base de données
 			$this->roles = array();
 			$this->dbRetrRoles();
-		} elseif ($_SESSION['utilisateur']->hasRole('editeurs')) {
-			if ($role == 'editeurs' || $role == 'teamEdit' || $role == 'my_edit' || $role == 'heures') {
-				$sql = sprintf("
-					DELETE FROM `TBL_ROLES`
-					WHERE `uid` = %d
-					AND `role` = '%s'
-					", $this->uid
-					, $role
-				);
-				$_SESSION['db']->db_interroge($sql);
-				// TODO réévaluer les privilèges de l'utilisateur sur la base de données
-				$this->roles = array();
-				$this->dbRetrRoles();
-			}
-		} elseif ($_SESSION['utilisateur']->hasRole('teamEdit')) {
-			if ($role == 'teamEdit' || $role == 'my_edit' || $role == 'heures') {
-				$sql = sprintf("
-					DELETE FROM `TBL_ROLES`
-					WHERE `uid` = %d
-					AND `role` = '%s'
-					", $this->uid
-					, $role
-				);
-				$_SESSION['db']->db_interroge($sql);
-				// TODO réévaluer les privilèges de l'utilisateur sur la base de données
-				$this->roles = array();
-				$this->dbRetrRoles();
-			}
 		}
 	}
 	public function vismed($vismed = NULL) {

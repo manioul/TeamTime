@@ -102,10 +102,47 @@ END
 DROP PROCEDURE IF EXISTS addRole|
 CREATE PROCEDURE addRole( IN uid_ INT(11), IN role_ VARCHAR(10), IN centre_ VARCHAR(50), IN team_ VARCHAR(10), IN beginning_ DATE, IN end_ DATE, IN commentaire_ VARCHAR(150), IN confirmed_ BOOLEAN )
 BEGIN
-	REPLACE INTO TBL_ROLES
-		(uid, role, centre, team, beginning, end, commentaire, confirmed)
-		VALUES
-		(uid_, role_, centre_, team_, beginning_, end_, commentaire_, confirmed_);
+	-- On ne vérifie pas si l'appelant a le droit d'attribuer le role
+	-- la vérification doit être effectuée côté front-office
+	DECLARE rid_ INT(11) DEFAULT NULL;
+	DECLARE debut,fin DATE;
+
+	SELECT rid_, debut, fin
+		INTO rid_, debut, fin
+		FROM TBL_ROLES
+		WHERE uid = uid_
+		AND role = role_
+		AND centre = centre_
+		AND team = team_
+		AND (beginning BETWEEN beginning_ AND end_
+			OR end BETWEEN beginning_ AND end_
+			OR beginning_ BETWEEN beginning AND end
+		       	OR end_ BETWEEN beginning AND end);
+	IF rid_ IS NULL THEN
+		INSERT INTO TBL_ROLES
+			(uid, role, centre, team, beginning, end, commentaire, confirmed)
+			VALUES
+			(uid_, role_, centre_, team_, beginning_, end_, commentaire_, confirmed_);
+	ELSE
+		IF beginning_ < debut THEN
+			IF end_ > fin THEN
+				UPDATE TBL_ROLE
+				SET beginning = beginning_
+				, end = end_
+				WHERE rid = rid_;
+			ELSE
+				UPDATE TBL_ROLE
+				SET beginning = beginning_
+				WHERE rid = rid_;
+			END IF;
+		ELSE
+			IF end_ > fin THEN
+				UPDATE TBL_ROLE
+				SET end = end_
+				WHERE rid = rid_;
+			END IF;
+		END IF;
+	END IF;
 END
 |
 -- AFFECTATIONS

@@ -119,16 +119,12 @@ require 'required_files.inc.php';
 
 
 $roles = array(	array('content' => ''));
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 if (!empty($_SESSION['ADMIN'])) {
 	$roles[] = array('content'	=> 'admin');
-	if (isset($_GET['centre'])) {
-		$centre = $_GET['centre'];
-	}
-	if (isset($_GET['team'])) {
-		$team = $_GET['team'];
-	}
+	$centre = (isset($_GET['centre'])) ? $_GET['centre'] : $affectation['centre'];
+	$team = (isset($_GET['team'])) ? $_GET['team'] : $affectation['team'];
 } else {
-	$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 	$centre = $affectation['centre'];
 	$team = $affectation['team'];
 }
