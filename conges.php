@@ -67,7 +67,7 @@ $date = (isset($_POST['datePicker']) ? $_POST['datePicker'] : date('Y-m-d'));
 
 $date1 = new Date($date);
 $date2 = clone $date1;
-$date2->addJours(Cycle::getCycleLength($affectation['centre'], $affectation['team'])); // FIXME génère une erreur 500 si $date2 est une date vide
+$date2->addJours(Cycle::getCycleLength($affectation['centre'], $affectation['team']) - 1); // FIXME génère une erreur 500 si $date2 est une date vide
 
 // Recherche les congés qui doivent être déposés
 $sql = sprintf("
