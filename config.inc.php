@@ -266,7 +266,7 @@ $DEBUG = false;
 		$compteur++;
 		 */
 	}
-	if ($DEBUG) {
+	if (isset($DEBUG) && true === $DEBUG) {
 		$stylesheet[$compteur]['href'] = 'debug.css';
 		$stylesheet[$compteur]['media'] = 'screen';
 		$compteur++;

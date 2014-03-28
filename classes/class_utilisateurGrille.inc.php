@@ -981,19 +981,19 @@ class utilisateursDeLaGrille {
 		// Recherche des jours de travail
 		//
 		$cycle = array();
-		if (isset($DEBUG)) debug::getInstance()->startChrono('load_planning_duree_norepos'); // Début chrono
+		if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->startChrono('load_planning_duree_norepos'); // Début chrono
 		for ($i=0; $i<$nbCycle; $i++) {
 			$cycle[$i] = new Cycle($dateIni, $centre, $team);
 			$dateIni->addJours(Cycle::getCycleLength($centre, $team));
 			$cycle[$i]->cycleId($i);
 		}
-		if (isset($DEBUG)) debug::getInstance()->stopChrono('load_planning_duree_norepos'); // Fin chrono
+		if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->stopChrono('load_planning_duree_norepos'); // Fin chrono
 
 		// Lorsque l'on n'affiche qu'un cycle, on ajoute des compteurs en fin de tableau
 		$evenSpec = array();
 		if ($nbCycle == 1) {
 			// Récupération des compteurs
-			if ($DEBUG) debug::getInstance()->startChrono('Relève compteur'); // Début chrono
+			if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->startChrono('Relève compteur'); // Début chrono
 			$sql = "
 				SELECT `dispo`, `nom_long`
 				FROM `TBL_DISPO`
@@ -1052,7 +1052,7 @@ class utilisateursDeLaGrille {
 				);
 			}
 			mysqli_free_result($results);
-			if ($DEBUG) debug::getInstance()->stopChrono('Relève compteur'); // Fin chrono
+			if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->stopChrono('Relève compteur'); // Fin chrono
 		}
 
 		$lastLine = count($users)-1;

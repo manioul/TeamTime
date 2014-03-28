@@ -34,7 +34,7 @@ function sql_globals_constants() {
 	$result = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 		if (isset($GLOBALS[$row['nom']])) {
-			if ($DEBUG) debug::getInstance()->triggerError("\$GLOBALS['".$row['nom']."'] est déjà défini");
+			if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->triggerError("\$GLOBALS['".$row['nom']."'] est déjà défini");
 		} else {
 			switch ($row['type']) {
 				case 'int':
@@ -83,7 +83,7 @@ function get_sql_globals_constant($constant_name) {
 		}
 		return $GLOBALS[$row['nom']];
 	} else {
-		if ($DEBUG) debug::getInstance()->triggerError("Plusieurs ou aucun résultat à la requête sql '$sql'");
+		if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->triggerError("Plusieurs ou aucun résultat à la requête sql '$sql'");
 		return FALSE;
 	}
 	mysqli_free_result($result);

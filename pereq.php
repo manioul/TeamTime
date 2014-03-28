@@ -172,7 +172,7 @@ if (isset($_POST['uid']) || isset($_POST['did']) || isset($_POST['year'])) {
 	}
 	if (isset($_POST['dateD'])) {
 		$date = new Date($_POST['dateD']);
-		if ($date) $pereq['date'] = $date->date();
+		if (false !== $date) $pereq['date'] = $date->date();
 	}	
 	if ($_POST['did'] != (int) $_POST['did'] || $_POST['uid'] != (int) $_POST['uid'] || $_POST['year'] != (int) $_POST['year'] || $_POST['did'] != abs($_POST['did']) || $_POST['uid'] != abs($_POST['uid']) || $_POST['year'] != abs($_POST['year'])) {
 		$err = "Paramètre incorrect... :o";

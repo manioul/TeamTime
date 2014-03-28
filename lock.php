@@ -75,7 +75,7 @@ if ($cycle = new Cycle($date, $affectation['centre'], $affectation['team'])) {
 /*
  * Verrouillage
  */
-if ($dateOK) {
+if (true === $dateOK) {
 	if ($_REQUEST['lock'] === 'bloque') {
 		$cycle->lockCycle();
 		print("Cycle verrouillé");

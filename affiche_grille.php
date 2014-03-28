@@ -124,39 +124,41 @@ if ($nbCycle > MAX_CYCLES) $nbCycle = MAX_CYCLES;
 
 // Choix de la date de début
 $dateDebut = new Date(isset($_GET['dateDebut']) ? $_GET['dateDebut'] : date("Y-m-d"));
-if ($dateDebut->compareDate(date('Y')+2 . date('-m-d')) > 0) {
-	$dateDebut = new Date(date('Y') + 2 . date('-m-d'));
-}
-if ($dateDebut != DATE_ERR_INVALID_FORMAT) {
-	$nextCycle = clone $dateDebut;
-	$nextCycle->addJours(Cycle::getCycleLength());
-	$sql = sprintf("
-		SELECT `tg`.`date`
-		FROM `TBL_GRILLE` AS `tg`
-		, `TBL_CYCLE` AS `tc`
-		WHERE `date` BETWEEN '%s' AND '%s'
-		AND `tc`.`cid` = `tg`.`cid`
-		AND `tc`.`vacation` != '%s'
-		", $dateDebut->date()
-		, $nextCycle->date()
-		, REPOS
-	);
-	$vacation = $_SESSION['db']->db_fetch_row($_SESSION['db']->db_interroge($sql));
-	$dateDebut = $vacation[0];
-} else {
-	die ("Erreur de date");
-}
+if (false !== $dateDebut) {
+	if ($dateDebut->compareDate(date('Y')+2 . date('-m-d')) > 0) {
+		$dateDebut = new Date(date('Y') + 2 . date('-m-d'));
+	}
+	if ($dateDebut != DATE_ERR_INVALID_FORMAT) {
+		$nextCycle = clone $dateDebut;
+		$nextCycle->addJours(Cycle::getCycleLength());
+		$sql = sprintf("
+			SELECT `tg`.`date`
+			FROM `TBL_GRILLE` AS `tg`
+			, `TBL_CYCLE` AS `tc`
+			WHERE `date` BETWEEN '%s' AND '%s'
+			AND `tc`.`cid` = `tg`.`cid`
+			AND `tc`.`vacation` != '%s'
+			", $dateDebut->date()
+			, $nextCycle->date()
+			, REPOS
+		);
+		$vacation = $_SESSION['db']->db_fetch_row($_SESSION['db']->db_interroge($sql));
+		$dateDebut = $vacation[0];
+	} else {
+		die ("Erreur de date");
+	}
 
-$return = utilisateursDeLaGrille::getInstance()->getGrilleActiveUsers($dateDebut, $nbCycle);
+	$return = utilisateursDeLaGrille::getInstance()->getGrilleActiveUsers($dateDebut, $nbCycle);
 
-/*
- * Début des appels d'affichage Smarty
- */
-foreach ($return as $key => $val) {
-	$smarty->assign($key, $val);
+	/*
+	 * Début des appels d'affichage Smarty
+	 */
+	foreach ($return as $key => $val) {
+		$smarty->assign($key, $val);
+	}
+
+	$smarty->display('grille2.tpl');
 }
-
-$smarty->display('grille2.tpl');
 
 /*
  * Informations de debug
