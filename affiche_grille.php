@@ -27,9 +27,6 @@ $requireAuthenticatedUser = true;
 
 ob_start(); // Obligatoire pour firePHP
 
-// Choix du nombre de cycle à présenter
-$nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
-
 /*
  * Configuration de la page
  * Définition des include nécessaires
@@ -120,9 +117,16 @@ $nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 
 require 'required_files.inc.php';
 
+// Choix du nombre de cycle à présenter
+$nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
+if ($nbCycle > MAX_CYCLES) $nbCycle = MAX_CYCLES;
+
 
 // Choix de la date de début
 $dateDebut = new Date(isset($_GET['dateDebut']) ? $_GET['dateDebut'] : date("Y-m-d"));
+if ($dateDebut->compareDate(date('Y')+2 . date('-m-d')) > 0) {
+	$dateDebut = new Date(date('Y') + 2 . date('-m-d'));
+}
 if ($dateDebut != DATE_ERR_INVALID_FORMAT) {
 	$nextCycle = clone $dateDebut;
 	$nextCycle->addJours(Cycle::getCycleLength());

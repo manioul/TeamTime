@@ -62,5 +62,6 @@ define('VERSION', "2.0a");
 
 // Constantes internes au fonctionnement du programme
 	define('REPOS', 'Repos'); // Dénommination des jours de repos du cycle dans la bdd (TBL_CYCLE)
+	define('MAX_CYCLES', 8); // Le nombre maximum de cycles affichables
 
 ?>
