@@ -131,9 +131,11 @@ class elemMenu {
 			, $this->idx
 			, substr($find_in_set, 0, -4)
 		);
-		/*$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "dbRetrRoles", NULL, NULL)'
-			, $requete)
-		);*/ 
+		if (!empty($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "db_setElem", NULL, NULL)'
+				, $requete)
+			);
+		}
 		$this->_setFromElemMenu($_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($requete)));
 	}
 	private function _db_insertDB() {
@@ -352,9 +354,11 @@ class menu {
 			, $this->idx
 			, substr($find_in_set, 0, -4)
 		);
-		/*$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "dbRetrRoles", NULL, NULL)'
-			, $requete)
-		);*/ 
+		if (isset($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "_db_setFromRow", NULL, NULL)'
+				, $requete)
+			); 
+		}
 		return ($this->_db_setFromRow($_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($requete))));
 	}
 	private function _db_getElems() {

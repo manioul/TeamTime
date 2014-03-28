@@ -401,7 +401,21 @@ class utilisateurGrille extends utilisateur {
 	}
 	// retourne les rôles (sous forme de tableau)
 	public function roles() {
-		if (sizeof($this->roles) < 1) $this->dbRetrRoles();
+		if (!empty($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("", "DEBUG", "roles", NULL, "uid:%d;sizeof(roles):%d")'
+				, $this->uid
+				, sizeof($this->roles))
+			);
+		}
+		if (sizeof($this->roles) < 1) {
+			$this->dbRetrRoles();
+			if (!empty($TRACE) && true === $TRACE) {
+				$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("roles array is empty.", "DEBUG", "roles", NULL, "uid:%d;sizeof(roles):%d")'
+					, $this->uid
+					, sizeof($this->roles))
+				);
+			}
+		}
 		return $this->roles;
 	}
 	// Retourne vrai si l'utilisateur a le rôle $role
@@ -418,9 +432,12 @@ class utilisateurGrille extends utilisateur {
 			", $this->uid
 			, date('Y-m-d')
 		);
-		/*$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "dbRetrRoles", NULL, NULL)'
-			, $sql)
-		);*/ 
+		if (!empty($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "dbRetrRoles", "requête roles", "uid:%d")'
+				, $sql
+				, $this->uid)
+			);
+		}
 		$result = $_SESSION['db']->db_interroge($sql);
 		while($row = $_SESSION['db']->db_fetch_assoc($result)) {
 			$this->roles[] = $row['role'];

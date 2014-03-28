@@ -135,6 +135,16 @@ class Date {
 	 * au format "YYYY-m-d" ou un tableau décrivant la date
 	 */
 	function __construct($row=NULL) {
+		if (isset($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "%s;%s:%s", "%s", "%s")'
+				, $msg
+				, __FUNCTION__
+				, __CLASS__
+				, __METHOD__
+				, $short
+				, $context)
+			);
+		} 
 		if (!is_null($row)) {
 			if ($this->date($row) === false) {
 				if ($this->DEBUG) {
@@ -174,10 +184,31 @@ class Date {
 	public function date($date=NULL) {
 		if (!is_null($date)) {
 			if (is_string($date)) {
+				if (isset($TRACE) && true === $TRACE) {
+					$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Calling method _initiateDateFromString", "DEBUG", "%s:%s", "", "date:%s")'
+						, __CLASS__
+						, __METHOD__
+						, $date)
+					);
+				}
 				return $this->_initiateDateFromString($date);
 			} else if (is_array($date)) {
+				if (isset($TRACE) && true === $TRACE) {
+					$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Calling method _initiateDateFromArray", "DEBUG", "%s:%s", "", "date:%s")'
+						, __CLASS__
+						, __METHOD__
+						, $date)
+					);
+				}
 				return $this->_initiateDateFromArray($date);
 			} else {
+				if (isset($TRACE) && true === $TRACE) {
+					$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Unable to construct Date object", "DEBUG", "%s:%s", "", "date:%s")'
+						, __CLASS__
+						, __METHOD__
+						, $date)
+					);
+				}
 				if ($this->DEBUG) {
 					ob_start();
 					print("date:\nErreur: Format de données inconnu pour Date: \n");
@@ -196,6 +227,13 @@ class Date {
 		return $this->date;
 	}
 	private function _initiateDateFromString($date) {
+		if (isset($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("", "DEBUG", "%s:%s", "", "date:%s")'
+				, __CLASS__
+				, __METHOD__
+				, $date)
+			);
+		} 
 		// La bdd attribue '0000-00-00' aux dates vides
 		// On attribue, quand même, la valeur à date, mais l'on retourne false
 		// et on ne remplit aucun attribut supplémentaire
@@ -208,7 +246,6 @@ class Date {
 			'(0?[1-9]|1[0-2])[-\/]' . 	       // m[-/]
 			'(0?[1-9]|[12][0-9]|3[01])$/i', // d
 			$date, $det_date)) {
-				//printf("<pre>det_date: %s</pre>\\<br />", var_dump($det_date));
 				$this->date = sprintf("%04d-%02d-%02d", $det_date[1], $det_date[2], $det_date[3]);
 				$this->annee = (int)$det_date[1];
 				$this->mois = (int)$det_date[2];
