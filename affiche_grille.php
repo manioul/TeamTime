@@ -49,6 +49,8 @@ ob_start(); // Obligatoire pour firePHP
  * Fin de la définition des include
  */
 
+// Choix du nombre de cycle à présenter
+$nbCycle = empty($_GET['nbCycle']) ? 1 : (int) $_GET['nbCycle'];
 
 /*
  * Configuration de la page
@@ -117,8 +119,6 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
-// Choix du nombre de cycle à présenter
-$nbCycle = isset($_GET['nbCycle']) ? (int) $_GET['nbCycle'] : 1;
 if ($nbCycle > MAX_CYCLES) $nbCycle = MAX_CYCLES;
 
 
