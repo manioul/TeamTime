@@ -141,7 +141,7 @@ class Affectation {
 			if (method_exists($this, $key)) {
 				$this->$key($value);
 			} else {
-				$this->key = $value;
+				$this->$key = $value;
 			}
 		}
 	}
