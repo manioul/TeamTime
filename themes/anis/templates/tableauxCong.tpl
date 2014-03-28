@@ -18,7 +18,7 @@
 <td id="u{$user->uid()}" class="user">{$user->nom()}</td>
 {section name=vac loop=$onglet.quantity}
 {* Le lien suivant ne sert pas. Il n'est là que pour prévoir une utilisation sans javascript, mais est-ce nécessaire ? *}
-<td class="date{if (!empty($tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['classe']))} {$tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['classe']}{/if}">{if isset($tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['date'])}<a href="?uid={$user->uid()}&amp;param={$tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['date']}">{$tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['date']}</a>{/if}</td>
+<td class="date{if (!empty($tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['classe']))} {$tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['classe']}{/if}"{if (!empty($tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['classe']))} id="u{$user->uid()}d{$tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['date']}"{/if}>{if isset($tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['date'])}<a href="?uid={$user->uid()}&amp;param={$tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['date']}">{$tab[$onglet.param][$user->uid()][$smarty.section.vac.index]['date']}</a>{/if}</td>
 {/section}
 </tr>
 {/foreach}
