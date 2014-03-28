@@ -58,7 +58,7 @@ class Affectation {
 		}		
 		return $array;
 	}
-// Consctucteur
+// Constructeur
 	public function __construct($param = NULL) {
 		if (is_null($param)) return true;
 		if (is_int($param)) {
