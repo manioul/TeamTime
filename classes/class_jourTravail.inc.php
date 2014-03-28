@@ -300,7 +300,7 @@ class jourTravail extends Date {
 			$query = sprintf("
 				SELECT `vacation`
 				FROM `TBL_CYCLE`
-				WHERE `cid` = %s
+				WHERE `cid` = %d
 				"
 				, $this->cid()
 			);
