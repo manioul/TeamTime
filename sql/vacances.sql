@@ -70,6 +70,65 @@ BEGIN
 	WHERE sdid = shiftDid;
 END
 |
+DROP PROCEDURE IF EXISTS toggleAnneeConge|
+CREATE PROCEDURE toggleAnneeConge( IN userid INT(11) , IN date_ DATE )
+BEGIN
+	DECLARE annee, year_ SMALLINT(6) DEFAULT NULL;
+	DECLARE sdid_, did_ INT(11);
+	DECLARE dateLimite, debutDemiCycle, finDemiCycle DATE;
+	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
+	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
+	DECLARE grade_ VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+
+	CALL searchAffectation(userid, date_, centre_, team_, grade_);
+
+	SELECT year, l.sdid, did
+	INTO year_, sdid_, did_
+	FROM TBL_VACANCES AS v
+	, TBL_L_SHIFT_DISPO AS l
+	WHERE date = date_
+	AND l.sdid = v.sdid
+	AND uid = userid;
+
+	-- Traitement des V
+	IF did_ = 1 THEN
+		IF year_ < YEAR(date_) THEN
+			CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
+			UPDATE TBL_VACANCES
+			SET year = YEAR(date_)
+			WHERE sdid IN (SELECT sdid
+				FROM TBL_L_SHIFT_DISPO AS l
+				WHERE date BETWEEN debutDemiCycle AND finDemiCycle
+				AND uid = userid);
+		ELSE
+			CALL dateLimiteConges(YEAR(date_) - 1, centre_, dateLimite);
+			IF date_ <= dateLimite THEN
+				CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
+				UPDATE TBL_VACANCES
+				SET year = YEAR(date_) - 1
+				WHERE sdid IN (SELECT sdid
+					FROM TBL_L_SHIFT_DISPO AS l
+					WHERE date BETWEEN debutDemiCycle AND finDemiCycle
+					AND uid = userid);
+			END IF;
+		END IF;
+	ELSE
+		IF year_ < YEAR(date_) THEN
+			SET annee = YEAR(date_);
+			UPDATE TBL_VACANCES
+			SET year = YEAR(date_)
+			WHERE sdid = sdid_;
+		ELSE
+			CALL dateLimiteConges(YEAR(date_) - 1, centre_, dateLimite);
+			IF date_ <= dateLimite THEN
+				UPDATE TBL_VACANCES
+				SET year = YEAR(date_) - 1
+				WHERE sdid = sdid_;
+			END IF;
+		END IF;
+	END IF;
+END
+|
 DROP PROCEDURE IF EXISTS dateLimiteConges|
 CREATE PROCEDURE dateLimiteConges( IN year SMALLINT(6) , IN centre_ VARCHAR(50) , OUT dateLimite DATE )
 BEGIN

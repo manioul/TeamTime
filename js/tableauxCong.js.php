@@ -48,6 +48,10 @@ $(function() {
 			});
 		// On retire les liens sur les dates de congés dans les tableaux pour les gérer avec jquery
 		$('td.date').children('a').replaceWith(function() { return $(this).contents(); });
+		$('td.date').dblclick(function() {
+			var sRequest = 'y=1&id='+this.id;
+			submitRequest(sRequest,'updateCong.php');
+			});
 		<?php
 		if (!empty($_SESSION['TEAMEDIT'])) { ?>
 		$('#datePicker').datepicker($.datepicker.regional['fr']);
@@ -56,12 +60,8 @@ $(function() {
 		if (!empty($_SESSION['TEAMEDIT'])) { ?>
 		$('td.filed').addClass('pointer');
 		$('td.filed').click(function() {
-			var type;
-			if ($(this).hasClass('filed'))
-			{
-				$(this).addClass('confirmed');
-				$(this).removeClass('pointer');
-			}
+			$(this).addClass('confirmed');
+			$(this).removeClass('pointer');
 			var sRequest = 'f=2&id='+this.id;
 			submitRequest(sRequest,'updateCong.php');
 			});
