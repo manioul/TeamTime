@@ -98,8 +98,7 @@ ob_start();
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
 	$conf['page']['stylesheet']['general'] = true;
-	// La feuille de style pour la page de gestion des congés
-	$conf['page']['stylesheet']['conG'] = true;
+	$conf['page']['stylesheet']['grille'] = true;
 	// La feuille de style pour jquery-ui
 	$conf['page']['stylesheet']['jquery-ui'] = true;
 
@@ -186,7 +185,7 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 		$class = '';
 		$class .= ($row['etat'] == 1 ? ' filed' : '');
-		$class .= ($row['etat'] == 2 ? ' confirmed' : '');
+		$class .= ($row['etat'] == 2 ? ' valide' : '');
 		$date = new Date($row['date']);
 		$tab[$res['did']][$row['uid']][] = array(	'date' => $date->formatDate()
 			,'classe' => $class

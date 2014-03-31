@@ -96,8 +96,7 @@ ob_start();
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
 	$conf['page']['stylesheet']['general'] = true;
-	// La feuille de style pour la page de gestion des congés
-	$conf['page']['stylesheet']['conG'] = true;
+	$conf['page']['stylesheet']['grille'] = true;
 
 	// Compactage des pages
 	$conf['page']['compact'] = false;

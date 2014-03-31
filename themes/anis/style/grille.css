@@ -8,7 +8,8 @@
 	font-size: 1em;
 	width: 33px;
 }
-table#grille {
+table#grille,
+.tabCong > table {
 	margin: auto;
 }
 th.ferie {
@@ -114,6 +115,20 @@ div.nobrief {
 	background: -ms-linear-gradient(top, #aaddaa 0%,#99cc99 50%,#99cc99 51%,#aaddaa 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #aaddaa 0%,#99cc99 50%,#99cc99 51%,#aaddaa 100%); /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#aaddaa', endColorstr='#aaddaa',GradientType=0 ); /* IE6-9 */
+}
+.tabCong td {
+	width:6em;
+}
+.date {
+	font-size: 9px;
+}
+.user {
+	font-weight: bold;
+}
+#dDatePicker {
+	width: 200px;
+	margin: 10px auto;
+	text-align:center;
 }
 .pointer {
 	cursor: pointer;
@@ -240,7 +255,7 @@ div#dFormRemplacement table td {
 	color: #f00;
 }
 .valide {
-	color:#070;
+	color:#090;
 }
 .filed {
 	color:#f00;

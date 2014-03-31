@@ -118,8 +118,6 @@ $DEBUG = false;
 	if (empty($conf['page']['stylesheet']['jquery-ui'])) $conf['page']['stylesheet']['jquery-ui'] = false;
 	// Chargement de la feuille de style 'grille'
 	if (empty($conf['page']['stylesheet']['grille'])) $conf['page']['stylesheet']['grille'] = false;
-	// Chargement de la feuille de style 'conG'
-	if (empty($conf['page']['stylesheet']['conG'])) $conf['page']['stylesheet']['conG'] = false;
 	// Chargement de la feuille de style 'annuaire'
 	if (empty($conf['page']['stylesheet']['annuaire'])) $conf['page']['stylesheet']['annuaire'] = false;
 	// Chargement de la feuille de style 'grilleUnique'
@@ -222,11 +220,6 @@ $DEBUG = false;
 	}
 	if (true === $conf['page']['stylesheet']['grilleUnique']) {
 		$stylesheet[$compteur]['href'] = 'grilleUnique.css';
-		$stylesheet[$compteur]['media'] = 'screen';
-		$compteur++;
-	}
-	if (true === $conf['page']['stylesheet']['conG']) {
-		$stylesheet[$compteur]['href'] = 'tableauxCong.css';
 		$stylesheet[$compteur]['media'] = 'screen';
 		$compteur++;
 	}
