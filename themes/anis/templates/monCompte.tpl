@@ -4,9 +4,11 @@
 <form name="fContact" id="fContact" class="ng" method="POST" action="monCompte.php">
 <fieldset><legend>Mon compte</legend>
 <ul>
+{if $smarty.session.ADMIN}
 <li>
 <label for="uid">uid : </label><input type="text" name="uid" id="uid" value="{$utilisateur->uid()}" />
 </li>
+{/if}
 <li>
 <label for="nom">nom : </label><input type="text" name="nom" id="nom" value="{$utilisateur->nom()}" />
 </li>
