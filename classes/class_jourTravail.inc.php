@@ -207,7 +207,7 @@ class jourTravail extends Date {
 	 * constructeur
 	 */
 	public function __construct($row=false, $centre = NULL, $team = NULL) {
-		if (is_null($centre) || is_null($team)) {
+		if (!array_key_exists('ADMIN', $_SESSION) || true !== $_SESSION['ADMIN'] || is_null($centre) || is_null($team)) {
 			$date = isset($row['date']) ? $row['date'] : date('Y-m-d');
 			$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
 			$this->centre($affectation['centre']);

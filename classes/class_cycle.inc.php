@@ -38,15 +38,10 @@ class Cycle {
 	private $team = NULL;
 	public function __construct($date=NULL, $centre = NULL, $team = NULL) {
 		if (!is_a($date, 'Date')) return false;
-		$row = $_SESSION['utilisateur']->affectationOnDate($date);
-		if (is_null($centre)) {
-			$this->centre($row['centre']);
-		} else {
+		if (!is_null($centre)) {
 			$this->centre($centre);
 		}
-		if (is_null($team)) {
-			$this->team($row['team']);
-		} else {
+		if (!is_null($team)) {
 			$this->team($team);
 		}
 		return $this->loadCycle($date);
