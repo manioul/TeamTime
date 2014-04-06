@@ -30,7 +30,7 @@ $colonnes = array();
 while ($row = $_SESSION['db']->db_fetch_array($result)) {
        $colonnes[] = $row[0];
 }
-if (!empty($_SESSION['ADMIN'])) {
+if (array_key_exists('ADMIN', $_SESSION)) {
 	$colonnes[] = 'centre';
 	$colonnes[] = 'team';
 	$sql = sprintf("
@@ -49,6 +49,7 @@ if (!empty($_SESSION['ADMIN'])) {
 		AND `TBL_USERS`.`uid` = `TBL_AFFECTATION`.`uid`
 		AND `beginning` <= '%s'
 		AND `end` >= '%s'
+		ORDER BY `nom`
 		", date('Y-m-d')
 		, date('Y-m-d')
 	);
@@ -109,6 +110,7 @@ $(function() {
 		AND `end` >= '%s'
 		AND (`centre` = '%s' OR `centre` = 'all')
 		AND (`team` = '%s' OR `team` = 'all');
+		ORDER BY `nom`
 		", date('Y-m-d')
 		, date('Y-m-d')
 		, $affectation['centre']
