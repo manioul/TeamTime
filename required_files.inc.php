@@ -31,6 +31,7 @@ if (isset($conf['page']['include']['globalConfig']))		require_once 'config.inc.p
 if (isset($conf['page']['include']['globals_db']))		require_once 'globals_db.inc.php';
 if (isset($conf['page']['include']['class_db']))		require_once 'classes/class_db.inc.php';
 if (isset($conf['page']['include']['class_utilisateurGrille']))	require_once 'classes/class_utilisateurGrille.inc.php';
+if (isset($conf['page']['include']['class_affectation']))		require_once 'classes/class_affectations.inc.php';
 if (isset($conf['page']['include']['class_date']))		require_once 'classes/class_date.inc.php';
 if (isset($conf['page']['include']['class_cycle']))		require_once 'classes/class_cycle.inc.php';
 if (isset($conf['page']['include']['class_menu']))		require_once 'classes/class_menu.inc.php';
