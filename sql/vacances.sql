@@ -3,6 +3,7 @@
 
 -- Attribue les congés à toutes les équipes
 UPDATE TBL_DISPO SET team = 'all' WHERE `type decompte` = 'conges';
+ALTER TABLE `TBL_DISPO` CHANGE `absence` `absence` DECIMAL( 2, 1  ) NOT NULL COMMENT 'Indique si la dispo correspond à une absence (0), à une présence (1) ou à une demi-équipe (.5)'
 
 CREATE TABLE IF NOT EXISTS TBL_VACANCES_A_ANNULER (
 	uid INT(11) NOT NULL,
