@@ -33,6 +33,9 @@ class Affectation {
 	private $centre;
 	private $team;
 	private $grade;
+	private $centreDisplay;
+	private $teamDisplay;
+	private $gradeDisplay;
 	private $beginning;
 	private $end;
 	private $table = 'TBL_AFFECTATION'; // La table qui gère les affectations
@@ -43,19 +46,20 @@ class Affectation {
 	public static function listeAffectations($type, $selected = NULL) {
 		$array = array('name' => $type);
 		$index = 0;
-		$sql = sprintf("SELECT `nom`
+		$sql = sprintf("SELECT `nom`, `description`
 			FROM `TBL_CONFIG_AFFECTATIONS`
 			WHERE `type` = '%s'
 			", $_SESSION['db']->db_real_escape_string($type));
 		$result = $_SESSION['db']->db_interroge($sql);
 		while($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$array['options'][$index]['content'] = $row['nom'];
+			$array['options'][$index]['content'] = $row['description'];
 			$array['options'][$index]['value'] = $row['nom'];
 			if (!is_null($selected) && $row['nom'] == $selected) {
 				$array['options'][$index]['selected'] = "selected";
 			}
 			$index++;
-		}		
+		}
+		mysqli_free_result($result);		
 		return $array;
 	}
 // Constructeur
@@ -63,8 +67,7 @@ class Affectation {
 		if (is_null($param)) return true;
 		if (is_int($param)) {
 			$this->setFromDb($param);
-		}
-		if (is_array($param)) {
+		} elseif (is_array($param)) {
 			$this->setFromRow($param);
 		}
 	}
@@ -101,6 +104,42 @@ class Affectation {
 			$this->grade = (string) $grade;
 		}
 		return $this->grade;
+	}
+	public function centreDisplay() {
+		if (!isset($this->centreDisplay)) {
+			$sql = sprintf("
+				SELECT `description`
+				FROM `TBL_CONFIG_AFFECTATIONS`
+				WHERE `nom` = '%s'
+				", $this->centre);
+			$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+			$this->centreDisplay = $row['description'];
+		}
+		return $this->centreDisplay;
+	}
+	public function teamDisplay() {
+		if (!isset($this->teamDisplay)) {
+			$sql = sprintf("
+				SELECT `description`
+				FROM `TBL_CONFIG_AFFECTATIONS`
+				WHERE `nom` = '%s'
+				", $this->team);
+			$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+			$this->teamDisplay = $row['description'];
+		}
+		return $this->teamDisplay;
+	}
+	public function gradeDisplay() {
+		if (!isset($this->gradeDisplay)) {
+			$sql = sprintf("
+				SELECT `description`
+				FROM `TBL_CONFIG_AFFECTATIONS`
+				WHERE `nom` = '%s'
+				", $this->grade);
+			$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+			$this->gradeDisplay = $row['description'];
+		}
+		return $this->gradeDisplay;
 	}
 	/*
 	 * Retourne le début de l'affectation comme une chaîne formattée pour la bdd

@@ -56,6 +56,7 @@
 </li>
 </ul>
 </fieldset>
+</li>
 {* Fin de l'affichage des téléphones *}
 
 {* Affichage des adresses *}
@@ -88,6 +89,8 @@
 </ul>
 </fieldset>
 {* Fin de l'affichage des adresses *}
+</li>
+</ul>
 </fieldset>
 {* Fin de la partie contact *}
 
@@ -147,9 +150,9 @@
 </tr>
 {foreach $datas as $carriere}
 <tr id="affectation{$carriere->aid()}">
-<td>{$carriere->centre()}</td>
-<td>{$carriere->team()}</td>
-<td>{$carriere->grade()}</td>
+<td>{$carriere->centreDisplay()}</td>
+<td>{$carriere->teamDisplay()}</td>
+<td>{$carriere->gradeDisplay()}</td>
 <td>{$carriere->beginning()->formatDate()}</td>
 <td>{$carriere->end()->formatDate()}</td>
 <td><div class="imgwrapper12" style="left:5px;cursor:pointer;" onclick='supprInfo("affectation", {$carriere->aid()}, {$utilisateur->uid()});' title="Supprimer l'entrée"><img class="cnl" alt="supprimer" src="{$image}" /></div></td>
