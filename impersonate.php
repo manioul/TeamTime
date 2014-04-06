@@ -92,19 +92,18 @@ ob_start(); // Obligatoire pour firePHP
 
 
 	// Utilisation de jquery
-	$conf['page']['javascript']['jquery'] = true;
+	$conf['page']['javascript']['jquery'] = false;
 	// Utilisation de ajax
-	$conf['page']['javascript']['ajax'] = true;
+	$conf['page']['javascript']['ajax'] = false;
 	// Utilisation de grille2.js.php
-	$conf['page']['javascript']['grille2'] = true;
+	$conf['page']['javascript']['grille2'] = false;
 	// Utilisation de grille2.js
 	$conf['page']['javascript']['grille2js'] = false;
 
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
 	$conf['page']['stylesheet']['general'] = true;
-	$conf['page']['stylesheet']['grille'] = true;
-	$conf['page']['stylesheet']['grilleUnique'] = ($nbCycle == 1 ? true : false);
+	$conf['page']['stylesheet']['grille'] = false;
 
 	// Compactage des pages
 	$conf['page']['compact'] = false;
@@ -115,9 +114,9 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
-if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
+if (!array_key_exists('uid', $_POST) && !array_key_exists('iWantMyselfBack', $_GET)) {
 	// On crée un formulaire pour sélectionner la personnalité à prendre
-	$result = $_SESSION['db']->db_interroge("SELECT `uid`, `nom` FROM `TBL_USERS`");
+	$result = $_SESSION['db']->db_interroge("SELECT `uid`, `nom` FROM `TBL_USERS` ORDER BY `nom`");
 	$users = array();
 	while ($row = $_SESSION['db']->db_fetch_row($result)) {
 		$users[$row[0]] = $row[1];
@@ -125,7 +124,7 @@ if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
 	mysqli_free_result($result);
 	$smarty->assign('users', $users);
 	$smarty->display('impersonate.tpl');
-} elseif (!empty($_POST['uid'])) { // On prend la personnalité de l'uid passé par le formulaire
+} elseif (array_key_exists('uid', $_POST)) { // On prend la personnalité de l'uid passé par le formulaire
 	// Nettoie la variable de session
 	unset($_SESSION['ADMIN']);
 	unset($_SESSION['EDITEURS']);
@@ -158,10 +157,7 @@ if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
 		mysqli_free_result($result2);
 	}
 	mysqli_free_result($result);
-	?><pre><?php
-	var_dump($_SESSION);
-	?></pre><?php
-} elseif (!empty($_GET['iWantMyselfBack']) && !empty($_SESSION['iAmVirtual'])) { // On reprend sa personnalité
+} elseif (array_key_exists('iWantMyselfBack', $_GET) && array_key_exists('iAmVirtual', $_SESSION)) { // On reprend sa personnalité
 	$sql = sprintf("
 		SELECT * FROM `TBL_USERS` AS `TU`
 		, `TBL_AFFECTATION` AS `TA`
@@ -186,10 +182,6 @@ if (empty($_POST['uid']) && empty($_GET['iWantMyselfBack'])) {
 		}
 		mysqli_free_result($result2);
 	}
-} else {
-	?><pre><?php
-	var_dump($_SESSION);
-	?></pre><?php
 }
 
 /*
