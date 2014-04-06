@@ -36,6 +36,50 @@ class Cycle {
 	private $compteTypeUserFin = array(); // Un tableau des décomptes par type (cf `type decompte` dans la bdd) et par utilisateur pour la fin du cycle
 	private $centre = NULL;
 	private $team = NULL;
+	// Liste les jours du cycle pour un centre et une équipe
+	// Ceci est directement utilisable avec html.form.select.tpl
+	public static function listeCycle($name = "j", $centre = NULL, $team = NULL, $selected = NULL) {
+		if (is_null($centre)) {
+			$centre = $_SESSION['utilisateur']->centre();
+		}
+		if (is_null($team)) {
+			$team = $_SESSION['utilisateur']->team();
+		}
+		$array = array(
+			'name'	=> $name
+			, 'options'	=> array(
+				array(
+					'content'	=> "all"
+					, 'value'	=> "all"
+				)
+			)
+		);
+		if ($selected == 'all') {
+			$array['options'][0]['selected'] = 'selected';
+		}
+		$index = 1;
+		$sql = sprintf("
+			SELECT `vacation`
+			FROM `TBL_CYCLE`
+			WHERE `centre` = '%s'
+			AND (`team` = '%s' OR `team` = 'all')
+			AND `vacation` != '%s'
+			", $_SESSION['db']->db_real_escape_string($centre)
+			, $_SESSION['db']->db_real_escape_string($team)
+			, REPOS
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			 $array['options'][$index]['content'] = $row['vacation'];
+			$array['options'][$index]['value'] = $row['vacation'];
+			if (!is_null($selected) && $row['vacation'] == $selected) {
+				$array['options'][$index]['selected'] = "selected";
+			}
+			$index++;
+		}
+		mysqli_free_result($result);		
+		return $array;
+	}
 	public function __construct($date=NULL, $centre = NULL, $team = NULL) {
 		if (!is_a($date, 'Date')) return false;
 		if (!is_null($centre)) {
