@@ -1006,9 +1006,9 @@ class utilisateursDeLaGrille {
 		}
 		if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->stopChrono('load_planning_duree_norepos'); // Fin chrono
 
-		// Lorsque l'on n'affiche qu'un cycle, on ajoute des compteurs en fin de tableau
+		// Lorsque l'on n'affiche qu'un cycle ou qu'on le souhaite, on ajoute des compteurs en fin de tableau
 		$evenSpec = array();
-		if ($nbCycle == 1) {
+		if ($nbCycle == 1 || array_key_exists('cpt', $_REQUEST)) {
 			// Récupération des compteurs
 			if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->startChrono('Relève compteur'); // Début chrono
 			$sql = "
@@ -1050,13 +1050,13 @@ class utilisateursDeLaGrille {
 						AND (`team` = 'all' OR `team` = '%s')
 					)
 				GROUP BY `td`.`did`, `uid`"
-				, $cycle[0]->dateRef()->date()
+				, $cycle[$nbCycle-1]->dateRef()->date()
 				, $centre
 				, $team
-				, $cycle[0]->dateRef()->date()
+				, $cycle[$nbCycle-1]->dateRef()->date()
 				, $centre
 				, $team
-				, $cycle[0]->dateRef()->date()
+				, $cycle[$nbCycle-1]->dateRef()->date()
 			);
 
 			$results = $_SESSION['db']->db_interroge($sql);
@@ -1094,7 +1094,7 @@ class utilisateursDeLaGrille {
 						'nom'		=> $cycle[$i]->dateRef()->moisAsHTML()
 						,'id'		=> 'moisDuCycle' . $cycle[$i]->dateRef()->dateAsId()
 						,'classe'	=> ''
-						,'colspan'	=> Cycle::getCycleLengthNoRepos()+1+count($evenSpec)
+						,'colspan'	=> ($i == $nbCycle-1 ? Cycle::getCycleLengthNoRepos($centre, $team)+1+count($evenSpec) : Cycle::getCycleLengthNoRepos($centre, $team)+1)
 					);
 					break;
 					/*
@@ -1149,8 +1149,8 @@ class utilisateursDeLaGrille {
 							,'nom'			=> '<div class="boule"></div>'
 						);
 					}
-					if ($nbCycle == 1) {
-						// Ajout d'une colonne pour les compteurs
+						if (($nbCycle == 1 || array_key_exists('cpt', $_REQUEST)) && $i == $nbCycle - 1) {
+						// Ajout d'une colonne pour les compteurs uniquement après la dernière grille
 						foreach (array_keys($evenSpec) as $even) {
 							$grille[$compteurLigne][] = array(
 								'classe'		=> ""
@@ -1191,7 +1191,7 @@ class utilisateursDeLaGrille {
 						,'id'			=> sprintf("locka%sm%sj%sc%s", $cycle[$i]->dateRef()->annee(), $cycle[$i]->dateRef()->mois(), $cycle[$i]->dateRef()->jour(), $cycle[$i]->cycleId())
 						,'nom'			=> isset($_SESSION['TEAMEDIT']) ? sprintf("<div class=\"imgwrapper12\"><a href=\"lock.php?date=%s&amp;lock=%s&amp;noscript=1\"><img src=\"themes/%s/images/glue.png\" class=\"%s\" alt=\"#\" /></a></div>", $cycle[$i]->dateRef()->date(), $un_lock, $_COOKIE['theme'], $lockClass) : sprintf("<div class=\"imgwrapper12\"><img src=\"themes/%s/images/glue.png\" class=\"%s\" alt=\"#\" /></div>", $_COOKIE['theme'], $lockClass) // Les éditeurs ont le droit de (dé)verrouiller la grille
 						,'title'	=> htmlentities($lockTitle, ENT_NOQUOTES, 'utf-8')
-						,'colspan'	=> 1+count($evenSpec)
+						,'colspan'	=> ($i == $nbCycle-1 ? 1+count($evenSpec) : 1)
 					);
 					break;
 					/*
@@ -1286,7 +1286,7 @@ class utilisateursDeLaGrille {
 						,'id'		=> sprintf("decDispou%sc%s", $user['uid'], $cycle[$i]->cycleId()+1)
 						,'classe'	=> 'decompte'
 					);
-					if ($nbCycle == 1) {
+					if (($nbCycle == 1 || array_key_exists('cpt', $_REQUEST)) && $i == $nbCycle - 1) {
 						foreach (array_keys($evenSpec) as $even) {
 							$grille[$compteurLigne][] = array(
 								'nom'		=> empty($evenSpec[$even]['uid'][$user['uid']]['nom']) ? 0 : $evenSpec[$even]['uid'][$user['uid']]['nom']
