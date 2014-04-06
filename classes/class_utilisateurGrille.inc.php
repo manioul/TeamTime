@@ -256,6 +256,21 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
+	// Retourne le centre actuel de l'utilisateur
+	public function centre() {
+		$affectation = $this->affectationOnDate(date('Y-m-d'));
+		return $affectation['centre'];
+	}
+	// Retourne le team actuel de l'utilisateur
+	public function team() {
+		$affectation = $this->affectationOnDate(date('Y-m-d'));
+		return $affectation['team'];
+	}
+	// Retourne le grade actuel de l'utilisateur
+	public function grade() {
+		$affectation = $this->affectationOnDate(date('Y-m-d'));
+		return $affectation['grade'];
+	}
 	/*
 	 * Ajoute un téléphone unique
 	 */
