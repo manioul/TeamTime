@@ -502,6 +502,12 @@ class jourTravail extends Date {
 	}
 	private function _dbUpdateReadOnly() {
 		$_SESSION['db']->db_interroge($this->_dbQueryUpdateReadOnly());
+		if (isset($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("msg", "TRACE", "%s", "%s", "%s")'
+				, __FUNCTION__
+				, $this->_dbQueryUpdateReadOnly())
+			);
+		}
 	}
 	public function _dbUpdate() {
 		$_SESSION['db']->db_interroge($this->__dbQueryUpdate());
