@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS TBL_MESSAGES_SYSTEME;
 CREATE TABLE TBL_MESSAGES_SYSTEME (
 	mid int(11) NOT NULL AUTO_INCREMENT,
 	utilisateur VARCHAR(63) NOT NULL,
-	catégorie set('DEBUG','INFO','ERREUR','LOG','USER') NOT NULL DEFAULT 'USER',
+	catégorie set('TRACE', 'DEBUG','INFO','ERREUR','LOG','USER') NOT NULL DEFAULT 'USER',
 	-- La catégorie USER est destinée à afficher un message à l'utilisateur
 	appelant VARCHAR(64) NOT NULL DEFAULT 'unknown',
 	short tinytext NOT NULL,
