@@ -123,10 +123,18 @@ ob_start(); // Obligatoire pour firePHP
 require 'required_files.inc.php';
 
 // Les utilisateurs non admin ne peuvent accéder qu'à leurs données
-if (!empty($_SESSION['ADMIN']) && !empty($_REQUEST['uid'])) {
+if (array_key_exists('ADMIN', $_SESSION) && array_key_exists('uid', $_REQUEST)) {
 	$utilisateur = new UtilisateurGrille( (int) $_REQUEST['uid']);
 } else {
-	$utilisateur = new UtilisateurGrille( $_SESSION['utilisateur']->uid());
+	// Les utilisateurs editeurs peuvent accéder au compte des utilisateurs de leur équipe
+	if (array_key_exists('EDITEURS') && array_key_exists('uid', $_REQUEST)) {
+		$utilisateur = new UtilisateurGrille( (int) $_REQUEST['uid']);
+		if ($_SESSION['utilisateur']->centre() != $utilisateur->centre() || $_SESSION['utilisateur']->team() != $utilisateur->team()) {
+			$utilisateur = clone $_SESSION['utilisateur'];
+		}
+	} else {
+		$utilisateur = new UtilisateurGrille( $_SESSION['utilisateur']->uid());
+	}
 }
 if (!is_a($utilisateur, 'utilisateurGrille')) {
 	die("On n'a pas obtenu l'objet attendu");
