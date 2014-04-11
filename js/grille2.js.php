@@ -50,7 +50,7 @@ function getAvailableOccupations(oThis) {
        	}
 <?
 	$find_in_set = "";
-	if (empty($_SESSION['ADMIN'])) { // Les non admins ont des restrictions sur les dispo qu'ils peuvent poser
+	if (!array_key_exists('ADMIN', $_SESSION)) { // Les non admins ont des restrictions sur les dispo qu'ils peuvent poser
 		foreach (array_flip(array_flip(array_merge(array('all', $_SESSION['utilisateur']->login()), $_SESSION['utilisateur']->roles(), $_SESSION['utilisateur']->classe(date('Y-m-d'))))) as $set) {
 			$find_in_set .= sprintf("FIND_IN_SET('%s', `peut poser`) OR ", $_SESSION['db']->db_real_escape_string($set));
 		}
@@ -84,31 +84,25 @@ function getAvailableOccupations(oThis) {
 		$dispo[$vacation] = '';
 	}
 	while ($row = $_SESSION['db']->db_fetch_row($resDispo)) {
-		if ($row[1] == 'all') { // On ajoute toutes les dispo valides pour all
-			$aDispo .= sprintf("'%s',", $row[0]);
-		} else {
-			foreach($vacations as $vacation) { // On parcourt toutes les possibilités de vacation pour voir si la dispo lui correspond
-				if (preg_match("/$vacation/", $row[1]) > 0) {
-					$dispo[$vacation] .= sprintf("'%s',", $row[0]);
-				}
+		foreach ($vacations as $vacation) {
+			if ($row[1] == 'all' || preg_match("/$vacation/", $row[1]) > 0) { // On ajoute les dispo valides par vacation
+				$dispo[$vacation] .= sprintf("'%s',", $row[0]);
 			}
 		}
 	}
 	mysqli_free_result($resDispo);
 	?>
-	var aDispo = new Array(<?=substr($aDispo, 0, -1)?>);
-		switch (aArray["Vacation"]) {<?
+	switch (aArray["Vacation"]) {<?
 	foreach($vacations as $vacation) {?>
-			case "<?=$vacation?>":
-				var aDispoExt = new Array(<?=substr($dispo[$vacation], 0, -1)?>);
-				break;
+		case "<?=$vacation?>":
+			var aDispo = new Array(<?=substr($dispo[$vacation], 0, -1)?>);
+			break;
 	<?
 	}?>
 			default:
 				var aDispoExt = new Array();
 			break;
 	}
-	aDispo = aDispo.concat(aDispoExt);
 	// Suppression des jours week end où il ne devrait pas y en avoir
 	if (!aArray["isFerie"]) {
 		var x = aDispo.indexOf("W");

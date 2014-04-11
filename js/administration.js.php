@@ -109,7 +109,7 @@ $(function() {
 		AND `beginning` <= '%s'
 		AND `end` >= '%s'
 		AND (`centre` = '%s' OR `centre` = 'all')
-		AND (`team` = '%s' OR `team` = 'all');
+		AND (`team` = '%s' OR `team` = 'all')
 		ORDER BY `nom`
 		", date('Y-m-d')
 		, date('Y-m-d')

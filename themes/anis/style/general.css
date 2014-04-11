@@ -172,6 +172,9 @@ form, input, textarea, select {
 	font-size: 11pt;
 	color: #060;
 }
+form ul li {
+	list-style:none;
+}
 form.ng {
 		padding:10px;
 		margin:auto;
@@ -288,7 +291,6 @@ div#dConnexion input {
 		border:3px solid rgba(255,255,255,.8);
 		border-radius:8px;
 		line-height:30px;
-		list-style:none;
 		padding:5px 10px;
 		margin-bottom:8px;
 	}
@@ -297,7 +299,8 @@ div#dConnexion input {
 		width:100px;
 		font-weight:bold;
 	}
-	form#fPereq input:not([type=radio]), select {
+	form#fPereq input:not([type=radio]),
+	form#fPereq select {
 		width:110px;
 	}
 	form#fPereq button {
@@ -341,7 +344,6 @@ div#dConnexion input {
 		border:3px solid rgba(255,255,255,.8);
 		border-radius:8px;
 		line-height:30px;
-		list-style:none;
 		padding:5px 10px;
 		margin-bottom:8px;
 	}
@@ -390,7 +392,6 @@ div#dConnexion input {
 		border:3px solid rgba(255,255,255,.8);
 		border-radius:8px;
 		line-height:15px;
-		list-style:none;
 		padding:5px 10px;
 		margin-right:10px;
 		margin-bottom:8px;
@@ -448,7 +449,6 @@ div#dConnexion input {
 		border:3px solid rgba(255,255,255,.8);
 		border-radius:8px;
 		line-height:15px;
-		list-style:none;
 		padding:2px 10px;
 		margin-right:10px;
 		margin-bottom:8px;
@@ -505,7 +505,6 @@ div#dConnexion input {
 	}
 	form#fIntervalHeures ul li {
 		line-height:30px;
-		list-style:none;
 	}
 	form#fIntervalHeures fieldset {
 		float:left;
@@ -544,7 +543,6 @@ div#dConnexion input {
 	}
 	form#fSaisieHeuresInd ul li {
 		line-height:30px;
-		list-style:none;
 	}
 	form#fSaisieHeuresInd label {
 		float:left;
@@ -594,7 +592,6 @@ div#dConnexion input {
 	}
 	form#fGestionCalendrier ul li {
 		line-height:30px;
-		list-style:none;
 	}
 	form#fGestionCalendrier fieldset {
 		float:left;
@@ -622,6 +619,38 @@ div#dConnexion input {
 		height:71px;
 		width:145px;
 	}
+/*
+ * Fin du formulaire de gestion du calendrier
+ */
+
+/*
+ * Formulaire d'ajout d'activité pour l'équipe
+ */
+	form#fActvt {
+		width:430px;
+	}
+	form#fActvt li {
+		margin-top:5px;
+	}
+	form#fActvt label[for=isd],
+	form#fActvt label[for=needCpt]{
+		width:380px;
+	}
+	form#fActvt label {
+		float:left;
+		width:200px;
+	}
+	form#fActvt input[type=text]{
+		width:100px;
+	}
+	form#fActvt input[type=submit] {
+		width:415px;
+		margin:auto;
+	}
+	/*form#fActvt {
+	form#fActvt {
+	form#fActvt {
+	form#fActvt {
 /*
  * Fin du formulaire de gestion du calendrier
  */
@@ -708,7 +737,6 @@ div#dConnexion input {
 		box-shadow:none;
 	}
 	form#fHS ul li {
-		list-style:none;
 		line-height:30px;
 	}
 	form#fHS label {

@@ -95,6 +95,28 @@ case 'dispatchSchema' :
 	$_SESSION['db']->db_interroge($sql);
 	print "Mise à jour effectuée";
 	break;
+case 'dispo' :
+	if ($_SESSION['ADMIN']) {
+		$sql = sprintf("DELETE FROM `TBL_DISPO`
+			WHERE `did` = %d
+			", $_GET['did']);
+	} elseif ($_SESSION['EDITEURS']) {
+		$sql = sprintf("DELETE FROM `TBL_DISPO`
+			WHERE `did` = %d
+			AND `centre` = '%s'
+			AND `team` = '%s'
+			", $_GET['did']
+			, $_SESSION['utilisateur']->centre()
+			, $_SESSION['utilisateur']->team()
+		);
+	}
+	if (isset($sql)) {
+		$_SESSION['db']->db_interroge($sql);
+		print "Mise à jour effectuée";
+	} else {
+		print "Vous n'avez pas le droit de faire cela...";
+	}
+	break;
 }
 
 

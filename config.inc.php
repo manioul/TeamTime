@@ -88,6 +88,8 @@ $DEBUG = false;
 	if (empty($conf['page']['javascript']['grille2'])) $conf['page']['javascript']['grille2'] = false;
 	// chargement du script de gestion administration
 	if (empty($conf['page']['javascript']['administration'])) $conf['page']['javascript']['administration'] = false;
+	// chargement du script de gestion d'équipe
+	if (empty($conf['page']['javascript']['gestionTeam'])) $conf['page']['javascript']['gestionTeam'] = false;
 	// chargement du script de gestion jquery
 	if (empty($conf['page']['javascript']['jquery'])) $conf['page']['javascript']['jquery'] = false;
 	// chargement du script de gestion jquery-ui
@@ -143,7 +145,7 @@ $DEBUG = false;
 		$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
 	}
 	// Gestion des dépendances javascript
-	if (true === $conf['page']['javascript']['grille2'] || true === $conf['page']['javascript']['administration']) {
+	if (true === $conf['page']['javascript']['grille2'] || true === $conf['page']['javascript']['administration'] || true === $conf['page']['javascript']['gestionTeam']) {
 		$conf['page']['javascript']['jquery'] = true;
 		$conf['page']['javascript']['ajax'] = true;
 	}
@@ -165,6 +167,7 @@ $DEBUG = false;
 	if (true === $conf['page']['javascript']['ajax']) $javascript[] = 'ajax.js';
 	if (true === $conf['page']['javascript']['grille2']) $javascript[] = 'grille2.js.php';
 	if (true === $conf['page']['javascript']['administration']) $javascript[] = 'administration.js.php';
+	if (true === $conf['page']['javascript']['gestionTeam']) $javascript[] = 'gestionTeam.js.php';
 	if (true === $conf['page']['javascript']['gestionUtilisateurs']) $javascript[] = 'gestionUtilisateurs.js.php';
 	if (true === $conf['page']['javascript']['conG']) $javascript[] = 'tableauxCong.js.php'; // Gestion des tableaux de congés
 	if (true === $conf['page']['javascript']['online']) $javascript[] = 'online.js.php';
