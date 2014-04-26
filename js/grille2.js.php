@@ -28,7 +28,16 @@ require_once('../session.inc.php');
 
 firePHPLog($_SESSION, 'SESSION');
 // tableau des dispos
-$sql = "SELECT `dispo` FROM `TBL_DISPO` WHERE `type decompte` = 'dispo' AND `actif` = TRUE";
+$sql = sprintf("
+	SELECT `dispo`
+	FROM `TBL_DISPO`
+	WHERE `type decompte` = 'dispo'
+	AND `actif` IS TRUE
+	AND (`centre` = '%s' OR `centre` = 'all')
+	AND (`team` = '%s' OR `team` = 'all')"
+	, $_SESSION['utilisateur']->centre()
+	, $_SESSION['utilisateur']->team()
+	);
 $dispos = "";
 $result = $_SESSION['db']->db_interroge($sql);
 while ($x = $_SESSION['db']->db_fetch_assoc($result)) {
@@ -56,18 +65,17 @@ function getAvailableOccupations(oThis) {
 		}
 		$find_in_set = " AND (" . substr($find_in_set, 0, -4) . ")";
 	}
-	$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 	$sqlDispo = sprintf("
 		SELECT `dispo`
 		, `jours possibles`
 		FROM `TBL_DISPO`
-		WHERE `actif` = '1'
+		WHERE `actif` IS TRUE
 		AND (`centre` = '%s' OR `centre` = 'all')
 		AND (`team` = '%s' OR `team` = 'all')
 		%s
 		ORDER BY `poids`"
-		, $affectation['centre']
-		, $affectation['team']
+		, $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
 		, $find_in_set
 	);
 	$resDispo = $_SESSION['db']->db_interroge($sqlDispo);
@@ -399,36 +407,53 @@ function comptePresents(sId)
 	}
 	<?
 	// Recherche les dispo qui correspondent à des absences pour les enlever du décompte des présents
-	$sqlDispo = "SELECT `dispo` FROM `TBL_DISPO` WHERE `actif` = '1' AND `absence` = '1' ORDER BY `poids`";
+	$sqlDispo = sprintf("SELECT `dispo` FROM `TBL_DISPO` WHERE `actif` = '1' AND `absence` = '1' ORDER BY `poids`");
+	$sqlDispo = sprintf("
+		SELECT `dispo`
+		, 1 - `absence`
+		, `type decompte`
+		FROM `TBL_DISPO`
+		WHERE `actif` IS TRUE
+		AND (`centre` = '%s' OR `centre` = 'all')
+		AND (`team` = '%s' OR `team` = 'all')
+		ORDER BY `poids`"
+		, $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+	);
 	$resDispo = $_SESSION['db']->db_interroge($sqlDispo);
 	$absences = "";
+	$dispo = "";
 	while ($abs = $_SESSION['db']->db_fetch_row($resDispo)) {
-		$absences .= sprintf("'%s', ", $abs[0]);
+		$absences .= sprintf("'%s':%0.1f, ", $abs[0], $abs[1]);
+		if ($abs[2] == "dispo") {
+			$dispo .= sprintf("'%s':0, ", $abs[0]);
+		} else {
+			$dispo .= sprintf("'%s':%0.1f, ", $abs[0], $abs[1]);
+		}
 	}
 	mysqli_free_result($resDispo);
 	?>
-	var aAbsent = new Array(<?=substr($absences, 0, -2)?>);
-	var aPresents = {'cds': 0, 'ce': 0, 'pc': 0, 'c': 0};
+	var aAbsent = {<?=substr($absences, 0, -2)?>};
+	var aD = {<?=substr($dispo, 0, -2)?>};
+	var aPresents = {'cds': 0, 'ce': 0, 'pc': 0, 'c': 0, 'aD':0};
 	var aListeUid = listeUid();
 	for (var iUid in aListeUid)
 	{
 		var sTemp = '#u'+iUid+sDate;
-		var iPresent = 1;
-		for (var iNdx in aAbsent)
-		{
-			if ($(sTemp).text() == aAbsent[iNdx])
-			{
-				iPresent = 0;
-				break;
-			}
-		}
-		if (iPresent == 1)
-		{
+		if ($(sTemp).text() == " ") {
 			aPresents[aListeUid[iUid]]++;
+			if (aListeUid[iUid] != 'c') {
+				aPresents['aD']++;
+			}
+		} else {
+			aPresents[aListeUid[iUid]] += aAbsent[$(sTemp).text()];
+			if (aListeUid[iUid] != 'c') {
+				aPresents['aD'] += aD[$(sTemp).text()];
+			}
 		}
 	}
 	aPresents['pc'] += aPresents['ce'] + aPresents['cds'];
-	$('#dec'+sDate).text(aPresents['pc']+"/"+aPresents['c']);
+	$('#dec'+sDate).text(aPresents['aD']+"/"+aPresents['pc']+"/"+aPresents['c']);
 	if (aPresents['pc'] < <?=get_sql_globals_constant('effectif_mini')?> && !$('#dec'+sDate).hasClass('protected'))
 	{
 		$('#dec'+sDate).addClass('emphasize');
