@@ -202,7 +202,7 @@ $smarty->assign('tab', $tab);
 
 $smarty->display('tableauxCong.tpl');
 
-if (isset($_SESSION['EDITEURS'])) {
+if (array_key_exists('TEAMEDIT', $_SESSION)) {
 	$sql = sprintf("SELECT *
 		FROM `TBL_VACANCES_A_ANNULER`
 		WHERE `edited` IS FAlSE
