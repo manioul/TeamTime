@@ -91,39 +91,39 @@ function get_sql_globals_constant($constant_name) {
 
 
 // Si la page nécessite que l'utilisateur soit logué, et qu'il ne l'est pas, on redirige vers la page de login
-if (!empty($requireAuthenticatedUser) && empty($_SESSION['AUTHENTICATED'])) {
+if (!empty($requireAuthenticatedUser) && !array_key_exists('AUTHENTICATED', $_SESSION)) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
-if (!empty($requireEditeur) && empty($_SESSION['EDITEURS'])) {
+if (!empty($requireEditeur) && !array_key_exists('EDITEURS', $_SESSION)) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
-if (!empty($requireTeamEdit) && empty($_SESSION['TEAMEDIT'])) {
+if (!empty($requireTeamEdit) && !array_key_exists('TEAMEDIT', $_SESSION)) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
-if (!empty($requireMyEdit) && empty($_SESSION['MY_EDIT'])) {
+if (!empty($requireMyEdit) && !array_key_exists('MY_EDIT', $_SESSION)) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
-if (!empty($requireHeures) && empty($_SESSION['HEURES'])) {
+if (!empty($requireHeures) && !array_key_exists('HEURES', $_SESSION)) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
-if (!empty($requireVirtualAdmin) && empty($_SESSION['iAmVirtual']) && empty($_SESSION['ADMIN'])) {
+if (!empty($requireVirtualAdmin) && !array_key_exists('iAmVirtual', $_SESSION) && !array_key_exists('ADMIN', $_SESSION)) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
-if (!empty($requireAdmin) && empty($_SESSION['ADMIN'])) {
+if (!empty($requireAdmin) && !array_key_exists('ADMIN', $_SESSION)) {
 	header('Location:index.php?norights=1&back=' . htmlspecialchars($_SERVER['REQUEST_URI']));
 	exit;
 }
 
 
 # S'il n'y a pas d'objet base de données défini dans la session, on en définit un
-if (empty($_SESSION['db']) || !is_a($_SESSION['db'], 'database')) {
-	if (!empty($_SESSION['utilisateur']) && is_a($_SESSION['utilisateur'], 'utilisateurGrille')) {
+if (!array_key_exists('db', $_SESSION) || !is_a($_SESSION['db'], 'database')) {
+	if (array_key_exists('utilisateur', $_SESSION) && is_a($_SESSION['utilisateur'], 'utilisateurGrille')) {
 		$DSN = $GLOBALS['DSN']['user'];
 		$DSN['username'] = 'ttm.'.$_SESSION['utilisateur']->uid();
 		$_SESSION['db'] = new database($DSN);
@@ -133,6 +133,6 @@ if (empty($_SESSION['db']) || !is_a($_SESSION['db'], 'database')) {
 }
 
 // Vérifie si le site est en maintenance
-if (FALSE === get_sql_globals_constant('online') && empty($_SESSION['ADMIN'])) header('Location:offline.html');
+if (FALSE === get_sql_globals_constant('online') && !array_key_exists('ADMIN', $_SESSION)) header('Location:offline.html');
 
 ?>
