@@ -10,6 +10,7 @@ BEGIN
 		WHERE centre = centre_
 		AND team = team_
 		AND poids >= from_
+		AND (`type decompte` != 'conges' OR `type decompte` IS NULL)
 		ORDER BY actif DESC, poids;
 	
 	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
@@ -27,3 +28,4 @@ BEGIN
 	CLOSE curDispo;
 END
 |
+DELIMITER ;

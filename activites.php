@@ -125,43 +125,37 @@ if (array_key_exists('u', $_GET) && array_key_exists('did', $_GET) && array_key_
 	$sql = sprintf("
 		UPDATE `TBL_DISPO`
 		SET `poids` = `poids` + 1
-		WHERE `poids` >= %d + 50
+		WHERE `poids` = %d + 49
 		AND `centre` = '%s'
 		AND `team` = '%s'
-		", $_GET['poids']-1
+		", $_GET['poids']
 		, $_SESSION['utilisateur']->centre()
 		, $_SESSION['utilisateur']->team()
 	);
 	$_SESSION['db']->db_interroge($sql);
 	$sql = sprintf("
 		UPDATE `TBL_DISPO`
-		SET `poids` = %d
+		SET `poids` = `poids` - 1
 		WHERE `did` = %d
 		AND `centre` = '%s'
 		AND `team` = '%s'
-		", $_GET['poids']-1
-		, $_GET['did']
+		", $_GET['did']
 		, $_SESSION['utilisateur']->centre()
 		, $_SESSION['utilisateur']->team()
 	);
 	$_SESSION['db']->db_interroge($sql);
-	$sql = sprintf("
-		CALL reorderDispo(50, 50, '%s', '%s')
-		", $_SESSION['utilisateur']->centre()
-		, $_SESSION['utilisateur']->team()
-	);
 }
 // Redescendre une entrée
 if (array_key_exists('d', $_GET) && array_key_exists('did', $_GET) && array_key_exists('poids', $_GET)) {
+	// On remonte l'entrée suivante
 	$sql = sprintf("
 		UPDATE `TBL_DISPO`
-		SET `poids` = %d + 50
-		WHERE `poids` >= %d + 50
+		SET `poids` = `poids` - 1
+		WHERE `poids` = %d + 51
 		AND `centre` = '%s'
 		AND `team` = '%s'
 		LIMIT 1
 		", $_GET['poids']
-		, $_GET['poids']
 		, $_SESSION['utilisateur']->centre()
 		, $_SESSION['utilisateur']->team()
 	);
