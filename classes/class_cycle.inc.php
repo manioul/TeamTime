@@ -408,6 +408,7 @@ class Cycle {
 					LIMIT 0,1
 				)
 			AND `TD`.`did` = `TL`.`did`
+			AND `TL`.`pereq` IS FALSE
 			AND `TG`.`centre` = '%s'
 			AND `TG`.`team` = '%s'
 			ORDER BY date ASC"
