@@ -235,6 +235,39 @@ mysqli_free_result($result);
 $smarty->assign('aListe', $aListe);
 
 /*
+ * Dates sur lesquelles il n'y a pas d'heure saisies
+ */
+$unput = array();
+
+$sql = sprintf("
+	SELECT `date`, `vacation`
+	FROM `TBL_GRILLE` AS `g`,
+	`TBL_CYCLE` AS `c`
+	WHERE `g`.`centre` = '%s'
+	AND `g`.`team` = '%s'
+	AND `g`.`cid` = `c`.`cid`
+	AND `date` NOT IN (SELECT `date`
+		FROM `TBL_HEURES_A_PARTAGER`
+		WHERE `centre` = '%s'
+		AND `team` = '%s')
+	AND `date` BETWEEN DATE_SUB(NOW(), INTERVAL 1 YEAR) AND NOW()
+	AND `g`.`cid` NOT IN (SELECT `cid`
+		FROM `TBL_CYCLE`
+		WHERE `vacation` = '%s')
+		", $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+		, $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+		, REPOS
+);
+$result = $_SESSION['db']->db_interroge($sql);
+while($row = $_SESSION['db']->db_fetch_assoc($result)) {
+	 $unput[$row['date']] = $row['vacation'];
+}
+mysqli_free_result($result);
+$smarty->assign('unput', $unput);
+
+/*
  * Début des appels d'affichage Smarty
  */
 
@@ -243,6 +276,8 @@ $smarty->display('saisieHeures.tpl');
 $smarty->display('recalcHeures.tpl');
 
 $smarty->display('listeHeuresSaisies.tpl');
+
+$smarty->display('listeHeuresAbsentes.tpl');
 
 /*
  * Informations de debug
