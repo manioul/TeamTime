@@ -121,7 +121,7 @@ $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') .
 
 // Recherche des dispos candidates à péréq
 $dispos = array();
-$dispos['name'] = 'uid';
+$dispos['name'] = 'did';
 $dispos['label'] = 'Dispos';
 $sql = sprintf("
 	SELECT `did`
