@@ -72,28 +72,41 @@ if (!empty($_POST['login']) && !empty($_POST['nom']) && !empty($_POST['email']))
 		$crlf = "\n";
 		$message = sprintf("Bonjour %s,
 
-Votre compte pour utiliser la grille 2.0 a été créé.
+Votre compte pour utiliser TeamTime a été créé.
 Vous pouvez désormais y accéder sur :
 %s/
 à l'aide des identifiants suivants (gare aux majuscules/minuscules) :
 login : %s
 mot de passe : %s
 
-Grâce à cette interface, vous pouvez déposer vos congés, récup, stages...
-Le planning est ensuite visée et validée.
-Vous pouvez également vérifier vos prochaines vacations.
+Grâce à TeamTime, vous pouvez déposer vos congés, récup, stages où que
+vous soyez et quand vous le souhaitez.
+Vous pouvez également vérifier les prochaines vacations, et voir qui sera
+présent.
+Vous visualisez, aisément, les briefings à venir, la période de charge,
+les vacances scolaires.
+Vous suivez votre décompte de congés et de récup, à tout moment.
+Vous accédez, également, à votre décompte d'heures très facilement.
+
+Pour toute question, n'hésitez pas à contater le webmaster.
+Mail : webmaster@teamtime.me
+XMPP : manioul@teamtime.me
+Friendica : https://titoux.info/profile/teamtime
+
 
 Bonne utilisation.
 
-++ ;)"
+++ ;)
+
+--"
 			, ucfirst($login)
 			, dirname($_SERVER['HTTP_REFERER'])
 			, $login
 			, $passwd
 		);
 		$hdrs = array(
-			'From'		=> "noreply@manioul.org"
-			,'Subject'	=> 'Création de votre compte sur lab.manioul.org'
+			'From'		=> "noreply@teamtime.me"
+			,'Subject'	=> 'Création de votre compte TeamTime'
 		);
 		$mime = new Mail_mime(array(
 			'eol'		=> $crlf
