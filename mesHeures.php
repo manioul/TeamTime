@@ -134,31 +134,9 @@ if (!empty($_POST['dateF'])) $dateFin = $_POST['dateF'];
 
 $affectation = $_SESSION['utilisateur']->affectationOnDate($dateDebut);
 
-/*
- * Recherche des dispo pour créer une liste d'exclusion
- */
-$sql = sprintf("
-	SELECT `did`, `dispo`, `nom_long`
-	FROM TBL_DISPO
-	WHERE `actif` IS TRUE
-	AND absence IS NOT TRUE
-	AND (`centre` = '%s' OR `centre` = 'all')
-	AND (`team` = '%s' OR `team` = 'all')
-	", $affectation['centre']
-	, $affectation['team']
-);
-$result = $_SESSION['db']->db_interroge($sql);
-while ($row = $_SESSION['db']->db_fetch_row($result)) {
-	$aDispos[$row[0]] = (!empty($row[2]) ? $row[2] : $row[1]) ;
-	if ($row[1] == 'Rempla') $checked[$row[0]] = 1;
-}
-mysqli_free_result($result);
-
 $previousYear = (int) date('Y');
 $previousYear--;
 $smarty->assign('defaultD', '01/01/' . $previousYear);
-$smarty->assign('aDispos', $aDispos);
-$smarty->assign('checked', $checked);
 
 $smarty->display('debutHeuresForm.tpl');
 
