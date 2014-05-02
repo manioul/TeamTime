@@ -24,8 +24,8 @@
 $messages = array();
 $index = 0;
 
-if (empty($_SESSION['iAmVirtual'])) {
-	if (!empty($_SESSION['ADMIN'])) {
+if (!array_key_exists('iAmVirtual', $_SESSION)) {
+	if (array_key_exists('ADMIN', $_SESSION)) {
 		$messages[$index]['message'] = "Connecté en tant que " . $_SESSION['utilisateur']->login();
 	}
 } else {
@@ -34,13 +34,13 @@ if (empty($_SESSION['iAmVirtual'])) {
 $messages[$index]['lien'] = "";
 $messages[$index]['classe'] = "warn";
 $index++;
-if (!empty($_SESSION['ADMIN']) && !get_sql_globals_constant('online')) {
+if (array_key_exists('ADMIN', $_SESSION) && !get_sql_globals_constant('online')) {
 	$messages[$index]['message'] = "Le site est actuellement hors-ligne.";
 	$messages[$index]['lien'] = "administration.php";
 	$messages[$index]['classe'] = "warn";
 	$index++;
 }
-if (!empty($_SESSION['iAmVirtual'])) {// && empty($_SESSION['ADMIN'])) {
+if (array_key_exists('iAmVirtual', $_SESSION)) {// && !array_key_exists('ADMIN', $_SESSION))) {
 	$messages[$index]['message'] = sprintf("Vous vous faites passer pour %s %s. Cliquez ici pour retrouver votre vraie personnalité...", $_SESSION['utilisateur']->prenom(), $_SESSION['utilisateur']->nom());
 	$messages[$index]['lien'] = "impersonate.php?iWantMyselfBack=1";
 	$messages[$index]['classe'] = "warn";

@@ -141,13 +141,13 @@ if (!is_a($utilisateur, 'utilisateurGrille')) {
 }
 
 if (sizeof($_POST) > 0) {
-	if (empty($_SESSION['ADMIN'])) $_POST['uid'] = $_SESSION['utilisateur']->uid();
-	if (!empty($_POST['submitAffect'])) {
+	if (!array_key_exists('ADMIN', $_SESSION)) $_POST['uid'] = $_SESSION['utilisateur']->uid();
+	if (array_key_exists('submitAffect', $_POST)) {
 		$utilisateur->addAffectation($_POST);
-	} else if (!empty($_POST['submitContact'])) {
-		if (!isset($_POST['actif']) && $_SESSION['ADMIN']) $_POST['actif'] = 0;
-		if (!isset($_POST['locked']) && $_SESSION['ADMIN']) $_POST['locked'] = 0;
-		if (!isset($_POST['totd']) && $_SESSION['ADMIN']) $_POST['showtipoftheday'] = 0;
+	} else if (array_key_exists('submitContact', $_POST)) {
+		if (array_key_exists('actif', $_POST) && array_key_exists('ADMIN', $_SESSION)) $_POST['actif'] = 0;
+		if (array_key_exists('locked', $_POST) && array_key_exists('ADMIN', $_SESSION)) $_POST['locked'] = 0;
+		if (array_key_exists('totd', $_POST) && array_key_exists('ADMIN', $_SESSION)) $_POST['showtipoftheday'] = 0;
 
 		$utilisateur->setFromRow($_POST);
 
@@ -157,7 +157,7 @@ if (sizeof($_POST) > 0) {
 		}
 
 		// S'il y a un nouveau téléphone à ajouter
-		if (!empty($_POST['newnb'])) {
+		if (array_key_exists('newnb', $_POST)) {
 			$newPhone = array(
 				'uid'	=> $utilisateur->uid()
 				, 'phone'		=> $_POST['newnb']
@@ -172,7 +172,7 @@ if (sizeof($_POST) > 0) {
 		}
 
 		// S'il y a une nouvelle adresse à ajouter
-		if (!empty($_POST['newadresse']) && !empty($_POST['newville']) && !empty($_POST['newcp'])) {
+		if (array_key_exists('newadresse', $_POST) && array_key_exists('newville', $_POST) && array_key_exists('newcp', $_POST)) {
 			$utilisateur->addAdresse(array(
 				'uid'	=> $utilisateur->uid()
 				, 'adresse'	=> $_POST['newadresse']
