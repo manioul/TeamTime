@@ -144,16 +144,28 @@ if (sizeof($_POST) > 0) {
 	if (!array_key_exists('ADMIN', $_SESSION)) $_POST['uid'] = $_SESSION['utilisateur']->uid();
 	if (array_key_exists('submitAffect', $_POST)) {
 		$utilisateur->addAffectation($_POST);
-	} else if (array_key_exists('submitContact', $_POST)) {
-		if (array_key_exists('actif', $_POST) && array_key_exists('ADMIN', $_SESSION)) $_POST['actif'] = 0;
+	} else {
+		if (array_key_exists('actif', $_POST) && array_key_exists('ADMIN', $_SESSION)) $_POST['actif'] = 1;
 		if (array_key_exists('locked', $_POST) && array_key_exists('ADMIN', $_SESSION)) $_POST['locked'] = 0;
 		if (array_key_exists('totd', $_POST) && array_key_exists('ADMIN', $_SESSION)) $_POST['showtipoftheday'] = 0;
 
 		$utilisateur->setFromRow($_POST);
 
+		/*
+		 * Préférences utilisateur
+		 */
 		// Ajout de la page favorite (jointe après la connexion)
 		if ($utilisateur->page($utilisateur->availablePages('uri', $_POST['read'])) === false) {
 			print "Erreur de mise à jour de la page...";
+		}
+		// Compteurs
+		//
+		// Il suffit d'ajouter un cookie, la préférence sera enregistrée en vérifiant
+		//l'existence du cookie lors de la mise à jour des infos de l'utilisateur
+		if (array_key_exists('cpt', $_POST)) {
+			setcookie('cpt', '1', $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
+		} else {
+			setcookie('cpt', '1', time() - 42000, $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
 		}
 
 		// S'il y a un nouveau téléphone à ajouter

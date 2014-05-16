@@ -199,7 +199,15 @@ class utilisateurGrille extends utilisateur {
 			, 'vismed'		=> $this->vismed
 			, 'poids'		=> $this->poids
 			, 'showtipoftheday'	=> $this->showtipoftheday
+			, 'pref'		=> json_encode($this->prefAsArray)
 		));
+	}
+	public function prefAsArray() {
+		$pref = array();
+		if (array_key_exists('cpt', $_COOKIE)) {
+			$pref['cpt'] = $_COOKIE['cpt'];
+		}
+		return $pref;
 	}
 	public function setFromRow($row) {
 		$valid = true;
@@ -254,6 +262,16 @@ class utilisateurGrille extends utilisateur {
 			return $this->prenom;
 		} else {
 			return false;
+		}
+	}
+	// Chargement des préférences utilisateur
+	public function pref($param = NULL) {
+		if (!is_null($param)) {
+			$var = json_decode($param);
+			// Ajoute les compteurs en fin de grille sur tous les affichages
+			if (!empty($var->cpt)) {
+				setcookie('cpt', '1', $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
+			}
 		}
 	}
 	// Retourne le centre actuel de l'utilisateur
@@ -1023,7 +1041,7 @@ class utilisateursDeLaGrille {
 
 		// Lorsque l'on n'affiche qu'un cycle ou qu'on le souhaite, on ajoute des compteurs en fin de tableau
 		$evenSpec = array();
-		if ($nbCycle == 1 || array_key_exists('cpt', $_REQUEST)) {
+		if ($nbCycle == 1 || array_key_exists('cpt', $_COOKIE)) {
 			// Récupération des compteurs
 			if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->startChrono('Relève compteur'); // Début chrono
 			$sql = "
@@ -1164,7 +1182,7 @@ class utilisateursDeLaGrille {
 							,'nom'			=> '<div class="boule"></div>'
 						);
 					}
-						if (($nbCycle == 1 || array_key_exists('cpt', $_REQUEST)) && $i == $nbCycle - 1) {
+						if (($nbCycle == 1 || array_key_exists('cpt', $_COOKIE)) && $i == $nbCycle - 1) {
 						// Ajout d'une colonne pour les compteurs uniquement après la dernière grille
 						foreach (array_keys($evenSpec) as $even) {
 							$grille[$compteurLigne][] = array(
@@ -1301,7 +1319,7 @@ class utilisateursDeLaGrille {
 						,'id'		=> sprintf("decDispou%sc%s", $user['uid'], $cycle[$i]->cycleId()+1)
 						,'classe'	=> 'decompte'
 					);
-					if (($nbCycle == 1 || array_key_exists('cpt', $_REQUEST)) && $i == $nbCycle - 1) {
+					if (($nbCycle == 1 || array_key_exists('cpt', $_COOKIE)) && $i == $nbCycle - 1) {
 						foreach (array_keys($evenSpec) as $even) {
 							$grille[$compteurLigne][] = array(
 								'nom'		=> empty($evenSpec[$even]['uid'][$user['uid']]['nom']) ? 0 : $evenSpec[$even]['uid'][$user['uid']]['nom']

@@ -38,6 +38,9 @@ ALTER TABLE `TBL_DISPO` CHANGE `type decompte` `type decompte` VARCHAR( 64  ) CH
 
 CREATE VIEW VIEW_LIST_DISPO AS select `l`.`sdid` AS `sdid`,`l`.`uid` AS `uid`,`u`.`nom` AS `nom`,`d`.`dispo` AS `dispo`,`l`.`date` AS `date`,`c`.`vacation` AS `vacation`,year(`l`.`date`) AS `year`,`l`.`pereq` AS `pereq` from ((((`TBL_L_SHIFT_DISPO` `l` join `TBL_USERS` `u`) join `TBL_DISPO` `d`) join `TBL_GRILLE` `g`) join `TBL_CYCLE` `c`) where ((`l`.`date` = `g`.`date`) and (`g`.`cid` = `c`.`cid`) and (`u`.`uid` = `l`.`uid`) and (`d`.`did` = `l`.`did`)) union select `l`.`sdid` AS `sdid`,`l`.`uid` AS `uid`,`u`.`nom` AS `nom`,`d`.`dispo` AS `dispo`,`l`.`date` AS `date`,`l`.`date` AS `date`,`v`.`year` AS `year`,`l`.`pereq` AS `pereq` from (((`TBL_L_SHIFT_DISPO` `l` join `TBL_USERS` `u`) join `TBL_DISPO` `d`) join `TBL_VACANCES` `v`) where ((`l`.`date` = 0) and (`l`.`sdid` = `v`.`sdid`) and (`u`.`uid` = `l`.`uid`) and (`d`.`did` = `l`.`did`)) order by `date`,`nom`;
 
+-- Ajoute un champ pour stocker les préférences utilisateurs au format JSON
+ALTER TABLE `TBL_USERS` ADD `pref` TEXT NOT NULL COMMENT 'préférences utilisateurs au format JSON';
+
 -- Modification des menus
 --
 -- Ajout d'un menu Gestion d'équipe

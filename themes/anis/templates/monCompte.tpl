@@ -19,12 +19,22 @@
 <label for="email">email : </label><input type="email" name="email" id="email" value="{$utilisateur->email()}" placeholder="monadresse@email.com" />
 </li>
 <li>
+<fieldset><legend>Préférences utilisateur</legend>
+<ul>
+<li>
 <label for="read">page d'accueil : </label>
 <select name="read" id="read">
 {foreach $utilisateur->availablePages('titre') as $k => $p}
 <option value="{$k}"{if $utilisateur->indexPage() == $k} selected="selected"{/if}>{$p}</option>
 {/foreach}
 </select>
+</li>
+<li>
+<label for="cpt" title="Les compteurs sont-ils visibles en affichage grilles multiples ?">Compteurs</label>
+<input type="checkbox" name="cpt" id="cpt"{if isset($smarty.cookies.cpt)} checked="checked"{/if} />
+</li>
+</ul>
+</fieldset>
 </li>
 
 {* Affichage des téléphones *}
@@ -52,7 +62,7 @@
 </li>
 {/foreach}
 <li>
-<label for="iAddPhone">Ajouter un téléphone : </label><input type="button" onclick="newPhone()" value="+" class="bouton" id="iAddPhone" />
+<input type="button" onclick="newPhone()" value="Ajouter un téléphone" class="bouton" id="iAddPhone" />
 </li>
 </ul>
 </fieldset>
@@ -84,7 +94,7 @@
 </li>
 {/foreach}
 <li>
-<label for="iAddAddress">Ajouter une adresse : </label><input type="button" class="bouton" onclick="newAddress()" value="+" id="iAddAddress" />
+<input type="button" class="bouton" onclick="newAddress()" value="Ajouter une adresse" id="iAddAddress" />
 </li>
 </ul>
 </fieldset>
