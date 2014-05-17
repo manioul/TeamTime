@@ -112,7 +112,7 @@ BEGIN
 	-- Recherche les dispo des utilisateurs présents
 	DECLARE curDisp CURSOR FOR SELECT uid, did
 		FROM TBL_L_SHIFT_DISPO
-		WHERE date = dat
+		WHERE date = date_
 		AND did NOT IN (SELECT did
 			FROM TBL_DISPO
 			WHERE absence IS TRUE
@@ -125,7 +125,7 @@ BEGIN
 		WHERE statut = 'fixed'
 		AND FIND_IN_SET((SELECT cid
 				FROM TBL_GRILLE
-				WHERE date = dat
+				WHERE date = date_
 				AND centre = centre_
 				AND team = team_)
 			, cids)
@@ -134,7 +134,7 @@ BEGIN
 	-- Ils doivent avoir une certaine ancienneté dans l'affectation (4 mois)
 	DECLARE curInstructeurs CURSOR FOR SELECT uid, SUM(instruction) AS instru
 		FROM TBL_HEURES
-		WHERE date BETWEEN DATE_SUB(date_, INTERVAL 4 MONTH) AND dat
+		WHERE date BETWEEN DATE_SUB(date_, INTERVAL 4 MONTH) AND date_
 		AND uid IN (SELECT uid -- utilisateur dans la bonne affectation
 			FROM TBL_AFFECTATION
 			WHERE centre = centre_
@@ -182,7 +182,7 @@ BEGIN
 		-- les utilisateurs qui ont une case remplie qui n'est pas une absence
 		AND uid NOT IN (SELECT uid
 			FROM TBL_L_SHIFT_DISPO
-			WHERE date = dat
+			WHERE date = date_
 			AND did IN (SELECT did
 				FROM TBL_DISPO
 				WHERE absence IS TRUE
@@ -192,7 +192,7 @@ BEGIN
 		-- cds en nuit (2)
 		AND uid NOT IN (SELECT uid
 			FROM TBL_L_SHIFT_DISPO
-			WHERE date = dat
+			WHERE date = date_
 			AND did = (SELECT did
 				FROM TBL_DISPO
 				WHERE dispo = '2')
@@ -216,7 +216,7 @@ BEGIN
 
 	-- On vide les heures correspondant à la date
 	DELETE FROM TBL_HEURES
-		WHERE date = dat
+		WHERE date = date_
 		AND uid IN (SELECT uid
 			FROM TBL_AFFECTATION
 			WHERE centre = centre_
@@ -293,7 +293,7 @@ BEGIN
 	AND date_ BETWEEN beginning AND end
 	AND uid NOT IN (SELECT uid
 		FROM TBL_L_SHIFT_DISPO
-		WHERE date = dat
+		WHERE date = date_
 		AND did IN (SELECT did
 			FROM TBL_DISPO
 			WHERE absence IS TRUE
