@@ -195,7 +195,10 @@ BEGIN
 			WHERE date = date_
 			AND did = (SELECT did
 				FROM TBL_DISPO
-				WHERE dispo = '2')
+				WHERE dispo = '2'
+				AND centre = centre_
+				AND team = team_
+			)
 			AND uid IN (SELECT uid
 				FROM TBL_AFFECTATION
 				WHERE grade = 'cds'
