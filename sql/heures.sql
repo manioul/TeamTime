@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS TBL_HEURES (
 	PRIMARY KEY (uid, date)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 ALTER TABLE `TBL_HEURES` ADD `double` DECIMAL( 4, 2  ) NOT NULL AFTER `simulateur`;
+-- La table temporaire pour distribuer les heures doit être recréée
+DROP TABLE IF EXISTS tmpPresents;
 
 CREATE TABLE IF NOT EXISTS `TBL_HEURES_A_PARTAGER` (
 	  `centre` varchar(50) NOT NULL,
@@ -161,6 +163,7 @@ BEGIN
 		normales DECIMAL(4,2) NOT NULL,
 		instruction DECIMAL(4,2) NOT NULL,
 		simulateur DECIMAL(4,2) NOT NULL,
+		`double` DECIMAL(4,2) NOT NULL,
 		statut ENUM('fixed', 'shared', 'unattr') DEFAULT 'unattr',
 		rid INT(11),
 		centre VARCHAR(50),
@@ -170,7 +173,7 @@ BEGIN
 
 	DELETE FROM tmpPresents WHERE team = team_ AND centre = centre_;
 	INSERT INTO tmpPresents
-		SELECT uid, grade, 0, 0, 0, 0, 'unattr', 0, centre_, team_
+		SELECT uid, grade, 0, 0, 0, 0, 0, 'unattr', 0, centre_, team_
 		FROM TBL_AFFECTATION
 		WHERE centre = centre_
 		AND team = team_
@@ -380,7 +383,7 @@ BEGIN
 	END IF;
 
 	REPLACE INTO TBL_HEURES
-		(SELECT uid, did, date_, normales, instruction, simulateur, statut
+		(SELECT uid, did, date_, normales, instruction, simulateur, `double`, statut
 		FROM tmpPresents
 		WHERE centre = centre_
 		AND team = team_);
