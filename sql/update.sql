@@ -1,111 +1,96 @@
-ALTER TABLE `TBL_USERS` CHANGE `nom` `nom` VARCHAR( 64  ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
-CHANGE `prenom` `prenom` VARCHAR( 64  ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
-CHANGE `login` `login` VARCHAR( 15  ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
-CHANGE `email` `email` VARCHAR( 128  ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
-CHANGE `sha1` `sha1` VARCHAR( 40  ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL ,
-CHANGE `page` `page` VARCHAR( 255  ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'affiche_grille.php' COMMENT 'La page affichée après la connexion d''un utilisateur';
-
-ALTER TABLE `TBL_ADRESSES` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci,
-CHANGE `adresse` `adresse` TEXT CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-CHANGE `cp` `cp` VARCHAR(15) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-CHANGE `ville` `ville` VARCHAR(80) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
-
-ALTER TABLE `TBL_AFFECTATION` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-
-ALTER TABLE `TBL_BRIEFING` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci,
-CHANGE `description` `description` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
-
-ALTER TABLE `TBL_HEURES` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-
-ALTER TABLE `TBL_HEURES_A_PARTAGER` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci,
-CHANGE `centre` `centre`  VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-CHANGE `team` `team`  VARCHAR(10) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
-
-ALTER TABLE `TBL_PERIODE_CHARGE` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci,
-CHANGE `description` `description` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
-
-ALTER TABLE `TBL_REMPLA` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci,
-CHANGE `nom` `nom`  VARCHAR(40) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-CHANGE `phone` `phone`  VARCHAR(15) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-CHANGE `email` `email`  VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
-
-ALTER TABLE `TBL_USERS` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
-
-ALTER TABLE `TBL_VACANCES_SCOLAIRES` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci,
-CHANGE `description` `description` VARCHAR(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL;
--- UPDATE TBL_DISPO SET poids = poids + 50 WHERE centre != 'all' AND team != 'all';
-ALTER TABLE `TBL_DISPO` CHANGE `type decompte` `type decompte` VARCHAR( 64  ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL ;
-
-CREATE VIEW VIEW_LIST_DISPO AS select `l`.`sdid` AS `sdid`,`l`.`uid` AS `uid`,`u`.`nom` AS `nom`,`d`.`dispo` AS `dispo`,`l`.`date` AS `date`,`c`.`vacation` AS `vacation`,year(`l`.`date`) AS `year`,`l`.`pereq` AS `pereq` from ((((`TBL_L_SHIFT_DISPO` `l` join `TBL_USERS` `u`) join `TBL_DISPO` `d`) join `TBL_GRILLE` `g`) join `TBL_CYCLE` `c`) where ((`l`.`date` = `g`.`date`) and (`g`.`cid` = `c`.`cid`) and (`u`.`uid` = `l`.`uid`) and (`d`.`did` = `l`.`did`)) union select `l`.`sdid` AS `sdid`,`l`.`uid` AS `uid`,`u`.`nom` AS `nom`,`d`.`dispo` AS `dispo`,`l`.`date` AS `date`,`l`.`date` AS `date`,`v`.`year` AS `year`,`l`.`pereq` AS `pereq` from (((`TBL_L_SHIFT_DISPO` `l` join `TBL_USERS` `u`) join `TBL_DISPO` `d`) join `TBL_VACANCES` `v`) where ((`l`.`date` = 0) and (`l`.`sdid` = `v`.`sdid`) and (`u`.`uid` = `l`.`uid`) and (`d`.`did` = `l`.`did`)) order by `date`,`nom`;
-
--- Ajoute un champ pour stocker les préférences utilisateurs au format JSON
-ALTER TABLE `TBL_USERS` ADD `pref` TEXT NOT NULL COMMENT 'préférences utilisateurs au format JSON';
-
--- Modification des menus
---
--- Ajout d'un menu Gestion d'équipe
-DROP PROCEDURE IF EXISTS __up;
-
 DELIMITER |
 
-CREATE PROCEDURE __up()
+-- Mise à jour à partir de la version 2.1c
+CREATE PROCEDURE post_2_1c
 BEGIN
-	DECLARE idxGE INT(11) DEFAULT NULL;
-	DECLARE idxAdministration INT(11);
+	ALTER TABLE TBL_USERS DROP gid;
+	-- Création d'une table pour lister les différentes affectations (centre, team, grade)
+	CREATE TABLE IF NOT EXISTS `TBL_CONFIG_AFFECTATIONS` (
+		`caid` int(11) NOT NULL AUTO_INCREMENT,
+		`type` varchar(64) NOT NULL,
+		`nom` varchar(64) NOT NULL,
+		`description` text NOT NULL,
+		PRIMARY KEY (`caid`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+	CREATE TABLE IF NOT EXISTS `TBL_ANCIENNETE_EQUIPE` (
+		`ancid` int(11) NOT NULL AUTO_INCREMENT,
+		`uid` int(11) NOT NULL,
+		`centre` varchar(50) NOT NULL,
+		`team` varchar(10) NOT NULL,
+		`beginning` date NOT NULL,
+		`end` date DEFAULT NULL,
+		`global` BOOLEAN DEFAULT FALSE,
+		PRIMARY KEY (`ancid`)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+	CREATE TABLE IF NOT EXISTS TBL_SIGNUP_ON_HOLD (
+		id INT(11) NOT NULL AUTO_INCREMENT,
+		nom varchar(64) NOT NULL,
+		prenom VARCHAR(64) NOT NULL,
+		email VARCHAR(128) NOT NULL,
+		centre VARCHAR(50) NOT NULL,
+		team VARCHAR(10) NOT NULL,
+		beginning DATE,
+		end DATE,
+		timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+		url VARCHAR(40) NULL DEFAULT NULL,
+		grade VARCHAR(64) NULL DEFAULT NULL,
+		classe VARCHAR(10) NULL DEFAULT NULL,
+		PRIMARY KEY (id)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-	SELECT idx
-		INTO idxAdministration
-		FROM TBL_MENUS
-		WHERE titre = 'Administration'
-		LIMIT 1;
-	SELECT idx
-		INTO idxGE
-		FROM TBL_MENUS
-		WHERE titre = 'Gestion Équipe'
-		LIMIT 1;
+--	INSERT INTO TBL_CONFIG_AFFECTATIONS
+--	(caid, type, nom, description)
+--	VALUES
+--	(NULL, 'classe', 'c', 'Élève'),
+--	(NULL, 'classe', 'pc', 'Premier contrôleur'),
+--	(NULL, 'classe', 'ce', "Chef d''équipe"),
+--	(NULL, 'classe', 'dtch', 'détaché'),
+--	(NULL, 'classe', 'fmp', 'Adjoint chef de salle'),
+--	(NULL, 'classe', 'cds', 'Chef de salle');
+--
+--	INSERT INTO `ttm`.`TBL_ARTICLES` (`idx`, `titre`, `description`, `texte`, `analyse`, `creation`, `modification`, `restricted`, `actif`) VALUES (NULL, 'Création de votre compte', '', 'Votre compte a été créé. Vous pouvez vous connecter dès maintenant en cliquant sur « Connexion ».', '', NOW(), CURRENT_TIMESTAMP, '0', '1');
 
-	IF idxGE IS NULL THEN
-		INSERT INTO TBL_MENUS
-			(titre, description, parent, creation, allowed, actif)
-			VALUES
-			('Gestion Équipe', 'Gestion de l''équipe, des activités...', idxAdministration, NOW(), 'editeurs', TRUE);
-	END IF;
+	-- Relations pour les utilisateurs (uid)
+	DELETE FROM TBL_CLASSE WHERE classe = 'détaché' OR classe = 'théorique' OR classe = 'theo' OR classe = 'teamEdit';
 
-	SET idxGE = NULL;
-	SELECT idx
-		INTO idxGE
-		FROM TBL_ELEMS_MENUS
-		WHERE titre = 'Gestion Équipe'
-		LIMIT 1;
+	ALTER TABLE `TBL_ROLES` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_ROLES_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-	IF idxGE IS NULL THEN
-		INSERT INTO TBL_ELEMS_MENUS
-			(titre, description, lien, sousmenu, creation, allowed, actif)
-			VALUES
-			('Gestion Équipe', 'Gestion de l''équipe, des activités...', '', (SELECT idx FROM TBL_MENUS WHERE titre = 'Gestion Équipe' LIMIT 1), NOW(), 'editeurs', TRUE);
-	END IF;
+	ALTER TABLE `TBL_CLASSE` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_CLASSE_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-	SET idxGE = NULL;
-	SELECT idx
-		INTO idxGE
-		FROM TBL_ELEMS_MENUS
-		WHERE titre = 'Ajout d''activité'
-		LIMIT 1;
+	ALTER TABLE `TBL_AFFECTATION` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_AFFECTATION_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-	IF idxGE IS NULL THEN
-		INSERT INTO TBL_ELEMS_MENUS
-			(titre, description, lien, sousmenu, creation, allowed, actif)
-			VALUES
-			('Ajout d''activité', 'Ajoute des activités pour l''équipe', 'activites.php', NULL, NOW(), 'editeurs', TRUE);
-	END IF;
+	ALTER TABLE `TBL_ANCIENNETE_EQUIPE` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_ANCIENNETE_EQUIPE_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-	REPLACE INTO TBL_MENUS_ELEMS_MENUS
-		(idxm, idxem, position)
-		VALUES
-		((SELECT idx FROM TBL_MENUS WHERE titre = 'Gestion Équipe' LIMIT 1), (SELECT idx FROM TBL_ELEMS_MENUS WHERE titre = 'Ajout d''activité' LIMIT 1), 1),
-		((SELECT idx FROM TBL_MENUS WHERE titre = 'Administration' LIMIT 1), (SELECT idx FROM TBL_ELEMS_MENUS WHERE titre = 'Gestion Équipe' LIMIT 1), 55);
-END|
+	ALTER TABLE `TBL_PHONE` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_PHONE_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	ALTER TABLE `TBL_ADRESSES` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_ADRESSES_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	ALTER TABLE `TBL_REMPLA` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_REMPLA_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	ALTER TABLE `TBL_EVENEMENTS_SPECIAUX` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_EVENEMENTS_SPECIAUX_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	ALTER TABLE `TBL_HEURES` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_HEURES_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	ALTER TABLE `TBL_VACANCES_A_ANNULER` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_VACANCES_A_ANNULER_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	ALTER TABLE `TBL_TIPOFTHEDAY` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_TIPOFTHEDAY_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	ALTER TABLE `TBL_LOG` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_LOG_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	ALTER TABLE `TBL_L_SHIFT_DISPO` CHANGE `uid` `uid` SMALLINT NOT NULL, ADD KEY `uid` (`uid`), ADD CONSTRAINT `TBL_L_SHIFT_DISPO_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	-- Relations pour les activités (did)
+	ALTER TABLE `TBL_L_SHIFT_DISPO` CHANGE `did` `did` SMALLINT NOT NULL, ADD KEY `did` (`did`), ADD CONSTRAINT `TBL_L_SHIFT_DISPO_ibfk_2` FOREIGN KEY (`did`) REFERENCES `TBL_DISPO` (`did`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	ALTER TABLE `TBL_VACANCES` ADD KEY `sdid` (`sdid`), ADD CONSTRAINT `TBL_VACANCES_ibfk_1` FOREIGN KEY (`sdid`) REFERENCES `TBL_L_SHIFT_DISPO` (`sdid`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	-- Relations pour les menus
+	ALTER TABLE `TBL_MENUS_ELEMS_MENUS` ADD CONSTRAINT `TBL_MENUS_ELEMS_MENUS_ibfk_1` FOREIGN KEY (`idxm`) REFERENCES `TBL_MENUS` (`idx`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	ALTER TABLE `TBL_MENUS_ELEMS_MENUS` ADD CONSTRAINT `TBL_MENUS_ELEMS_MENUS_ibfk_2` FOREIGN KEY (`idxem`) REFERENCES `TBL_ELEMS_MENUS` (`idx`) ON DELETE CASCADE ON UPDATE CASCADE;
+END
+|
 
 DELIMITER ;
 
--- CALL __up;
+-- CALL post_2_1c();
