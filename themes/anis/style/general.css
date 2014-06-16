@@ -139,6 +139,25 @@ img.cadenasF {
 .superpose input {
 	background-color:#e7ffe7;
 }
+#dMessages > ul {
+	margin: auto;
+	padding:5px;
+	margin-bottom:5px;
+	list-style-type: none;
+	max-width:870px;
+	display:block;
+	background-color: #fff;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	border-radius: 3px;
+}
+#dMessages .warn a {
+	color: #700;
+	font-size: 13px;
+	background-color: #fdd;
+}
 /*
  * Mise en forme comme un tableau
  */

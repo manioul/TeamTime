@@ -178,7 +178,7 @@ $DEBUG = false;
 
 // Liste des feuilles de styles à charger dans l'ordre de chargement
 	// Dépendances
-	$conf['page']['stylesheet']['messages'] = $conf['page']['elements']['messages'];
+
 	$stylesheet = array();
 	$compteur = 0;
 	if (true === $conf['page']['stylesheet']['general']) {
@@ -206,11 +206,6 @@ $DEBUG = false;
 		$compteur++;
 		$stylesheet[$compteur]['href'] = 'menuHorP.css';
 		$stylesheet[$compteur]['media'] = 'print';
-		$compteur++;
-	}
-	if (true === $conf['page']['stylesheet']['messages']) {
-		$stylesheet[$compteur]['href'] = 'messages.css';
-		$stylesheet[$compteur]['media'] = 'screen';
 		$compteur++;
 	}
 	if (true === $conf['page']['stylesheet']['grille']) {
