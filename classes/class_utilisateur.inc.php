@@ -203,7 +203,7 @@ class utilisateur {
 	}
 	public function email ($param = NULL) {
 		if (!is_null($param)) {
-			$this->email = $param;
+			$this->email = filter_var($param, FILTER_VALIDATE_EMAIL); // retourne FALSE si erreur http://www.php.net/manual/en/function.filter-var.php
 		}
 		return $this->email;
 	}
