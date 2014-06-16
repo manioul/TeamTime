@@ -1,23 +1,3 @@
-ALTER TABLE TBL_USERS DROP gid;
--- Création d'une table pour lister les différentes affectations (centre, team, grade)
-CREATE TABLE IF NOT EXISTS `TBL_CONFIG_AFFECTATIONS` (
-	  `caid` int(11) NOT NULL AUTO_INCREMENT,
-	  `type` varchar(64) NOT NULL,
-	  `nom` varchar(64) NOT NULL,
-	  `description` text NOT NULL,
-	  PRIMARY KEY (`caid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-CREATE TABLE IF NOT EXISTS `TBL_ANCIENNETE_EQUIPE` (
-	  `ancid` int(11) NOT NULL AUTO_INCREMENT,
-	  `uid` int(11) NOT NULL,
-	  `centre` varchar(50) NOT NULL,
-	  `team` varchar(10) NOT NULL,
-	  `beginning` date NOT NULL,
-	  `end` date DEFAULT NULL,
-	  `global` BOOLEAN DEFAULT FALSE,
-	  PRIMARY KEY (`ancid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
 DELIMITER |
 -- CREATION/SUPPRESSION UTILISATEURS
 DROP PROCEDURE IF EXISTS __createUtilisateurDb|
@@ -34,31 +14,100 @@ BEGIN
 	FLUSH PRIVILEGES;
 END
 |
-DROP PROCEDURE IF EXISTS createUser|
-CREATE PROCEDURE createUser( IN nom_ VARCHAR(64), IN prenom_ VARCHAR(64), IN login_ VARCHAR(15), IN email_ VARCHAR(128), IN password_ VARCHAR(255), IN locked_ BOOLEAN, IN poids_ SMALLINT(6), IN actif_ BOOLEAN, IN showtipoftheday_ BOOLEAN, IN page_ VARCHAR(255), IN dbpasswd_ VARCHAR(64), IN centre_ VARCHAR(50), IN team_ VARCHAR(10), IN grade_ VARCHAR(64), IN beginning_ DATE, IN end_ DATE )
+-- Accepte l'inscription d'un utilisateur prépare les informations pour le compte
+DROP PROCEDURE IF EXISTS acceptUser|
+CREATE PROCEDURE acceptUser( IN id_ INT(11), IN dateD_ DATE, IN dateF_ DATE, IN grade_ VARCHAR(64), IN classe_ VARCHAR(10) )
 BEGIN
+	UPDATE TBL_SIGNUP_ON_HOLD
+		SET url = SHA1(CONCAT(NOW(), RAND()))
+		, beginning = dateD_
+		, end = dateF_
+		, grade = grade_
+		, classe = classe_
+		WHERE id = id_;
+
+END
+|
+-- Création d'un utilisateur à partir d'un enregistrement (signup)
+-- La longueur des mots de passe est tronquée à 40 caractères
+DROP PROCEDURE IF EXISTS createFromSignup|
+CREATE PROCEDURE createFromSignup( IN url_ VARCHAR(40), login_ VARCHAR(15), password_ VARCHAR(40), IN dbpasswd_ VARCHAR(64) )
+BEGIN
+	DECLARE nom_, prenom_, grade_ VARCHAR(64);
+	DECLARE email_ VARCHAR(128);
+	DECLARE centre_ VARCHAR(50);
+	DECLARE team_, classe_ VARCHAR(10);
+	DECLARE beginning_, end_ DATE;
 	DECLARE uid_ INT(11);
+	DECLARE count_ INT(11);
+
+	-- Recherche si le login est déjà utilisé
+	SELECT COUNT(*)
+	INTO count_
+	FROM TBL_USERS
+	WHERE login = 'login_';
+
+	-- Le login existe déjà
+	IF count_ != 0 THEN
+		-- Un message est envoyé avec comme destinataire la clé unique de l'utilisateur
+		-- (url dans TBL_SIGNUP_ON_HOLD)
+		INSERT INTO TBL_MESSAGES_SYSTEME
+		(mid, utilisateur, catégorie, appelant, short, message, contexte, timestamp)
+		VALUES
+		(NULL, url_, 'ERREUR', 'createFromSignup', 'duplicate login', 'Le login existe déjà dans la base', CONCAT('login:', login_, ';nom:', nom_, ';prenom:', prenom_, ';email:', email_));
+	ELSE
+		-- Recherche les noms et prénoms
+		SELECT nom, prenom, email, beginning, end, grade, classe
+		INTO nom_, prenom_, email_, beginning_, end_, grade_, classe_
+		FROM TBL_SIGNUP_ON_HOLD
+		WHERE url = url_;
+
+		-- Suppression de la demande d'enregistrement
+		DELETE FROM TBL_SIGNUP_ON_HOLD
+		WHERE url = 'url_';
+
+		CALL createUser(nom_, prenom_, login_, email_, password_, FALSE, 50, TRUE, TRUE, '', dbpasswd_, centre_, team_, grade_, classe_, beginning_, end_);
+	END IF;
+END
+|
+DROP PROCEDURE IF EXISTS createUser|
+CREATE PROCEDURE createUser( IN nom_ VARCHAR(64), IN prenom_ VARCHAR(64), IN login_ VARCHAR(15), IN email_ VARCHAR(128), IN password_ VARCHAR(255), IN locked_ BOOLEAN, IN poids_ SMALLINT(6), IN actif_ BOOLEAN, IN showtipoftheday_ BOOLEAN, IN page_ VARCHAR(255), IN dbpasswd_ VARCHAR(64), IN centre_ VARCHAR(50), IN team_ VARCHAR(10), IN grade_ VARCHAR(64), IN classe_ VARCHAR(10), IN beginning_ DATE, IN end_ DATE )
+BEGIN
+	DECLARE count_ INT(11);
 
 	-- Recherche un email ou un login identique
-	SELECT uid INTO uid_ FROM TBL_USERS WHERE email = email_ OR login = login_;
+	SELECT COUNT(*)
+	INTO count_
+	FROM TBL_USERS
+	WHERE email = email_
+	OR login = login_;
 
-	IF uid_ IS NULL THEN
-		CALL messageSystem(CONCAT("Création de l'utilisateur ", nom_), "USER", 'createUser', "Création utilissateur", CONCAT('nom:', nom_, ';prenom:', prenom_, ';login:', login_, ';email:', email_, ';via:', USER()));
+	IF count_ = 0 THEN
+		CALL messageSystem(CONCAT("Création de l'utilisateur ", nom_, "USER", 'createUser', "Création utilissateur", CONCAT('nom:', nom_, ';prenom:', prenom_, ';login:', login_, ';email:', email_, ';via:', USER()));
+
 		INSERT INTO TBL_USERS
-			(nom, prenom, login, email, sha1, locked, poids, actif, showtipoftheday, page)
-			VALUES
-			(nom_, prenom_, login_, email_, SHA1(CONCAT(login_, password_)), locked_, poids_, actif_, showtipoftheday_, page_);
+		(nom, prenom, login, email, sha1, locked, poids, actif, showtipoftheday, page)
+		VALUES
+		(nom_, prenom_, login_, email_, SHA1(CONCAT(login_, password_)), locked_, poids_, actif_, showtipoftheday_, page_);
+
 		SET uid_ = LAST_INSERT_ID();
+
 		CALL __createUtilisateurDb(uid_, dbpasswd_);
+		
 		CALL addRole(uid_, 'my_edit', centre_, team_, beginning_, end_, '', TRUE);
+		
 		INSERT INTO TBL_AFFECTATION
-			(aid, uid, centre, team, grade, beginning, end, validated)
-			VALUES
-			(NULL, uid_, centre_, team_, grade_, beginning_, end_, TRUE);
+		(aid, uid, centre, team, grade, beginning, end, validated)
+		VALUES
+		(NULL, uid_, centre_, team_, grade_, beginning_, end_, TRUE);
+		
 		INSERT INTO TBL_CLASSE
-			(clid, uid, classe, beginning, end)
-			VALUES
-			(NULL, uid_, LOWER(grade_), beginning_, end_);
+		(clid, uid, classe, beginning, end, commentaire)
+		VALUES
+		(NULL, uid_, classe_, beginning_, end_, '');
+
+		-- Ajoute les anciennetés de l'utilisateur
+		CALL setAncienneteUser(uid_, centre_, team_);
 	ELSE
 		CALL messageSystem("Création de l'utilisateur impossible : le login ou le mail sont déjà utilisés", "USER", 'createUser', "duplicate user info", CONCAT('nom:', nom_, ';prenom:', prenom_, ';login:', login_, ';email:', email_));
 	END IF;
@@ -87,13 +136,13 @@ CREATE PROCEDURE reallyDeleteUser( IN uid_ INT(11) )
 BEGIN
 	CALL deleteUser(uid_);
 	DELETE FROM TBL_USERS WHERE uid = uid_;
-	DELETE FROM TBL_AFFECTATION WHERE uid = uid_;
-	DELETE FROM TBL_L_SHIFT_DISPO WHERE uid = uid_;
-	DELETE FROM TBL_ADRESSES WHERE uid = uid_;
-	DELETE FROM TBL_PHONE WHERE uid = uid_;
-	DELETE FROM TBL_HEURES WHERE uid = uid_;
-	DELETE FROM TBL_EVENEMENTS_SPECIAUX WHERE uid = uid_;
-	DELETE FROM TBL_ANCIENNETE_EQUIPE WHERE uid = uid_;
+	-- DELETE FROM TBL_AFFECTATION WHERE uid = uid_;
+	-- DELETE FROM TBL_L_SHIFT_DISPO WHERE uid = uid_;
+	-- DELETE FROM TBL_ADRESSES WHERE uid = uid_;
+	-- DELETE FROM TBL_PHONE WHERE uid = uid_;
+	-- DELETE FROM TBL_HEURES WHERE uid = uid_;
+	-- DELETE FROM TBL_EVENEMENTS_SPECIAUX WHERE uid = uid_;
+	-- DELETE FROM TBL_ANCIENNETE_EQUIPE WHERE uid = uid_;
 END
 |
 -- ROLES
@@ -556,6 +605,15 @@ BEGIN
 	CLOSE curAnciennete;
 END
 |
+-- Affecte toutes les anciennetés de l'utilisateur
+CREATE PROCEDURE IF NOT EXISTS setAncienneteUser( IN uid_ INT(11), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
+BEGIN
+	CALL setAncienneteAffectQualif(uid_, centre_, team_);
+	CALL setAncienneteAffectGlobal(uid_, centre_, team_);
+	CALL setAncienneteLastQualif(uid_);
+	CALL setAncienneteLastGlobal(uid_);
+END
+|
 DROP PROCEDURE IF EXISTS setAnciennete|
 CREATE PROCEDURE setAnciennete( IN uid_ INT(11) )
 BEGIN
@@ -645,44 +703,44 @@ CREATE VIEW affectations AS
 	ORDER BY actif DESC,nom ASC, beginning ASC;
 
 -- AJOUT DES VALEURS DANS LA BASE
-INSERT INTO TBL_CONFIG_AFFECTATIONS
-	(caid, type, nom, description)
-	VALUES
-	(NULL, 'centre', 'athis', 'CRNA Nord - Athis-Mons'),
-	(NULL, 'centre', 'Aix', 'CRNA Sud-Est - Aix-en-Provence'),
-	(NULL, 'centre', 'Reims', 'CRNA Est - Reims'),
-	(NULL, 'centre', 'Bordeaux', 'CRNA Sud-Ouest - Bordeaux'),
-	(NULL, 'centre', 'Brest', 'CRNA Ouest - Brest'),
-	(NULL, 'grade', 'C', 'Élève'),
-	(NULL, 'grade', 'Théorique', 'Élève ayant obtenu son théorique'),
-	(NULL, 'grade', 'PC', 'Premier contrôleur'),
-	(NULL, 'grade', 'FMP', 'FMPiste'),
-	(NULL, 'grade', 'Détaché', 'contrôleur détaché'),
-	(NULL, 'grade', 'CE', "Chef d'équipe"),
-	(NULL, 'grade', 'CDS', 'Chef de salle'),
-	(NULL, 'team', '1e', 'Équipe 1 Est'),
-	(NULL, 'team', '2e', 'Équipe 2 Est'),
-	(NULL, 'team', '3e', 'Équipe 3 Est'),
-	(NULL, 'team', '4e', 'Équipe 4 Est'),
-	(NULL, 'team', '5e', 'Équipe 5 Est'),
-	(NULL, 'team', '6e', 'Équipe 6 Est'),
-	(NULL, 'team', '7e', 'Équipe 7 Est'),
-	(NULL, 'team', '8e', 'Équipe 8 Est'),
-	(NULL, 'team', '9e', 'Équipe 9 Est'),
-	(NULL, 'team', '10e', 'Équipe 10 Est'),
-	(NULL, 'team', '11e', 'Équipe 11 Est'),
-	(NULL, 'team', '12e', 'Équipe 12 Est'),
-	(NULL, 'team', '1w', 'Équipe 1 Ouest'),
-	(NULL, 'team', '2w', 'Équipe 2 Ouest'),
-	(NULL, 'team', '3w', 'Équipe 3 Ouest'),
-	(NULL, 'team', '4w', 'Équipe 4 Ouest'),
-	(NULL, 'team', '5w', 'Équipe 5 Ouest'),
-	(NULL, 'team', '6w', 'Équipe 6 Ouest'),
-	(NULL, 'team', '7w', 'Équipe 7 Ouest'),
-	(NULL, 'team', '8w', 'Équipe 8 Ouest'),
-	(NULL, 'team', '9w', 'Équipe 9 Ouest'),
-	(NULL, 'team', '10w', 'Équipe 10 Ouest'),
-	(NULL, 'team', '11w', 'Équipe 11 Ouest'),
-	(NULL, 'team', '12w', 'Équipe 12 Ouest');
+-- INSERT INTO TBL_CONFIG_AFFECTATIONS
+-- 	(caid, type, nom, description)
+-- 	VALUES
+-- 	(NULL, 'centre', 'athis', 'CRNA Nord - Athis-Mons'),
+-- 	(NULL, 'centre', 'Aix', 'CRNA Sud-Est - Aix-en-Provence'),
+-- 	(NULL, 'centre', 'Reims', 'CRNA Est - Reims'),
+-- 	(NULL, 'centre', 'Bordeaux', 'CRNA Sud-Ouest - Bordeaux'),
+-- 	(NULL, 'centre', 'Brest', 'CRNA Ouest - Brest'),
+-- 	(NULL, 'grade', 'C', 'Élève'),
+-- 	(NULL, 'grade', 'Théorique', 'Élève ayant obtenu son théorique'),
+-- 	(NULL, 'grade', 'PC', 'Premier contrôleur'),
+-- 	(NULL, 'grade', 'FMP', 'FMPiste'),
+-- 	(NULL, 'grade', 'Détaché', 'contrôleur détaché'),
+-- 	(NULL, 'grade', 'CE', "Chef d'équipe"),
+-- 	(NULL, 'grade', 'CDS', 'Chef de salle'),
+-- 	(NULL, 'team', '1e', 'Équipe 1 Est'),
+-- 	(NULL, 'team', '2e', 'Équipe 2 Est'),
+-- 	(NULL, 'team', '3e', 'Équipe 3 Est'),
+-- 	(NULL, 'team', '4e', 'Équipe 4 Est'),
+-- 	(NULL, 'team', '5e', 'Équipe 5 Est'),
+-- 	(NULL, 'team', '6e', 'Équipe 6 Est'),
+-- 	(NULL, 'team', '7e', 'Équipe 7 Est'),
+-- 	(NULL, 'team', '8e', 'Équipe 8 Est'),
+-- 	(NULL, 'team', '9e', 'Équipe 9 Est'),
+-- 	(NULL, 'team', '10e', 'Équipe 10 Est'),
+-- 	(NULL, 'team', '11e', 'Équipe 11 Est'),
+-- 	(NULL, 'team', '12e', 'Équipe 12 Est'),
+-- 	(NULL, 'team', '1w', 'Équipe 1 Ouest'),
+-- 	(NULL, 'team', '2w', 'Équipe 2 Ouest'),
+-- 	(NULL, 'team', '3w', 'Équipe 3 Ouest'),
+-- 	(NULL, 'team', '4w', 'Équipe 4 Ouest'),
+-- 	(NULL, 'team', '5w', 'Équipe 5 Ouest'),
+-- 	(NULL, 'team', '6w', 'Équipe 6 Ouest'),
+-- 	(NULL, 'team', '7w', 'Équipe 7 Ouest'),
+-- 	(NULL, 'team', '8w', 'Équipe 8 Ouest'),
+-- 	(NULL, 'team', '9w', 'Équipe 9 Ouest'),
+-- 	(NULL, 'team', '10w', 'Équipe 10 Ouest'),
+-- 	(NULL, 'team', '11w', 'Équipe 11 Ouest'),
+-- 	(NULL, 'team', '12w', 'Équipe 12 Ouest');
 
 CALL ____attribAnciennete();
