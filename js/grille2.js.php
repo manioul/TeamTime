@@ -254,7 +254,7 @@ function changeValue(oThis, sDispo)
 	comptePresents(oThis.id);
 }
 <?
-if (!empty($_SESSION['TEAMEDIT'])) {
+if (array_key_exists('TEAMEDIT', $_SESSION)) {
 	// Ces fonctions ne doivent pas être accessible à tous
 	// Seuls les éditeurs peuvent (dé)protéger la grille
 // Effectue les actions nécessaires à la (dé)protection de la grille

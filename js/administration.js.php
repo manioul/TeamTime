@@ -167,7 +167,7 @@ $(function() {
 function opDb(op, table, id, field, val)
 {
 	var sRequest = "op="+op+"&t="+table+"&id="+id+"&field="+field+"&val="+val;
-	submitRequest(sRequest, "opTable.php");
+	submitRequest(sRequest, "ajax.php");
 }
 <?
 //ob_end_flush();

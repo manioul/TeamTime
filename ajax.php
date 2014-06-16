@@ -1,7 +1,7 @@
 <?php
-// opTable.php
+// ajax.php
 //
-// Opérations sur la base de données
+// Traitement des requêtes ajax
 
 /*
 	TeamTime is a software to manage people working in team on a cyclic shift.
@@ -118,41 +118,75 @@ require 'required_files.inc.php';
 
 $err = "";
 
-if ($_POST['id']) {
-	print_r($_POST);
-	switch ($_POST['op']) { 
-	case 'del':
-		$err = $_SESSION['db']->db_interroge("DELETE FROM `TBL_L_SHIFT_DISPO` WHERE `sdid` = " . (int) $_POST['id']);
-		$err .= $_SESSION['db']->db_interroge("DELETE FROM `TBL_VACANCES` WHERE `sdid` = " . (int) $_POST['id']);
-		break;
-	case 'upd':
-		if ($_POST['t'] == 'l') {
-			switch ($_POST['field']) {
-			case 'pereq':
-				$val = empty($_POST['val']) ? 'FALSE' : 'TRUE';
-				// On met à jour le statut de péréquation à condition que la date ne soit pas nul
-				// (lequel cas ne pourrait correspondre qu'à une péréq)
-				$sql = sprintf("
-					UPDATE `TBL_L_SHIFT_DISPO`
-					SET `pereq` = %s
-					WHERE `sdid` = %d
-					AND `date` != '0000-00-00'
-					", $val
-					, $_POST['id']
-				);
-				$err = $_SESSION['db']->db_interroge($sql);
+if (sizeof($_REQUEST) > 0) {
+	/*
+	 * Actions des admins
+	 */
+	if (array_key_exists('ADMIN', $_SESSION)) {
+		if ($_POST['id']) {
+			switch ($_POST['op']) { 
+			case 'del':
+				$err = $_SESSION['db']->db_interroge("DELETE FROM `TBL_L_SHIFT_DISPO` WHERE `sdid` = " . (int) $_POST['id']);
+				$err .= $_SESSION['db']->db_interroge("DELETE FROM `TBL_VACANCES` WHERE `sdid` = " . (int) $_POST['id']);
+				break;
+			case 'upd':
+				if ($_POST['t'] == 'l') {
+					switch ($_POST['field']) {
+					case 'pereq':
+						$val = empty($_POST['val']) ? 'FALSE' : 'TRUE';
+						// On met à jour le statut de péréquation à condition que la date ne soit pas nul
+						// (lequel cas ne pourrait correspondre qu'à une péréq)
+						$sql = sprintf("
+							UPDATE `TBL_L_SHIFT_DISPO`
+							SET `pereq` = %s
+							WHERE `sdid` = %d
+							AND `date` != '0000-00-00'
+							", $val
+							, $_POST['id']
+						);
+						$err = $_SESSION['db']->db_interroge($sql);
+						break;
+					}
+				}
 				break;
 			}
+			// Si les deux requêtes se sont bien passées, elles renvoient chacune 1
+			// d'où $err === "11" si tout s'est bien passé
+			if ($err === "11") $err = "";
+		} else {
+			exit;
 		}
-		break;
 	}
-} else {
-	exit;
+	/*
+	 * Actions des éditeurs
+	 */
+	if (array_key_exists('EDITEURS', $_SESSION)) {
+		// Suppression des comptes créés par des inconnus (confirmUser.php)
+		//
+		// id contient l'identifiant de l'entrée dans la table TBL_SIGNUP_ON_HOLD
+		if (array_key_exists('infirm', $_REQUEST)) {
+			if (array_key_exists('id', $_REQUEST)) {
+				// On précise centre et équipe pour éviter
+				// la suppression d'inscription dans
+				// d'autres équipes que celle de l'utilisateur
+				$_SESSION['db']->db_interroge(sprintf(
+					"DELETE FROM `TBL_SIGNUP_ON_HOLD`
+					WHERE `id` = %d
+					AND `centre` = '%s'
+					AND `team` = '%s'
+					", $_REQUEST['id']
+					, $_SESSION['utilisateur']->centre()
+					, $_SESSION['utilisateur']->team()
+				));
+			}
+		}
+		// Confirme l'existence d'un utilisateur et création du compte utilisateur
+		if (array_key_exists('confirm', $_REQUEST) && array_key_exists('dateD', $_REQUEST) && array_key_exists('dateF', $_REQUEST) && array_key_exists('grade', $_REQUEST)) {
+			utilisateurGrille::acceptUser($_REQUEST['id'], $_REQUEST['dateD'], $_REQUEST['dateF'], $_REQUEST['grade'], $_REQUEST['classe']);
+		}
+	}
 }
 
-// Si les deux requêtes se sont bien passées, elles renvoient chacune 1
-// d'où $err === "11" si tout s'est bien passé
-if ($err === "11") $err = "";
 if ($err != "") {
 	print(nl2br(htmlspecialchars($err)));
 } else {

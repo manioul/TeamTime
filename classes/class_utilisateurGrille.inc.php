@@ -46,7 +46,7 @@ class utilisateurGrille extends utilisateur {
 	private $affectations = array(); // tableau des affectations
 	private $orderedAffectations = array(); // tableau des affectations rangées en ordre croissant
 	private $cacheAffectation = array(); // Une variable pour garder en cache les affectations
-       					// précédemment recherchées afin d'éviter d'interroger la base de données à chaque fois
+	// précédemment recherchées afin d'éviter d'interroger la base de données à chaque fois
 	// '2000-01-01'	=> array('centre'	=>
 	// 			'team'		=>
 	// 			'beginning'	=>
@@ -70,11 +70,11 @@ class utilisateurGrille extends utilisateur {
 				  , 'uri'	=> 'affiche_grille.php?nbCycle=3'
 				  , 'gid'	=> 255)
 		, 3  	=> array('titre'	=> "mon compte"
-				 , 'uri'	=> 'monCompte.php'
+				  , 'uri'	=> 'monCompte.php'
 				  , 'gid'	=> 255)
 		, 4  	=> array('titre'	=> "Gestion des utilisateurs"
-				 , 'uri'	=> 'utilisateur.php'
-				 , 'gid'	=> 0)
+				  , 'uri'	=> 'utilisateur.php'
+				  , 'gid'	=> 0)
 	);
 	protected static function _label($index) {
 		if (isset(self::$label[$index])) {
@@ -141,10 +141,10 @@ class utilisateurGrille extends utilisateur {
 			, $_SESSION['db']->db_real_escape_string($row['password'])
 			, $row['locked'] == 'on' ? 'TRUE' : 'FALSE'
 			, (int) $row['poids']
-			, $row['actif'] == 'on' ? 'TRUE' : 'FALSE'
-			, $row['showtipoftheday'] == 'on' ? 'TRUE' : 'FALSE'
+			, array_key_exists('actif', $row) && $row['actif'] == 'off' ? 'FALSE' : 'TRUE'
+			, array_key_exists('showtipoftheday', $row) && $row['showtipoftheday'] == 'on' ? 'TRUE' : 'FALSE'
 			, $_SESSION['db']->db_real_escape_string($row['page'])
-			, $GLOBALS['DSN']['user']['password']
+			, $_SESSION['db']->db_real_escape_string($GLOBALS['DSN']['user']['password'])
 			, $_SESSION['db']->db_real_escape_string($row['centre'])
 			, $_SESSION['db']->db_real_escape_string($row['team'])
 			, $_SESSION['db']->db_real_escape_string($row['grade'])
@@ -152,6 +152,17 @@ class utilisateurGrille extends utilisateur {
 			, $dateF->date()
 		);
 		$_SESSION['db']->db_interroge($sql);
+	}
+	// Méthode permettant d'accepter un nouvel utilisateur dans TTm
+	// $id est l'index dans la table TBL_SIGNUP_ON_HOLD
+	// $dateD et $dateF sont les dates de début et de fin (en littéral,
+	// formats acceptés par l'objet Date) dans l'équipe acceptant l'utilisateur
+	// $grade est le grade de l'utilisateur
+	// $classe est la classe à laquelle appartient l'utilisateur
+	public static function acceptUser($id, $dateD, $dateF, $grade, $classe) {
+		$dateD = new Date($dateD);
+		$dateF = new Date($dateF);
+		$_SESSION['db']->db_interroge(sprintf("CALL acceptUser(%d, '%s', '%s', '%s', '%s')", $id, $dateD->date(), $dateF->date(), $_SESSION['db']->db_real_escape_string($grade), $_SESSION['db']->db_real_escape_string($classe)));
 	}
 	// Liste les pages accessibles par tous les utilisateurs à partir des entrées de menus
 	// et retourne un tableau utilisable par un html.form.select.tpl
