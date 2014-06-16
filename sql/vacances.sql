@@ -275,7 +275,8 @@ BEGIN
 			AND uid = userid
 			AND l.did = d.did
 			AND (centre = centre_ OR centre = 'all')
-			AND (team = team_ OR team = 'all');
+			AND (team = team_ OR team = 'all')
+			LIMIT 1;
 		END IF;
 		-- Supprime l'ancienne dispo
 		IF oldDisponibilite != "" THEN
