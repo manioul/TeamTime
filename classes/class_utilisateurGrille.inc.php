@@ -1057,7 +1057,7 @@ class utilisateursDeLaGrille {
 			// Récupération des compteurs
 			if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->startChrono('Relève compteur'); // Début chrono
 			$sql = "
-				SELECT `dispo`, `nom_long`
+				SELECT `type decompte`
 				FROM `TBL_DISPO`
 				WHERE `actif` = TRUE
 				AND `need_compteur` = TRUE
@@ -1076,8 +1076,13 @@ class utilisateursDeLaGrille {
 			/*
 			 * Recherche le décompte des évènements spéciaux
 			 */
-			$sql = sprintf("SELECT `uid`, `dispo`, COUNT(`td`.`did`), MAX(`date`)
-				FROM `TBL_L_SHIFT_DISPO` AS `tl`, `TBL_DISPO` AS `td`
+			$sql = sprintf("
+				SELECT `uid`,
+				`type decompte`,
+				COUNT(`td`.`did`),
+				MAX(`date`)
+				FROM `TBL_L_SHIFT_DISPO` AS `tl`,
+				`TBL_DISPO` AS `td`
 				WHERE `td`.`did` = `tl`.`did`
 				AND `td`.`actif` = TRUE
 				AND `date` <= '%s'
@@ -1194,14 +1199,14 @@ class utilisateursDeLaGrille {
 							,'nom'			=> '<div class="boule"></div>'
 						);
 					}
-						if (($nbCycle == 1 || array_key_exists('cpt', $_COOKIE)) && $i == $nbCycle - 1) {
+					if (($nbCycle == 1 || array_key_exists('cpt', $_COOKIE)) && $i == $nbCycle - 1) {
 						// Ajout d'une colonne pour les compteurs uniquement après la dernière grille
 						foreach (array_keys($evenSpec) as $even) {
 							$grille[$compteurLigne][] = array(
 								'classe'		=> ""
 								,'id'			=> str_replace(" ", "", $evenSpec[$even]['nomLong']) // Certains noms longs comportent des espaces, ce qui n'est pas autorisé pour un id
 								,'date'			=> ""
-								,'nom'			=> ucfirst(substr($even, 0, 1))
+								,'nom'			=> htmlentities($even, ENT_NOQUOTES, 'utf-8')
 								,'title'		=> $evenSpec[$even]['nomLong']
 							);
 						}

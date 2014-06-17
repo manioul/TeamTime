@@ -121,7 +121,7 @@ foreach ($users as $user) {
 $tab = array();
 $sql = sprintf("
 	SELECT `did`
-	, `nom_long`
+	, `type decompte`
 	FROM `TBL_DISPO`
 	WHERE `need_compteur` IS TRUE
 	AND `actif` IS TRUE
@@ -134,7 +134,7 @@ $sql = sprintf("
 $results = $_SESSION['db']->db_interroge($sql);
 $index = 0;
 while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$onglets[$index] = array('nom'	=> htmlspecialchars($res['nom_long'], ENT_COMPAT, 'UTF-8')
+	$onglets[$index] = array('nom'	=> htmlspecialchars($res['type decompte'], ENT_COMPAT, 'UTF-8')
 		,'quantity'		=> 10
 		,'param'		=> $res['did']
 	);
