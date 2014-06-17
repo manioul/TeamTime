@@ -981,8 +981,42 @@ class utilisateursDeLaGrille {
 		return $array;
 	}
 	public function getActiveUsersCell($from, $to, $centre = 'athis', $team = '9e') {
-		$this->getActiveUsersFromTo($from, $to, $centre, $team);
-		return $this->usersCell($from);
+		$sql = "SELECT `a`.`uid`
+			, `nom`
+			, `prenom`
+			, `classe`
+			FROM `classes` AS `c`
+			, `TBL_AFFECTATION` AS `a`
+			WHERE `a`.`uid` = `c`.`uid`
+			AND `a`.`centre` = '$centre'
+			AND `a`.`team` = '$team'
+			AND `a`.`beginning` <= '$to'
+			AND `a`.`end` >= '$from'
+			AND `c`.`beginning` <= '$to'
+			AND `c`.`end` >= '$from'
+			AND `actif`  IS TRUE
+			ORDER BY `poids` ASC
+			";
+		$oldUid = -1; // Pour gérer des classes multiples
+		$i = 0;
+		$result = $_SESSION['db']->db_interroge($sql);
+		while($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			if ($row['uid'] == $oldUid) { // On ajoute une classe
+				$array[$i]['classe'] .= " " . $row['classe'];
+			} else {
+				$oldUid = $row['uid'];
+				$i++;
+				$array[$i] = array(
+					'nom'		=> htmlentities($row['nom'], ENT_NOQUOTES, 'utf-8')
+					, 'prenom'	=> htmlentities($row['prenom'], ENT_NOQUOTES, 'utf-8')
+					, 'classe'	=> 'nom ' . htmlentities($row['classe'], ENT_NOQUOTES, 'utf-8')
+					, 'id'		=> 'u' . $row['uid']
+					, 'uid'		=> $row['uid']
+				);
+			}
+		}
+		mysqli_free_result($result);
+		return $array;
 	}
 	public function getGrilleActiveUsers($dateDebut, $nbCycle = 1) {
 		$dateIni = new Date($dateDebut);

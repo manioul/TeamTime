@@ -88,6 +88,50 @@ BEGIN
 	ALTER TABLE `TBL_MENUS_ELEMS_MENUS` ADD CONSTRAINT `TBL_MENUS_ELEMS_MENUS_ibfk_1` FOREIGN KEY (`idxm`) REFERENCES `TBL_MENUS` (`idx`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 	ALTER TABLE `TBL_MENUS_ELEMS_MENUS` ADD CONSTRAINT `TBL_MENUS_ELEMS_MENUS_ibfk_2` FOREIGN KEY (`idxem`) REFERENCES `TBL_ELEMS_MENUS` (`idx`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+	DROP VIEW IF EXISTS classes;
+	CREATE VIEW classes AS
+		SELECT u.uid AS uid, nom, prenom, 'pc' AS `classe`, MIN(beginning) AS `beginning`, MAX(end) AS `end`, `poids`, `actif`
+		FROM TBL_AFFECTATION AS c, TBL_USERS AS u
+		WHERE u.uid = c.uid
+		AND (grade = 'pc' OR grade = 'dtch' OR grade = 'fmp')
+		AND `validated` IS TRUE
+		GROUP BY u.uid
+		UNION
+		SELECT u.uid AS uid, nom, prenom, 'dtch' AS `classe`, MIN(beginning) AS `beginning`, MAX(end) AS `end`, `poids`, `actif`
+		FROM TBL_AFFECTATION AS c, TBL_USERS AS u
+		WHERE u.uid = c.uid
+		AND grade = 'dtch'
+		AND `validated` IS TRUE
+		GROUP BY u.uid
+		UNION
+		SELECT u.uid AS uid, nom, prenom, 'fmp' AS `classe`, MIN(beginning) AS `beginning`, MAX(end) AS `end`, `poids`, `actif`
+		FROM TBL_AFFECTATION AS c, TBL_USERS AS u
+		WHERE u.uid = c.uid 
+		AND grade = 'fmp'
+		AND `validated` IS TRUE
+		GROUP BY u.uid
+		UNION
+		SELECT u.uid AS uid, nom, prenom, 'ce' AS `classe`, MIN(beginning) AS `beginning`, MAX(end) AS `end`, `poids`, `actif`
+		FROM TBL_AFFECTATION AS c, TBL_USERS AS u
+		WHERE u.uid = c.uid
+		AND grade = 'ce'
+		AND `validated` IS TRUE
+		GROUP BY u.uid
+		UNION
+		SELECT u.uid AS uid, nom, prenom, 'c' AS `classe`, MIN(beginning) AS `beginning`, MAX(end) AS `end`, `poids`, `actif`
+		FROM TBL_AFFECTATION AS c, TBL_USERS AS u
+		WHERE u.uid = c.uid
+		AND (grade = 'c' OR `grade` = 'theo')
+		AND `validated` IS TRUE
+		GROUP BY u.uid
+		UNION
+		SELECT u.uid AS uid, nom, prenom, 'cds' AS `classe`, MIN(beginning) AS `beginning`, MAX(end) AS `end`, `poids`, `actif`
+		FROM TBL_AFFECTATION AS c, TBL_USERS AS u
+		WHERE u.uid = c.uid
+		AND grade = 'cds'
+		AND `validated` IS TRUE
+		GROUP BY u.uid;
 END
 |
 

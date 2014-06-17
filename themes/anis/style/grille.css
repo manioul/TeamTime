@@ -74,6 +74,8 @@ div.nobrief {
 #grille td.ce {
 	background-color: #72f676;
 }
+#grille td.dtch,
+#grille td.fmp,
 #grille td.pc {
 	background-color: #93fda9;
 }
