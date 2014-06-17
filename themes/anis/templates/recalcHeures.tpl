@@ -12,6 +12,7 @@
 <label for="dateFin">Fin des heures</label>
 <input type="date" id="dateF" name="dateF" />
 </li>
+</ul>
 </fieldset>
 </li>
 <li>
