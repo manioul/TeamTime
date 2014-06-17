@@ -52,6 +52,22 @@ foreach ($_SESSION['utilisateur']->retrMessages() as $message) {
 	$index++;
 }
 $_SESSION['utilisateur']->flushMessages();
+// Recherche les comptes créés en attente de validation
+if (array_key_exists('EDITEURS', $_SESSION)) {
+	$sql = sprintf("SELECT * FROM `TBL_SIGNUP_ON_HOLD`
+		WHERE `centre` = '%s'
+		AND `team` = '%s'
+		", $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+	);
+	$result = $_SESSION['db']->db_interroge($sql);
+	if (mysqli_num_rows($result) > 0) {
+		$messages[$index]['message'] = "Des utilisateurs ont fait une demande d'inscription dans votre équipe et attendent votre acceptation.";
+		$messages[$index]['lien'] = 'confirmUser.php';
+		$index++;
+	}
+	mysqli_free_result($result);	
+}
 
 $smarty->assign('messages', $messages);
 $smarty->display('messages.tpl');
