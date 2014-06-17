@@ -1,5 +1,5 @@
 {* Smarty *}
-<form id="fIntervalHeures" class="ng" method="POST" action="">
+<form id="fIntervalHeures" class="ng w24" method="POST" action="">
 <ul>
 <li>
 <fieldset>

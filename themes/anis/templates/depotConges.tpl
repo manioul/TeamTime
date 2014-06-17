@@ -1,5 +1,5 @@
 {* Smarty *}
-<div id="dDatePicker">
+<div class="ng w24">
 <form id='fDepotCong' method='POST' action='conges.php'>
 <label for='datePicker'>Éditer les titres de congés jusqu'au</label>
 <input type="text" name='datePicker' id='datePicker' />

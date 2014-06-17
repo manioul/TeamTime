@@ -1,5 +1,5 @@
 {* Smarty *}
-<div class="ng w24">
+<div class="ng w24 bloc">
 <table>
 <caption>Dates sans heure attribuée</caption>
 <thead>

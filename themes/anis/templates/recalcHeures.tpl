@@ -1,5 +1,6 @@
 {* Smarty *}
-<form id="fIntervalHeures" class="ng" method="POST" action="">
+<div class="ng w24 bloc">
+<form id="fIntervalHeures" method="POST" action="">
 <ul>
 <li>
 <fieldset>
@@ -20,3 +21,4 @@
 </li>
 </ul>
 </form>
+</div>

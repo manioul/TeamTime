@@ -3,9 +3,14 @@
 	padding:0;
 	border:0;
 }
+html {
+	height:100%;
+}
 body {
 	font-family: "Times New Roman", Times, "Liberation Serif", FreeSerif, serif;
 	font-size: 8pt;
+}
+body, #container {
 	background-color: #efe;
 	background: -moz-linear-gradient(-45deg, #ffffff 0%, #eaffea 17%, #eeffee 100%) no-repeat; /* FF3.6+ */
 	background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,#ffffff), color-stop(17%,#eaffea), color-stop(100%,#eeffee)) no-repeat; /* Chrome,Safari4+ */
@@ -14,8 +19,7 @@ body {
 	background: -ms-linear-gradient(-45deg, #ffffff 0%,#eaffea 17%,#eeffee 100%) no-repeat; /* IE10+ */
 	background: linear-gradient(135deg, #ffffff 0%,#eaffea 17%,#eeffee 100%) no-repeat; /* W3C */
 	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#eeffee',GradientType=1 ) no-repeat; /* IE6-9 fallback on horizontal gradient */
-	margin: 0;
-	padding: 0;
+	min-height:100%;
 }
 h1 {
 	display: block;
@@ -33,23 +37,34 @@ a {
 /*
  * Page gestion.php
  */
-div#dBriefing {
+#dBriefing {
 	width:750px;
 	margin:auto;
 }
-div#dBriefing table {
+#dBriefing table {
 	margin: auto;
 }
 /*
  * fin page gestion.php
  */
-div#contenu {
-	margin:auto;
-	width:98%;
+#container {
+	position:relative;
 }
-div#container {
+#content {
 	margin: auto;
-	width: 300px;
+	padding-bottom:2.5em;
+}
+/*
+ * notes de version
+ */
+#notesversion {
+	position:fixed;
+	bottom:0;
+	width: 100%;
+	font-size: 9pt;
+	text-align: center;
+	color: #575;
+	background-color: #eaffea;
 }
 div.logo {
 	background: url('../images/glue.png') 0 0 no-repeat;
@@ -193,16 +208,12 @@ form, input, textarea, select {
 }
 form ul li {
 	list-style:none;
+	line-height:30px;
 }
-form.ng {
-		padding:10px;
-		margin:auto;
-		background-color:#beb;
-		border-radius:15px;
-		box-shadow: 2px 2px 2px #88aa88;
+fieldset:first-of-type {
+	margin:0;
 }
 fieldset {
-	display:table;
 	padding:5px;
 	border:1px solid #060;
 	border-right:3px solid #060;
@@ -212,6 +223,7 @@ fieldset {
 	-ms-border-radius: 3px;
 	-o-border-radius: 3px;
 	border-radius: 3px;
+	margin:15px auto 0 auto;
 }
 legend {
 	padding:5px;
@@ -228,31 +240,11 @@ input, textarea, select {
 	-ms-border-radius: 3px;
 	-o-border-radius: 3px;
 	border-radius: 3px;
-}
-:disabled {
-	border:0;
-}
-label, .label {
-}
-/*
- * placeholder
- */
-	::-webkit-input-placeholder { color:#7a7; }
-	::-moz-placeholder { color:#7a7; } /* firefox 19+ */
-	:-ms-input-placeholder { color:#7a7; } /* ie */
-	input:-moz-placeholder { color:#7a7; }
-
-div#dConnexion {
-	width: 70px;
-	margin: auto;
-}
-div#dConnexion input {
-	margin-top: 3px;
-	width: 70px;
-	height: 1.5em;
-	font-size: 7pt;
+	width:100%;
 }
 .bouton, input[type=submit] {
+	width:100%;
+	height:50px;
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 	font-size: 11pt;
 	text-align:center;
@@ -276,13 +268,29 @@ div#dConnexion input {
 	box-shadow: 2px 2px 2px #88aa88;
 
 	padding:4px;
-	margin:auto;
+	margin:0 auto;
 
-	cursor:pointer;
+	cursor:pointer;)
+}
+input[type=submit]:last-of-type {
+	margin:15px auto 5px auto;
 }
 .bouton:hover, input[type=submit]:hover {
 	box-shadow: -1px -1px 0 #88aa88;
 }
+:disabled {
+	border:0;
+}
+label, .label {
+}
+/*
+ * placeholder
+ */
+	::-webkit-input-placeholder { color:#7a7; }
+	::-moz-placeholder { color:#7a7; } /* firefox 19+ */
+	:-ms-input-placeholder { color:#7a7; } /* ie */
+	input:-moz-placeholder { color:#7a7; }
+
 .header {
 	font-size: 300%;
 	height:50px;
@@ -298,6 +306,41 @@ div#dConnexion input {
 	border-bottom:1px solid rgba(50,200,50,.3);
 	margin-bottom:30px;
 	color:#060;
+}
+
+.ng {
+	color:#060;
+	background-color:#beb;
+	border-radius:15px;
+	box-shadow: 2px 2px 2px #88aa88;
+}
+.ng caption {
+	font-size:200%;
+	padding-bottom:10px;
+}
+.w24 {
+	width:240px;
+	padding:10px;
+	margin:10px auto;
+}
+.w24 table {
+	margin:10px 5px;
+	border:1px solid #060;
+	width:220px;
+}
+.bloc {
+	float:left;
+}
+
+div#dConnexion {
+	width: 70px;
+	margin: auto;
+}
+div#dConnexion input {
+	margin-top: 3px;
+	width: 70px;
+	height: 1.5em;
+	font-size: 7pt;
 }
 
 /*
@@ -351,14 +394,12 @@ div#dConnexion input {
  * Formulaires mon compte
  */
 	div#monCompte {
-		width:875px;
 		margin:auto;
 	}
 	div#monCompte form {
-		float:left;
-		width:875px;
-	}
-	form#fContact {
+		max-width:850px;
+		margin:auto;
+		padding:10px;
 	}
 	form#fContact fieldset {
 		margin-bottom:10px;
@@ -366,7 +407,7 @@ div#dConnexion input {
 	}
 	form#fContact li.contact {
 		float:left;
-		width: 400px;
+		max-width: 400px;
 		margin-right:10px;
 	}
 	form#fContact li.contact:last-of-type {
@@ -385,22 +426,19 @@ div#dConnexion input {
 	form#fContact ul ul ul li {
 		border:0;
 	}
-	form#fContact label[for=iAddPhone],
-	form#fContact label[for=iAddAddress] {
-		width:200px;
-	}
 	form#fContact label {
 		float:left;
 		width:120px;
 		font-weight:bold;
 	}
-	form#fContact input:not([type=radio]),
+	form#fContact input[type=text],
+	form#fContact input[type=email],
 	form#fContact select,
 	form#fContact textarea {
 		width:200px;
 	}
 	form#fContact input[type=button] {
-		width:160px;
+		width:100%;
 	}
 	form#fAffectation input,
 	form#fAffectation select {
@@ -417,13 +455,9 @@ div#dConnexion input {
 /*
  * Formulaire saisie d'heures
  */
-	form#fSaisieHeures {
-		float:left;
-		width:230px;
-	}
 	form#fSaisieHeures ul li {
 		float:left;
-		width: 200px;
+		width: 210px;
 		border:3px solid rgba(255,255,255,.8);
 		border-radius:8px;
 		line-height:15px;
@@ -436,7 +470,7 @@ div#dConnexion input {
 		border:0;
 	}
 	form#fSaisieHeures textarea {
-		width:192px;
+		width:202px;
 		height:250px;
 		color: #060;
 		border: 1px solid #060;
@@ -456,9 +490,6 @@ div#dConnexion input {
 		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d7ffd7', endColorstr='#d7ffd7',GradientType=0 ); /* IE6-9 */
 		padding:4px;
 		margin:auto;
-	}
-	form#fSaisieHeures input[type=submit] {
-		width:200px;
 	}
 	.hInput {
 		width:4em;
@@ -512,9 +543,6 @@ div#dConnexion input {
 		width:160px;
 		font-weight:bold;
 	}
-	form#fDistribHeures input[type=submit] {
-		width:200px;
-	}
 	form#fDistribHeures fieldset#joursDuCycle label,
 	form#fDistribHeures fieldset#grades label {
 		text-transform:uppercase;
@@ -526,44 +554,22 @@ div#dConnexion input {
 /*
  * Formulaire de sélection de l'intervalle d'heures à afficher pour le listing d'heures
  */
-	form#fIntervalHeures {
-		float:left;
-		margin:0 15px;
-		font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
-		font-size: 11pt;
-		width:200px;
-		padding:10px;
-		background-color:#beb;
-		border-radius:15px;
-
-		box-shadow: 2px 2px 2px #88aa88;
-	}
-	form#fIntervalHeures ul li {
-		line-height:30px;
-	}
 	form#fIntervalHeures fieldset {
 		float:left;
-		width: 172px;
 		border:3px solid rgba(255,255,255,.8);
 		border-radius:8px;
 		padding:2px 10px;
-		margin-right:10px;
 		margin-bottom:8px;
 	}
 	form#fIntervalHeures fieldset label {
 		float:left;
-		width:150px;
+		width:120px;
 		padding-right:5px;
 	}
 	form#fIntervalHeures input[type=date] {
-		width:170px;
-	}
-	form#fIntervalHeures input[type=submit],
-	form#fSaisieHeuresInd input[type=submit] {
-		width:170px;
-		margin:15px;
-		height:50px;
-		font-size:20px;
+		float:left;
+		width:80px;
+		margin:5px 0;
 	}
 /*
  * Fin du formulaire de sélection de l'intervalle d'heures
@@ -572,10 +578,6 @@ div#dConnexion input {
 /*
  * Formulaire de saisie heures individuelles
  */
-	form#fSaisieHeuresInd {
-		float:left;
-		width:235px;
-	}
 	form#fSaisieHeuresInd ul li {
 		line-height:30px;
 	}
@@ -586,7 +588,7 @@ div#dConnexion input {
 	}
 	form#fSaisieHeuresInd fieldset {
 		float:left;
-		width:200px;
+		width:180px;
 		border:3px solid rgba(255,255,255,.8);
 		border-radius:8px;
 		padding:2px 10px;
@@ -612,8 +614,6 @@ div#dConnexion input {
 	}
 	form#fSaisieHeuresInd input[type=text] {
 		width:50px;
-	}
-	form#fSaisieHeuresInd {
 	}
 /*
  * Fin du formulaire de saisie heures individuelles
@@ -755,18 +755,8 @@ div#dConnexion input {
 /*
  * Affichage des heures à partager déjà saisies
  */
-	div#listHS {
-		color:#060;
-		float:left;
-		padding:10px;
-		margin:auto;
-		background-color:#beb;
-		border-radius:15px;
-		box-shadow: 2px 2px 2px #88aa88;
-		width:240px;
-	}
 	form#fHS {
-		width:200px;
+		width:220px;
 		margin:auto;
 		border:1px solid #060;
 		box-shadow:none;
@@ -781,18 +771,6 @@ div#dConnexion input {
 	}
 	form#fHS input[type=date] {
 		width:90px;
-	}
-	form#fHS input[type=submit] {
-		width:160px;
-		margin:0 25px;
-	}
-	div#listHS caption {
-		font-size:200%;
-		padding-bottom:10px;
-	}
-	div#listHS table {
-		margin:10px 5px;
-		border:1px solid #060;
 	}
 /*
  * tableaux
@@ -881,19 +859,6 @@ div#info {
 	background-color:#f00;
 }
 
-/*
- * notes de version
- */
-div#notesversion {
-	float:left;
-	margin-top: 5em;
-	padding: 10px;
-	width: 100%;
-	font-size: 9pt;
-	text-align: center;
-	color: #575;
-	background-color: #eaffea;
-}
 
 /*
  * Choix du thème

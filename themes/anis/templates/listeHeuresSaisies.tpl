@@ -1,6 +1,6 @@
 {* Smarty *}
-<div id="listHS">
-<form id="fHS" class="ng" method="POST" action="">
+<div class="ng w24 bloc">
+<form id="fHS" method="POST" action="">
 <ul>
 <li>
 <label for="dateFrom">Début</label>
