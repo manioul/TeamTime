@@ -14,18 +14,6 @@
 </li>
 </fieldset>
 </li>
-<li>{* Dispos de l'agent *}
-	<fieldset>
-	<legend>Filtres</legend>
-	<ul>
-	{foreach $aDispos as $dispo => $nom_long}
-	<li>
-	<label for="{$dispo}">{$nom_long}</label>
-	<input type="checkbox" name="dispo[{$dispo}]" id="dispo{$dispo}" value="{$dispo}" {if !empty($checked.$dispo)}checked="checked" {/if}/>
-	{/foreach}
-	</ul>
-	</fieldset>
-</li>
 <li>
 <input type="submit" />
 </li>
