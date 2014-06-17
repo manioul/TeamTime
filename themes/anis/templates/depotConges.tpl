@@ -1,9 +1,9 @@
 {* Smarty *}
 <div id="dDatePicker">
-<form id='fDepotCong' method='post' action='conges.php'>
+<form id='fDepotCong' method='POST' action='conges.php'>
 <label for='datePicker'>Éditer les titres de congés jusqu'au</label>
 <input type="text" name='datePicker' id='datePicker' />
 <input type='submit' />
 </form>
-{if isset($annulation)}<div class="bouton"><a href="annulationConges.php">Annulation congés</a></div>{/if}
+{if isset($annulation)}<form method="POST" action="annulationConges.php"><input type="submit" value="Annulation congés" /></form>{/if}
 </div>

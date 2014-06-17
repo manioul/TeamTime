@@ -1,6 +1,6 @@
 {* Smarty *}
 <div>
-<form name="fCc" method="post" action="" onsubmit="">
+<form name="fCc" method="POST" action="" onsubmit="">
 <table class="genElem">
 <tr>
 <td><label for="uid">Nom</label></td>
