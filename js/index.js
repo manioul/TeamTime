@@ -3,11 +3,17 @@
 
 $(function() {
 	$('#nav2-text h1').toggle(function() {
-		$('#dConnexion').css('display', 'block');
-		$('#dConnexion').addClass('largeConnexion');
+		$('#fConn').css('display', 'block');
+		$('#fConn').addClass('largeConnexion');
 		}
 		,function() {
-		$('#dConnexion').css('display', 'none');
-		$('#dConnexion').removeClass('largeConnexion');
+		$('#fConn').css('display', 'none');
+		$('#fConn').removeClass('largeConnexion');
+		});
+	$('#nav4-text h1').toggle(function() {
+		$('#fSignup').css('display', 'block');
+		}
+		,function() {
+		$('#fSignup').css('display', 'none');
 		});
 });

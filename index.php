@@ -104,8 +104,94 @@ ob_start(); // Obligatoire pour firePHP
 require 'required_files.inc.php';
 
 if (isset($_SESSION['AUTHENTICATED']) && empty($_GET['norights']) && empty($_GET['k'])) {
+	if (isset($_GET['back'])) {
+		header("Location:" . $_GET['back']);
+	}
 	header("Location:" . (is_null($_SESSION['utilisateur']->page()) ? "affiche_grille.php" : $_SESSION['utilisateur']->page() ));
 }
+
+$fcon = array(
+	'name'		=> "fConn"
+	, 'id'		=> "fConn"
+	, 'method'	=> "POST"
+	, 'action'	=> "logon.php"
+	, 'classe'	=> "ng"
+	, 'fieldsets'	=> array(
+		array(
+			'display'	=> "none"
+			, 'row'	=> array(
+				array(
+					'type'		=> "text"
+					, 'name'	=> "login"
+					, 'placeholder'	=> 'Login'
+				)
+				, array(
+					'type'		=> "password"
+					, 'name'	=> "pwd"
+					, 'placeholder'	=> '****'
+				)
+				, array(
+					'type'		=> "submit"
+					, 'value'	=> "Connexion"
+				)
+			)
+		)
+	)
+);
+$form = array(
+	'name'		=> "fSignup"
+	, 'id'		=> "fSignup"
+	, 'method'	=> "POST"
+	, 'action'	=> "signup.php"
+	, 'classe'	=> "ng"
+	, 'fieldsets'	=> array(
+		array(
+			'titre'		=> "Création de compte"
+			, 'display'	=> "none"
+			, 'row'		=> array(
+				array(
+					'type'	=> 'text'
+					, 'label'	=> 'Nom'
+					, 'name'	=> 'iNom'
+					//, 'placeholder'	=> 'Votre nom'
+				)
+				, array(
+					'type'	=> 'text'
+					, 'label'	=> 'Prénom'
+					, 'name'	=> 'iPrenom'
+					//, 'placeholder'	=> 'Votre prénom'
+				)
+				, array(
+					'type'	=> 'email'
+					, 'label'	=> 'Email'
+					, 'name'	=> 'iEmail'
+					, 'placeholder'	=> 'monnom@email.com'
+				)
+				, array_merge(
+					array(
+						'type'	=> 'select'
+						, 'label'	=> "Centre"
+					)
+					, Affectation::listeAffectations('centre')
+				)
+				, array_merge(
+					array(
+						'type'	=> 'select'
+						, 'label'	=> "Équipe"
+					)
+					, Affectation::listeAffectations('team')
+				)
+				, array(
+					'type'	=> 'submit'
+					, 'name'	=> 'iSubmit'
+					, 'value'	=> 'Créer le compte'
+				)
+			)
+		)
+	)
+);
+$smarty->assign('fcon', $fcon);
+$smarty->assign('form', $form);
 
 if (isset($_GET['k'])) {
 	switch($_GET['k']) {
@@ -125,7 +211,7 @@ if (isset($_GET['k'])) {
 			'1'	=> "accueil"
 			,'2'	=> "connexion"
 			,'3'	=> "support"
-			,'4'	=> "download"
+			,'4'	=> "signup"
 		);
 		$content[1] = ""; // On ne veut pas du message affiché au survol d'accueil
 		break;
@@ -145,7 +231,7 @@ if (isset($_GET['k'])) {
 			'1'	=> "accueil"
 			,'2'	=> "connexion"
 			,'3'	=> "support"
-			,'4'	=> "download"
+			,'4'	=> "signup"
 		);
 		$content[1] = ""; // On ne veut pas du message affiché au survol d'accueil
 		break;
@@ -165,7 +251,25 @@ if (isset($_GET['k'])) {
 			'1'	=> "accueil"
 			,'2'	=> "connexion"
 			,'3'	=> "support"
-			,'4'	=> "download"
+			,'4'	=> "signup"
+		);
+		$content[1] = ""; // On ne veut pas du message affiché au survol d'accueil
+		break;
+	case 'compteok':
+		$article = new Article(2);
+		if ($article->actif()) {
+			$contenu = array(
+				"id1" => array(
+					'titre'	=> $article->titre()
+					,'texte' => $article->texte()
+				)
+			);
+		}
+		$nav = array(
+			'1'	=> "accueil"
+			,'2'	=> "connexion"
+			,'3'	=> "support"
+			,'4'	=> "signup"
 		);
 		$content[1] = ""; // On ne veut pas du message affiché au survol d'accueil
 		break;
@@ -174,7 +278,7 @@ if (isset($_GET['k'])) {
 			'1'	=> "accueil"
 			,'2'	=> "connexion"
 			,'3'	=> "support"
-			,'4'	=> "download"
+			,'4'	=> "signup"
 		);
 	}
 } else {
@@ -182,7 +286,7 @@ if (isset($_GET['k'])) {
 		'1'	=> "accueil"
 		,'2'	=> "connexion"
 		,'3'	=> "support"
-		,'4'	=> "download"
+		,'4'	=> "signup"
 	);
 }
 
