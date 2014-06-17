@@ -70,7 +70,7 @@ if (isset($DEBUG) && true === $DEBUG) {
 $smarty->assign('notesversion', $notesversion); 
 
 // Affichage des en-têtes de page
-$smarty->display('header.tpl');
+$smarty->display('html.header.tpl');
 
 // Ajout du menu horizontal
 if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
