@@ -127,6 +127,8 @@ if (!array_key_exists('db', $_SESSION) || !is_a($_SESSION['db'], 'database')) {
 		$DSN = $GLOBALS['DSN']['user'];
 		$DSN['username'] = 'ttm.'.$_SESSION['utilisateur']->uid();
 		$_SESSION['db'] = new database($DSN);
+	} elseif ($_SERVER['SCRIPT_NAME'] == '/createAccount.php') {
+		$_SESSION['db'] = new database($GLOBALS['DSN']['createAccount']);
 	} else {
 		$_SESSION['db'] = new database($GLOBALS['DSN']['admin']);
 	}
