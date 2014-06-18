@@ -400,50 +400,6 @@ class utilisateurGrille extends utilisateur {
 		}
 		return $this->adresse;
 	}
-	// $date est la date pour laquelle on veut obtenir les classes de l'utilisateur
-	public function classe($date = NULL) {
-		if (sizeof($this->classe) < 1) $this->_getClassesFromDb();
-		if (is_null($date)) return $this->classe;
-		if (!is_object($date)) $date = new Date($date);
-		$classes = array();
-		foreach ($this->classe as $classe => $array) {
-			foreach ($array as $key => $value) {
-				if ($date->compareDate($value['beginning']) >= 0 && $date->compareDate($value['end']) <= 0) $classes[] = $classe;
-			}
-		}
-		return $classes;
-	}
-	protected function _getClassesFromDb() {
-		$result = $_SESSION['db']->db_interroge(sprintf("
-			SELECT * FROM `TBL_CLASSE`
-			WHERE `uid` = '%s'
-			", $this->uid()
-		));
-		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$this->addClasse($row);
-		}
-		mysqli_free_result($result);
-	}
-	public function addClasse($classe = false) {
-		if (false === $classe) return false;
-		$index = isset($this->classe[$classe['classe']]) ? sizeof($this->classe[$classe['classe']]) : 0;
-		$this->classe[$classe['classe']][$index]['beginning'] = $classe['beginning'];
-		$this->classe[$classe['classe']][$index]['end'] = $classe['end'];
-	}
-	protected function _dbAddClasse($classe) {
-		$sql = sprintf("
-			INSERT INTO `TBL_CLASSE`
-			(`clid`, `uid`, `classe`, `beginning`, `end`, `commentaire`)
-			VALUES
-			(NULL, %d, '%s', '%s', '%s', '%s')
-			", $this->uid()
-			, $classe['classe']
-			, $classe['beginning']
-			, $classe['end']
-			, $classe['comment']
-		);
-		$_SESSION['db']->db_interroge($sql);
-	}
 	// retourne les rôles (sous forme de tableau)
 	public function roles() {
 		if (!empty($TRACE) && true === $TRACE) {
@@ -568,10 +524,6 @@ class utilisateurGrille extends utilisateur {
 		if (!is_array($row)) return false;
 		$row['uid'] = $this->uid();
 		$affectation = new Affectation($row);
-		$row['classe'] = strtolower($row['grade']);
-		$this->_dbAddClasse($row);
-		$this->classe = array();
-		$this->_getClassesFromDb();
 		$aid = $affectation->insert();
 		return true;
 	}
@@ -852,7 +804,7 @@ class utilisateurGrille extends utilisateur {
 // Méthodes utiles pour l'affichage
 	public function userCell($dateDebut) {
 		return array('nom'	=> htmlentities($this->nom())
-			,'classe'	=> 'nom ' . implode(' ', $this->classe($dateDebut))
+			,'classe'	=> 'nom '
 			,'id'		=> "u". $this->uid()
 			,'uid'		=> $this->uid()
 		);

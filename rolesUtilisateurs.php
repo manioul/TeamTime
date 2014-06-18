@@ -171,7 +171,7 @@ foreach ($users as $user) {
 				'type'		=> 'content'
 				, 'content'	=> htmlentities($user->nom())
 				, 'id'		=> 'u' . $user->uid()
-				, 'class'	=> 'nom ' . implode(' ', $user->classe(date('Y-m-d')))
+				, 'class'	=> 'nom'
 			);
 		} else { // Les autres colonnes sont des cases à cocher
 			$row[$index] = array(

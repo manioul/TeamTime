@@ -22,10 +22,8 @@ CREATE TABLE `TBL_ADRESSES` (
   `adresse` text NOT NULL,
   `cp` varchar(15) NOT NULL,
   `ville` varchar(80) NOT NULL,
-  PRIMARY KEY (`adresseid`),
-  KEY `TBL_ADDRESSES_ibfk_1` (`uid`),
-  CONSTRAINT `TBL_ADDRESSES_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`adresseid`)
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_AFFECTATION`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -40,7 +38,7 @@ CREATE TABLE `TBL_AFFECTATION` (
   `end` date NOT NULL,
   `validated` tinyint(1) NOT NULL DEFAULT '0' COMMENT 'Permet à un admin de valider cette entrée',
   PRIMARY KEY (`aid`)
-) ENGINE=InnoDB AUTO_INCREMENT=152 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=168 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_ANCIENNETE_EQUIPE`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -54,7 +52,7 @@ CREATE TABLE `TBL_ANCIENNETE_EQUIPE` (
   `end` date DEFAULT NULL,
   `global` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`ancid`)
-) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=124 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_ARTICLES`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -70,7 +68,7 @@ CREATE TABLE `TBL_ARTICLES` (
   `restricted` tinyint(1) NOT NULL,
   `actif` tinyint(1) NOT NULL,
   PRIMARY KEY (`idx`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_ARTICLES_RUBRIQUES`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -92,20 +90,7 @@ CREATE TABLE `TBL_BRIEFING` (
   `centre` varchar(50) NOT NULL DEFAULT 'athis',
   `team` varchar(10) NOT NULL DEFAULT 'all',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `TBL_CLASSE`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `TBL_CLASSE` (
-  `clid` int(11) NOT NULL AUTO_INCREMENT,
-  `uid` tinyint(4) NOT NULL,
-  `classe` varchar(10) NOT NULL,
-  `beginning` date NOT NULL,
-  `end` date NOT NULL,
-  `commentaire` varchar(150) NOT NULL,
-  PRIMARY KEY (`clid`)
-) ENGINE=InnoDB AUTO_INCREMENT=107 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_CONFIG_AFFECTATIONS`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -159,43 +144,6 @@ CREATE TABLE `TBL_DISPATCH_HEURES` (
   PRIMARY KEY (`rid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER updateDispatchSchema
-	AFTER UPDATE ON TBL_DISPATCH_HEURES
-	FOR EACH ROW
-	CALL updateDispatchSchema(OLD.rid) */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER deleteDispatchSchema
-	AFTER DELETE ON TBL_DISPATCH_HEURES
-	FOR EACH ROW
-	DELETE FROM TBL_DISPATCH_HEURES_USER
-		WHERE rid = OLD.rid */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 DROP TABLE IF EXISTS `TBL_DISPATCH_HEURES_USER`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -233,7 +181,7 @@ CREATE TABLE `TBL_DISPO` (
   `centre` varchar(50) NOT NULL DEFAULT 'athis',
   `team` varchar(10) NOT NULL DEFAULT '9e',
   PRIMARY KEY (`did`)
-) ENGINE=InnoDB AUTO_INCREMENT=60 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_ELEMS_MENUS`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -279,7 +227,7 @@ CREATE TABLE `TBL_GRILLE` (
   `centre` varchar(50) NOT NULL DEFAULT 'athis',
   `team` varchar(10) NOT NULL DEFAULT '9e',
   PRIMARY KEY (`grid`)
-) ENGINE=InnoDB AUTO_INCREMENT=4493 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4816 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_GROUPS`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -320,30 +268,6 @@ CREATE TABLE `TBL_HEURES_A_PARTAGER` (
   PRIMARY KEY (`centre`,`team`,`date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Le nombre d''heures à paratager par jour';
 /*!40101 SET character_set_client = @saved_cs_client */;
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = '' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER deleteHours
-	AFTER DELETE ON TBL_HEURES_A_PARTAGER
-	FOR EACH ROW
-	DELETE FROM TBL_HEURES
-		WHERE date = OLD.date
-			AND uid IN (SELECT uid
-				FROM TBL_AFFECTATION
-				WHERE centre = OLD.centre
-				AND team = OLD.team
-				AND OLD.date BETWEEN beginning AND end) */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 DROP TABLE IF EXISTS `TBL_LOG`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -372,7 +296,7 @@ CREATE TABLE `TBL_L_SHIFT_DISPO` (
   `priorite` tinyint(4) DEFAULT NULL COMMENT 'Définit un ordre dans le cas de dispo multiples',
   PRIMARY KEY (`sdid`),
   KEY `date` (`date`)
-) ENGINE=InnoDB AUTO_INCREMENT=9222 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=11519 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_MENUS`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -407,7 +331,7 @@ DROP TABLE IF EXISTS `TBL_MESSAGES_SYSTEME`;
 CREATE TABLE `TBL_MESSAGES_SYSTEME` (
   `mid` int(11) NOT NULL AUTO_INCREMENT,
   `utilisateur` varchar(63) NOT NULL,
-  `catégorie` set('TRACE','DEBUG','INFO','ERREUR','LOG','USER') NOT NULL DEFAULT 'USER',
+  `catégorie` set('DEBUG','INFO','ERREUR','LOG','USER') NOT NULL DEFAULT 'USER',
   `appelant` varchar(64) NOT NULL DEFAULT 'unknown',
   `short` tinytext NOT NULL,
   `message` text NOT NULL,
@@ -415,7 +339,7 @@ CREATE TABLE `TBL_MESSAGES_SYSTEME` (
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `lu` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`mid`)
-) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=9426 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_PERIODE_CHARGE`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -439,10 +363,8 @@ CREATE TABLE `TBL_PHONE` (
   `phone` varchar(25) NOT NULL,
   `description` text NOT NULL,
   `principal` tinyint(1) DEFAULT NULL,
-  PRIMARY KEY (`phoneid`),
-  KEY `TBL_PHONE_ibfk_1` (`uid`),
-  CONSTRAINT `TBL_PHONE_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8 COMMENT='Tables des numéro de téléphone des utilisateurs';
+  PRIMARY KEY (`phoneid`)
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8 COMMENT='Tables des numéro de téléphone des utilisateurs';
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_REMPLA`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -461,7 +383,7 @@ DROP TABLE IF EXISTS `TBL_ROLES`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `TBL_ROLES` (
   `rid` int(11) NOT NULL AUTO_INCREMENT,
-  `uid` smallint(6) NOT NULL,
+  `uid` tinyint(4) NOT NULL,
   `role` varchar(10) NOT NULL,
   `centre` varchar(50) NOT NULL,
   `team` varchar(10) CHARACTER SET utf8 COLLATE utf8_estonian_ci NOT NULL,
@@ -469,10 +391,8 @@ CREATE TABLE `TBL_ROLES` (
   `end` date NOT NULL,
   `commentaire` varchar(150) NOT NULL,
   `confirmed` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`rid`,`uid`,`role`,`centre`,`team`),
-  KEY `uid` (`uid`),
-  CONSTRAINT `TBL_ROLES_ibfk_1` FOREIGN KEY (`uid`) REFERENCES `TBL_USERS` (`uid`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=89 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`rid`,`uid`,`role`,`centre`,`team`)
+) ENGINE=InnoDB AUTO_INCREMENT=102 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_RUBRIQUES`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -535,7 +455,7 @@ CREATE TABLE `TBL_USERS` (
   `page` varchar(255) NOT NULL DEFAULT 'affiche_grille.php' COMMENT 'La page affichée après la connexion d''un utilisateur',
   `pref` text NOT NULL COMMENT 'préférences utilisateurs au format JSON',
   PRIMARY KEY (`uid`)
-) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=74 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `TBL_VACANCES`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -681,13 +601,13 @@ USE `ttm`;
 
 LOCK TABLES `TBL_MENUS` WRITE;
 /*!40000 ALTER TABLE `TBL_MENUS` DISABLE KEYS */;
-INSERT INTO `TBL_MENUS` (`idx`, `titre`, `description`, `parent`, `creation`, `modification`, `allowed`, `actif`, `type`) VALUES (1,'principal','Menu principal',0,'0000-00-00 00:00:00','2012-10-14 12:14:25','all',1,'0'),(2,'Grille','Menu permettant d\'accéder aux différents affichages de la grille',1,'0000-00-00 00:00:00','2012-10-14 12:43:37','all',1,'0'),(3,'Décomptes','Décomptes de congés, repas...',1,'0000-00-00 00:00:00','2012-10-14 12:43:50','all',1,'0'),(4,'Administration','Accès aux pages d\'administration',1,'0000-00-00 00:00:00','2014-03-06 11:35:25','cds,teamEdit,admin',1,'0'),(5,'année congés','Accéder aux congés de différentes années',3,'2012-10-25 00:27:34','2012-10-25 08:06:11','all',1,NULL),(6,'calendrier','Gestion des calendriers vacances scolaires, briefings, période de  charge',4,'2012-10-25 10:05:17','2012-10-25 08:06:11','cds',1,NULL),(7,'Planning','',0,'2012-10-25 12:27:48','2012-10-25 10:27:48','all',1,NULL),(8,'évènements','Les évènements spéciaux',3,'2012-11-04 01:28:08','2012-11-04 00:42:05','all',1,NULL),(9,'Gestion utilisateurs','Sous-menu de gestion des utilisateurs de TeamTime',4,'2013-07-10 23:37:06','2014-03-06 11:35:48','cds,teamEdit,admin',1,NULL),(10,'Maintenance','',4,'2013-11-12 18:25:07','2013-11-12 17:25:07','admin',1,NULL),(11,'utilisateur','',1,'2013-11-20 17:16:45','2013-11-20 16:16:45','all',1,NULL),(12,'Heures','Saisie des heures et configuration de la répartition des heures',4,'2013-12-20 14:32:42','2014-03-06 11:36:11','cds,heures,admin',1,NULL),(13,'Gestion Équipe','Gestion de l\'équipe, des activités...',4,'2014-04-27 17:16:13','2014-04-27 15:16:13','editeurs',1,NULL);
+INSERT INTO `TBL_MENUS` (`idx`, `titre`, `description`, `parent`, `creation`, `modification`, `allowed`, `actif`, `type`) VALUES (1,'principal','Menu principal',0,'0000-00-00 00:00:00','2012-10-14 12:14:25','all',1,'0'),(2,'Grille','Menu permettant d\'accéder aux différents affichages de la grille',1,'0000-00-00 00:00:00','2012-10-14 12:43:37','all',1,'0'),(3,'Décomptes','Décomptes de congés, repas...',1,'0000-00-00 00:00:00','2012-10-14 12:43:50','all',1,'0'),(4,'Administration','Accès aux pages d\'administration',1,'0000-00-00 00:00:00','2014-06-18 23:12:19','teamEdit',1,'0'),(5,'année congés','Accéder aux congés de différentes années',3,'2012-10-25 00:27:34','2012-10-25 08:06:11','all',1,NULL),(6,'calendrier','Gestion des calendriers vacances scolaires, briefings, période de  charge',4,'2012-10-25 10:05:17','2014-06-18 23:14:07','teamEdit',1,NULL),(7,'Planning','',0,'2012-10-25 12:27:48','2012-10-25 10:27:48','all',1,NULL),(8,'évènements','Les évènements spéciaux',3,'2012-11-04 01:28:08','2012-11-04 00:42:05','all',1,NULL),(9,'Gestion utilisateurs','Sous-menu de gestion des utilisateurs de TeamTime',4,'2013-07-10 23:37:06','2014-06-18 23:12:19','teamEdit',1,NULL),(10,'Maintenance','',4,'2013-11-12 18:25:07','2013-11-12 17:25:07','admin',1,NULL),(11,'utilisateur','',1,'2013-11-20 17:16:45','2013-11-20 16:16:45','all',1,NULL),(12,'Heures','Saisie des heures et configuration de la répartition des heures',4,'2013-12-20 14:32:42','2014-06-18 23:13:35','heures,editeurs',1,NULL),(13,'Gestion Équipe','Gestion de l\'équipe, des activités...',4,'2014-04-27 17:16:13','2014-04-27 15:16:13','editeurs',1,NULL);
 /*!40000 ALTER TABLE `TBL_MENUS` ENABLE KEYS */;
 UNLOCK TABLES;
 
 LOCK TABLES `TBL_ELEMS_MENUS` WRITE;
 /*!40000 ALTER TABLE `TBL_ELEMS_MENUS` DISABLE KEYS */;
-INSERT INTO `TBL_ELEMS_MENUS` (`idx`, `titre`, `description`, `lien`, `sousmenu`, `creation`, `modification`, `allowed`, `actif`) VALUES (1,'Planning','Planning annuel','planning_universel.html',7,'0000-00-00 00:00:00','2012-10-25 10:28:20','all',1),(2,'Grille','Affichage de la grille sous différents formats','affiche_grille.php?nbCycle=3',2,'0000-00-00 00:00:00','2013-06-05 17:02:49','all',1),(3,'Décomptes','Affichages des décomptes divers','tableauxCong.php',3,'0000-00-00 00:00:00','2012-10-13 23:29:33','all',1),(4,'Administration','Lien vers les pages d\'administration','',4,'0000-00-00 00:00:00','2014-03-06 11:37:18','cds,ce',1),(5,'logout','Déconnexion de l\'interface','logout.php',NULL,'0000-00-00 00:00:00','2012-10-13 23:29:33','all',1),(6,'Un cycle','Affichage d\'un cycle unique de la grille','affiche_grille.php',NULL,'0000-00-00 00:00:00','2013-12-21 11:56:56','all',1),(7,'Trois cycles','Affichage de trois cycles de la grille','affiche_grille.php?nbCycle=3',NULL,'0000-00-00 00:00:00','2013-06-05 17:06:24','all',1),(8,'Congés','','tableauxCong.php',5,'0000-00-00 00:00:00','2012-10-24 22:27:55','all',1),(9,'Évènements','','tableauxEvenSpec.php',8,'0000-00-00 00:00:00','2012-11-04 00:30:29','all',1),(10,'Mon compte','','monCompte.php',11,'0000-00-00 00:00:00','2013-12-20 13:57:19','all',1),(11,'Gestion utilisateurs','','creationCompte.php',NULL,'0000-00-00 00:00:00','2012-10-25 11:24:55','admin',1),(12,'Gestion calendrier','Saisir les dates de vacances scolaires et des périodes de charge','',6,'2012-10-14 15:04:11','2012-12-30 20:42:05','cds',1),(13,'2014','','tableauxCong.php?year=2014',NULL,'0000-00-00 00:00:00','2014-06-17 20:52:07','all',1),(14,'2015','','tableauxCong.php?year=2015',NULL,'0000-00-00 00:00:00','2014-06-17 20:52:07','all',1),(15,'Titres édités','Liste des titres de congés déjà édités','litc.php',NULL,'2014-02-28 13:15:45','2014-03-06 11:37:47','admin,teamEdit',1),(30,'Mise hors ligne','Mettre en et hors ligne le site','administration.php',NULL,'2012-10-25 01:43:27','2012-10-25 10:39:56','admin',1),(31,'Briefings','Ajout et modification des dates de briefings','gestion.php?q=briefing',NULL,'2012-10-25 10:08:32','2014-03-06 11:37:18','cds,ce',1),(32,'Période de charge','Ajout et modif des périodes de charge','gestion.php?q=charge',NULL,'2012-10-25 10:08:32','2012-12-30 20:42:05','cds',1),(33,'Vacances scolaires','Ajout et modif des vacances scolaires','gestion.php?q=vacances',NULL,'2012-10-25 10:09:10','2012-12-30 20:42:05','cds',1),(34,'Planning universel','','planning_universel.html',NULL,'2012-10-25 12:29:33','2012-10-25 10:37:37','all',0),(35,'Planning','','planning.php',NULL,'2012-10-25 12:29:33','2012-10-25 10:29:33','all',0),(36,'Situations répétitives','Ajoute des dispo sur de longue périodes','addMultipleDispoUser.php',NULL,'2013-04-21 16:08:28','2013-12-20 13:27:40','all',1),(37,'Saisie Heures','Saisie des heures','saisieHeures.php',NULL,'2013-05-10 09:23:01','2014-03-06 11:39:03','cds,heures,ce',1),(38,'Gestion utilisateur','Ajout et suppression d\'utilisateur','',9,'2013-06-30 09:50:26','2014-03-06 11:37:47','admin,teamEdit',1),(39,'Impersonate','Prendre la personnalité de quelqu\'un d\'autre','impersonate.php',NULL,'2013-07-10 23:14:15','2013-07-10 21:15:28','all',1),(40,'gestion des utilisateurs','Ajoute, supprime des utilisateurs, affecte les droits...','gestionUtilisateur.php',NULL,'2013-08-22 18:46:07','2014-03-06 11:37:47','admin,teamEdit',1),(41,'Maintenance','','maintenance.php',10,'2013-11-12 18:25:07','2013-11-12 17:25:07','admin',1),(42,'update','Script de mise à jour','update.php',NULL,'2013-11-12 18:25:07','2013-11-12 17:25:58','admin',0),(43,'Maintenance DB','Vérification et réparation de la base de données','maintenance.php',NULL,'2013-11-12 18:25:07','2013-11-12 17:25:07','admin',1),(44,'Péréquations','Ajoute, supprime des péréquations aux utilisateurs','pereq.php',NULL,'2013-11-13 15:30:09','2014-03-06 11:37:58','admin,teamEdit,cds',1),(45,'Mes infos','information se rapportant à un compte utilisateur','monCompte.php',NULL,'2013-11-20 17:15:53','2013-12-20 13:54:40','all',1),(46,'Mon équipe','Annuaire des utlilsateurs','annuaire.php',NULL,'2013-11-20 17:20:30','2013-12-20 13:55:05','all',1),(47,'Distribution des heures','','distribHeures.php',NULL,'2013-12-18 14:46:55','2014-03-06 11:38:40','admin,heures,cds',1),(48,'Mes heures','','mesHeures.php',NULL,'2013-12-18 14:48:14','2013-12-18 13:48:14','all',1),(49,'Totaux heures','Liste les totaux des heures pour vérifier que la configuration de la répartiution est convenable','lesHeures.php',NULL,'2013-12-20 14:34:58','2014-03-06 11:38:40','admin,heures,cds',1),(50,'Heures','Gestion interne des heures (saisie, config et vérification)','',12,'2013-12-20 14:37:28','2014-03-06 11:38:40','admin,heures,cds',1),(51,'Ajout utilisateur','','ajoutUtilisateur.php',NULL,'2014-03-06 22:25:15','2014-03-06 21:25:15','admin',1),(52,'Gestion des rôles','','rolesUtilisateurs.php',NULL,'2014-03-06 22:25:15','2014-03-26 00:52:55','admin,editeurs',1),(53,'Gestion Équipe','Gestion de l\'équipe, des activités...','',13,'2014-04-27 17:16:13','2014-04-27 15:16:13','editeurs',1),(54,'Ajout d\'activité','Ajoute des activités pour l\'équipe','activites.php',NULL,'2014-04-27 17:16:13','2014-04-27 15:16:13','editeurs',1);
+INSERT INTO `TBL_ELEMS_MENUS` (`idx`, `titre`, `description`, `lien`, `sousmenu`, `creation`, `modification`, `allowed`, `actif`) VALUES (1,'Planning','Planning annuel','planning_universel.html',7,'0000-00-00 00:00:00','2012-10-25 10:28:20','all',1),(2,'Grille','Affichage de la grille sous différents formats','affiche_grille.php?nbCycle=3',2,'0000-00-00 00:00:00','2013-06-05 17:02:49','all',1),(3,'Décomptes','Affichages des décomptes divers','tableauxCong.php',3,'0000-00-00 00:00:00','2012-10-13 23:29:33','all',1),(4,'Administration','Lien vers les pages d\'administration','',4,'0000-00-00 00:00:00','2014-06-18 23:03:05','teamEdit',1),(5,'logout','Déconnexion de l\'interface','logout.php',NULL,'0000-00-00 00:00:00','2012-10-13 23:29:33','all',1),(6,'Un cycle','Affichage d\'un cycle unique de la grille','affiche_grille.php',NULL,'0000-00-00 00:00:00','2013-12-21 11:56:56','all',1),(7,'Trois cycles','Affichage de trois cycles de la grille','affiche_grille.php?nbCycle=3',NULL,'0000-00-00 00:00:00','2013-06-05 17:06:24','all',1),(8,'Congés','','tableauxCong.php',5,'0000-00-00 00:00:00','2012-10-24 22:27:55','all',1),(9,'Évènements','','tableauxEvenSpec.php',8,'0000-00-00 00:00:00','2012-11-04 00:30:29','all',1),(10,'Mon compte','','monCompte.php',11,'0000-00-00 00:00:00','2013-12-20 13:57:19','all',1),(11,'Gestion utilisateurs','','creationCompte.php',NULL,'0000-00-00 00:00:00','2012-10-25 11:24:55','admin',1),(12,'Gestion calendrier','Saisir les dates de vacances scolaires et des périodes de charge','',6,'2012-10-14 15:04:11','2014-06-18 23:03:05','teamEdit',1),(13,'2014','','tableauxCong.php?year=2014',NULL,'0000-00-00 00:00:00','2014-06-18 23:14:11','all',1),(14,'2015','','tableauxCong.php?year=2015',NULL,'0000-00-00 00:00:00','2014-06-18 23:14:12','all',1),(15,'Titres édités','Liste des titres de congés déjà édités','litc.php',NULL,'2014-02-28 13:15:45','2014-06-18 23:05:18','teamEdit',1),(30,'Mise hors ligne','Mettre en et hors ligne le site','administration.php',NULL,'2012-10-25 01:43:27','2012-10-25 10:39:56','admin',1),(31,'Briefings','Ajout et modification des dates de briefings','gestion.php?q=briefing',NULL,'2012-10-25 10:08:32','2014-06-18 23:03:05','teamEdit',1),(32,'Période de charge','Ajout et modif des périodes de charge','gestion.php?q=charge',NULL,'2012-10-25 10:08:32','2014-06-18 23:03:05','teamEdit',1),(33,'Vacances scolaires','Ajout et modif des vacances scolaires','gestion.php?q=vacances',NULL,'2012-10-25 10:09:10','2014-06-18 23:03:05','teamEdit',1),(34,'Planning universel','','planning_universel.html',NULL,'2012-10-25 12:29:33','2012-10-25 10:37:37','all',0),(35,'Planning','','planning.php',NULL,'2012-10-25 12:29:33','2012-10-25 10:29:33','all',0),(36,'Situations répétitives','Ajoute des dispo sur de longue périodes','addMultipleDispoUser.php',NULL,'2013-04-21 16:08:28','2013-12-20 13:27:40','all',1),(37,'Saisie Heures','Saisie des heures','saisieHeures.php',NULL,'2013-05-10 09:23:01','2014-06-18 23:00:26','heures',1),(38,'Gestion utilisateur','Ajout et suppression d\'utilisateur','',9,'2013-06-30 09:50:26','2014-06-18 23:05:58','editeurs',1),(39,'Impersonate','Prendre la personnalité de quelqu\'un d\'autre','impersonate.php',NULL,'2013-07-10 23:14:15','2013-07-10 21:15:28','all',1),(40,'gestion des utilisateurs','Ajoute, supprime des utilisateurs, affecte les droits...','gestionUtilisateur.php',NULL,'2013-08-22 18:46:07','2014-06-18 23:06:14','admin',1),(41,'Maintenance','','maintenance.php',10,'2013-11-12 18:25:07','2013-11-12 17:25:07','admin',1),(42,'update','Script de mise à jour','update.php',NULL,'2013-11-12 18:25:07','2013-11-12 17:25:58','admin',0),(43,'Maintenance DB','Vérification et réparation de la base de données','maintenance.php',NULL,'2013-11-12 18:25:07','2013-11-12 17:25:07','admin',1),(44,'Péréquations','Ajoute, supprime des péréquations aux utilisateurs','pereq.php',NULL,'2013-11-13 15:30:09','2014-06-18 23:03:05','teamEdit',1),(45,'Mes infos','information se rapportant à un compte utilisateur','monCompte.php',NULL,'2013-11-20 17:15:53','2013-12-20 13:54:40','all',1),(46,'Mon équipe','Annuaire des utlilsateurs','annuaire.php',NULL,'2013-11-20 17:20:30','2013-12-20 13:55:05','all',1),(47,'Distribution des heures','','distribHeures.php',NULL,'2013-12-18 14:46:55','2014-06-18 23:00:26','heures',1),(48,'Mes heures','','mesHeures.php',NULL,'2013-12-18 14:48:14','2013-12-18 13:48:14','all',1),(49,'Totaux heures','Liste les totaux des heures pour vérifier que la configuration de la répartiution est convenable','lesHeures.php',NULL,'2013-12-20 14:34:58','2014-06-18 23:00:26','heures',1),(50,'Heures','Gestion interne des heures (saisie, config et vérification)','',12,'2013-12-20 14:37:28','2014-06-18 23:00:26','heures',1),(51,'Ajout utilisateur','','ajoutUtilisateur.php',NULL,'2014-03-06 22:25:15','2014-03-06 21:25:15','admin',1),(52,'Gestion des rôles','','rolesUtilisateurs.php',NULL,'2014-03-06 22:25:15','2014-06-18 23:06:52','editeurs',1),(53,'Gestion Équipe','Gestion de l\'équipe, des activités...','',13,'2014-04-27 17:16:13','2014-04-27 15:16:13','editeurs',1),(54,'Ajout d\'activité','Ajoute des activités pour l\'équipe','activites.php',NULL,'2014-04-27 17:16:13','2014-04-27 15:16:13','editeurs',1);
 /*!40000 ALTER TABLE `TBL_ELEMS_MENUS` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -699,7 +619,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `TBL_ARTICLES` WRITE;
 /*!40000 ALTER TABLE `TBL_ARTICLES` DISABLE KEYS */;
-INSERT INTO `TBL_ARTICLES` (`idx`, `titre`, `description`, `texte`, `analyse`, `creation`, `modification`, `restricted`, `actif`) VALUES (1,'Licence','','TeamTime est distribué sous licence AGPL v3.\r\nVous pouvez donc l\'utiliser librement, le copier, le modifier, le redistribuer à condition de respecter les termes de la licence.{br}{br}\r\nPour de plus amples informations, reportez-vous au site {lien:http://gnu.org/licenses/|http://gnu.org/licenses/} ou rapprochez-vous de l\'auteur.',1,'2012-08-27 03:07:53','2012-10-14 11:06:53',0,1),(2,'Votre compte a été créé','','Vous pouvez vous connecter dès maintenant en cliquant sur « Connexion ».',0,'2014-06-08 23:55:41','2014-06-08 22:13:34',0,1);
+INSERT INTO `TBL_ARTICLES` (`idx`, `titre`, `description`, `texte`, `analyse`, `creation`, `modification`, `restricted`, `actif`) VALUES (1,'Licence','','TeamTime est distribué sous licence AGPL v3.\r\nVous pouvez donc l\'utiliser librement, le copier, le modifier, le redistribuer à condition de respecter les termes de la licence.{br}{br}\r\nPour de plus amples informations, reportez-vous au site {lien:http://gnu.org/licenses/|http://gnu.org/licenses/} ou rapprochez-vous de l\'auteur.',1,'2012-08-27 03:07:53','2012-10-14 11:06:53',0,1);
 /*!40000 ALTER TABLE `TBL_ARTICLES` ENABLE KEYS */;
 UNLOCK TABLES;
 

@@ -134,9 +134,7 @@ if (!array_key_exists('uid', $_POST) && !array_key_exists('iWantMyselfBack', $_G
 	$sql = sprintf("
 		SELECT * FROM `TBL_USERS` AS `TU`
 		, `TBL_AFFECTATION` AS `TA`
-		, `TBL_CLASSE` AS `TC`
 		WHERE `TA`.`uid` = `TU`.`uid`
-		AND `TC`.`uid` = `TU`.`uid`
 		AND `TU`.`uid` = '%s'
 		", $_SESSION['db']->db_real_escape_string($_POST['uid'])
 	);
@@ -161,9 +159,7 @@ if (!array_key_exists('uid', $_POST) && !array_key_exists('iWantMyselfBack', $_G
 	$sql = sprintf("
 		SELECT * FROM `TBL_USERS` AS `TU`
 		, `TBL_AFFECTATION` AS `TA`
-		, `TBL_CLASSE` AS `TC`
 		WHERE `TA`.`uid` = `TU`.`uid`
-		AND `TC`.`uid` = `TU`.`uid`
 		AND `TU`.`uid` = '%s'
 		", $_SESSION['db']->db_real_escape_string($_SESSION['iAmVirtual'])
 	);

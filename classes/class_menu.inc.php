@@ -120,7 +120,7 @@ class elemMenu {
 // méthodes de bdd
 	public function db_setElem() {
 		$find_in_set = "";
-		foreach (array_flip(array_flip(array_merge(array('all'), $_SESSION['utilisateur']->roles(), $_SESSION['utilisateur']->classe(date('Y-m-d'))))) as $set) {
+		foreach (array_flip(array_flip(array_merge(array('all'), $_SESSION['utilisateur']->roles()))) as $set) {
 			$find_in_set .= sprintf("FIND_IN_SET('%s', `allowed`) OR ", $_SESSION['db']->db_real_escape_string($set));
 		}
 		$requete = sprintf("
@@ -343,7 +343,7 @@ class menu {
 	}
 	private function _db_setFromDB() {
 		$find_in_set = "";
-		foreach (array_flip(array_flip(array_merge(array('all'), $_SESSION['utilisateur']->roles(), $_SESSION['utilisateur']->classe(date('Y-m-d'))))) as $set) {
+		foreach (array_flip(array_flip(array_merge(array('all'), $_SESSION['utilisateur']->roles()))) as $set) {
 			$find_in_set .= sprintf("FIND_IN_SET('%s', `allowed`) OR ", $_SESSION['db']->db_real_escape_string($set));
 		}
 		$requete = sprintf("
