@@ -440,15 +440,15 @@ function comptePresents(sId)
 	for (var iUid in aListeUid)
 	{
 		var sTemp = '#u'+iUid+sDate;
-		if ($(sTemp).text() == " ") {
+		if ($(sTemp).text() == " " && !$(sTemp).hasClass('absent')) {
 			aPresents[aListeUid[iUid]]++;
 			if (aListeUid[iUid] != 'c') {
 				aPresents['aD']++;
 			}
 		} else {
-			aPresents[aListeUid[iUid]] += aAbsent[$(sTemp).text()];
+			aPresents[aListeUid[iUid]] += aAbsent[$(sTemp).text()] || 0;
 			if (aListeUid[iUid] != 'c') {
-				aPresents['aD'] += aD[$(sTemp).text()];
+				aPresents['aD'] += aD[$(sTemp).text()] || 0;
 			}
 		}
 	}
