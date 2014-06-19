@@ -134,7 +134,7 @@ $sql = sprintf("
 $results = $_SESSION['db']->db_interroge($sql);
 $index = 0;
 while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$onglets[$index] = array('nom'	=> htmlspecialchars($res['type decompte'], ENT_COMPAT, 'UTF-8')
+	$onglets[$index] = array('nom'	=> htmlspecialchars(ucfirst($res['type decompte']), ENT_COMPAT, 'UTF-8')
 		,'quantity'		=> 10
 		,'param'		=> $res['did']
 	);

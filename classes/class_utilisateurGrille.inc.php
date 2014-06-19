@@ -1189,11 +1189,11 @@ class utilisateursDeLaGrille {
 						// Ajout d'une colonne pour les compteurs uniquement après la dernière grille
 						foreach (array_keys($evenSpec) as $even) {
 							$grille[$compteurLigne][] = array(
-								'classe'		=> ""
+								'classe'		=> "semaine w15"
 								,'id'			=> str_replace(" ", "", $evenSpec[$even]['nomLong']) // Certains noms longs comportent des espaces, ce qui n'est pas autorisé pour un id
 								,'date'			=> ""
-								,'nom'			=> htmlentities($even, ENT_NOQUOTES, 'utf-8')
-								,'title'		=> $evenSpec[$even]['nomLong']
+								,'nom'			=> "<div class='compteur-vertical'>" . htmlentities(ucfirst($even), ENT_NOQUOTES, 'utf-8') . "</div>"
+								,'title'		=> ""
 							);
 						}
 					}

@@ -57,6 +57,19 @@ div.nobrief {
 .dateGrille a:hover {
 	color:#333;
 }
+.compteur-vertical {
+	-webkit-transform-origin:50 0;
+	-ms-transform-origin:50 0;
+	transform-origin:50 0;
+	-webkit-transform:rotate(90deg);
+	-ms-transform:rotate(90deg);
+	transform: rotate(90deg);
+	width:25px;
+	margin-top:-20px;
+}
+.w15 {
+	width:15px;
+}
 /*
  * Affichage des utilisateurs dans la grille
 */
