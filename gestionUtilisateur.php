@@ -1,7 +1,7 @@
 <?php
 /* gestionUtilisateur.php
  *
- * Page permetta,t de gérer les informations d'un utilisateur
+ * Page permettat de gérer les informations d'un utilisateur
  *
  */
 
@@ -128,7 +128,7 @@ if (isset($_GET['fin'])) {
 }
 
 
-if (empty($_POST['nom'])) { // On vérifie que des données de formulaire n'ont pas été envoyées
+if (!array_key_exists('nom', $_POST)) { // On vérifie que des données de formulaire n'ont pas été envoyées
 	if (isset($_SESSION['ADMIN'])) {
 		if (isset($_GET['centre'])) {
 			$centre = $_GET['centre'];
