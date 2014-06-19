@@ -127,10 +127,11 @@ if (array_key_exists('ADMIN', $_SESSION) && array_key_exists('uid', $_REQUEST)) 
 	$utilisateur = new UtilisateurGrille( (int) $_REQUEST['uid']);
 } else {
 	// Les utilisateurs editeurs peuvent accéder au compte des utilisateurs de leur équipe
-	if (array_key_exists('EDITEURS') && array_key_exists('uid', $_REQUEST)) {
+	if (array_key_exists('EDITEURS', $_SESSION) && array_key_exists('uid', $_REQUEST)) {
 		$utilisateur = new UtilisateurGrille( (int) $_REQUEST['uid']);
 		if ($_SESSION['utilisateur']->centre() != $utilisateur->centre() || $_SESSION['utilisateur']->team() != $utilisateur->team()) {
-			$utilisateur = clone $_SESSION['utilisateur'];
+			$err = "Vous n'êtes pas autorisé à modifier ce compte...";
+			die ($err);
 		}
 	} else {
 		$utilisateur = new UtilisateurGrille( $_SESSION['utilisateur']->uid());
@@ -141,13 +142,16 @@ if (!is_a($utilisateur, 'utilisateurGrille')) {
 }
 
 if (sizeof($_POST) > 0) {
-	if (!array_key_exists('ADMIN', $_SESSION)) $_POST['uid'] = $_SESSION['utilisateur']->uid();
+	if (!array_key_exists('EDITEURS', $_SESSION) && $_POST['uid'] != $_SESSION['utilisateur']->uid()) {
+		$err = "Vous n'êtes pas autorisé à modifier ce compte...";
+		die ($err);
+	}
 	if (array_key_exists('submitAffect', $_POST)) {
 		$utilisateur->addAffectation($_POST);
 	} else {
-		if (array_key_exists('actif', $_POST) && array_key_exists('ADMIN', $_SESSION)) $_POST['actif'] = 1;
-		if (array_key_exists('locked', $_POST) && array_key_exists('ADMIN', $_SESSION)) $_POST['locked'] = 0;
-		if (array_key_exists('totd', $_POST) && array_key_exists('ADMIN', $_SESSION)) $_POST['showtipoftheday'] = 0;
+		if (array_key_exists('actif', $_POST) && array_key_exists('EDITEURS', $_SESSION)) $_POST['actif'] = 1;
+		if (array_key_exists('locked', $_POST) && array_key_exists('EDITEURS', $_SESSION)) $_POST['locked'] = 0;
+		if (array_key_exists('totd', $_POST) && array_key_exists('EDITEURS', $_SESSION)) $_POST['showtipoftheday'] = 0;
 
 		$utilisateur->setFromRow($_POST);
 
