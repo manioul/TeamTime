@@ -26,7 +26,7 @@
 define('INSTALL_DIR', "/var/www/TeamTime");
 
 // Numéro de version de l'application
-define('VERSION', "2.1c");
+define('VERSION', "2.2a");
 
 // Les constantes relatives à des erreurs critiques sont préfixées par ERR_
 // Les constantes relatives à des erreurs fatales sont préfixées par FAT_
