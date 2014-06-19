@@ -69,6 +69,7 @@ div.nobrief {
 }
 .w15 {
 	width:15px;
+	overflow:hidden;
 }
 /*
  * Affichage des utilisateurs dans la grille
