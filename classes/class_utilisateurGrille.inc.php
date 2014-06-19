@@ -60,7 +60,7 @@ class utilisateurGrille extends utilisateur {
 	private $indexPage; // L'index de la page favorite (ouverte après la connexion) dans le tableaux $availablePages
 	private $dispos; /* un tableau contenant un tableau des dispos indexées par les dates:
 			* $dispos[date] = array('dispo1', 'dispo2',... 'dispoN'); */
-	private $messages;
+	private $messages = array();
 	private static $label = array();
 	private static $availablePages = array(
 		1	=> array ('titre'	=> 'Cycle unique'
