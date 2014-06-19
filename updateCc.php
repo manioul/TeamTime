@@ -63,7 +63,7 @@ require_once 'Mail/mime.php';
 $err = '';
 
 // Vérifie si un formulaire a été posté
-if (!empty($_POST['login']) && !empty($_POST['nom']) && !empty($_POST['email'])) {
+if (array_key_exists('login', $_POST) && array_key_exists('nom', $_POST) && array_key_exists('email', $_POST)) {
 	$to = $_POST['email'];
 	$login = $_POST['login'];
 	$passwd = $_POST['password'];
