@@ -932,23 +932,30 @@ class utilisateursDeLaGrille {
 		return $array;
 	}
 	public function getActiveUsersCell($from, $to, $centre = 'athis', $team = '9e') {
-		$sql = "SELECT `a`.`uid`
+		$sql = sprintf("
+			SELECT `a`.`uid`
 			, `nom`
 			, `prenom`
 			, `classe`
 			FROM `classes` AS `c`
 			, `TBL_AFFECTATION` AS `a`
 			WHERE `a`.`uid` = `c`.`uid`
-			AND `a`.`centre` = '$centre'
-			AND `a`.`team` = '$team'
-			AND `a`.`beginning` <= '$to'
-			AND `a`.`end` >= '$from'
-			AND `c`.`beginning` <= '$to'
-			AND `c`.`end` >= '$from'
+			AND `a`.`centre` = '%s'
+			AND `a`.`team` = '%s'
+			AND `a`.`beginning` <= '%s'
+			AND `a`.`end` >= '%s'
+			AND `c`.`beginning` <= '%s'
+			AND `c`.`end` >= '%s'
 			AND `actif`  IS TRUE
 			ORDER BY `poids` ASC
-			, `nom` ASC
-			";
+			, `nom` ASC"
+			, $_SESSION['db']->db_real_escape_string($centre)
+			, $_SESSION['db']->db_real_escape_string($team)
+			, $_SESSION['db']->db_real_escape_string($to)
+			, $_SESSION['db']->db_real_escape_string($from)
+			, $_SESSION['db']->db_real_escape_string($to)
+			, $_SESSION['db']->db_real_escape_string($from)
+		);
 		$oldUid = -1; // Pour gérer des classes multiples
 		$i = 0;
 		$result = $_SESSION['db']->db_interroge($sql);

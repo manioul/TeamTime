@@ -51,9 +51,9 @@ class jourTravail extends Date {
 			return "N'éditez que votre ligne, svp.";
 		}
 		$sql = sprintf("CALL addDispo(%d, '%s', '%s', NULL, %s)"
-			, $dispo['uid']
-			, $dispo['date']
-			, $dispo['dispo']
+			, (int) $dispo['uid']
+			, $_SESSION['db']->db_real_escape_string($dispo['date'])
+			, $_SESSION['db']->db_real_escape_string($dispo['dispo'])
 			, (!empty($dispo['pereq']) ? 'TRUE' : 'FALSE')
 		);
 		$_SESSION['db']->db_interroge($sql);
