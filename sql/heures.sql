@@ -108,7 +108,7 @@ BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE gradeFixed VARCHAR(64);
 	DECLARE typeFixed VARCHAR(64);
-	DECLARE userid, dispoid, ruleid, eleves, instructeursId, unattr, didFixed INT;
+	DECLARE uid_, dispoid, ruleid, eleves, instructeursId, unattr, didFixed INT;
 	DECLARE valeurFixed, heuresLeft, inst, heuresEach FLOAT;
 	DECLARE nbInstructeurs INT DEFAULT 5; -- Nombre de personnes (moins une) qui se partageront les heures d'instruction
 	-- Recherche les dispo des utilisateurs présents
@@ -211,11 +211,11 @@ BEGIN
 	-- Remplit les did
 	OPEN curDisp;
 	REPEAT
-	FETCH curDisp INTO userid, dispoid;
+	FETCH curDisp INTO uid_, dispoid;
 	IF NOT done THEN
 		UPDATE tmpPresents
 		SET did = dispoid
-		WHERE uid = userid;
+		WHERE uid = uid_;
 	END IF;
 	UNTIL done END REPEAT;
 	SET done = 0;
@@ -535,12 +535,12 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS addHeuresIndividuelles|
-CREATE PROCEDURE addHeuresIndividuelles( IN userid INT, IN dateH DATE, IN normal FLOAT, IN instruc FLOAT, IN simul FLOAT )
+CREATE PROCEDURE addHeuresIndividuelles( IN uid_ SMALLINT(6), IN dateH DATE, IN normal FLOAT, IN instruc FLOAT, IN simul FLOAT )
 BEGIN
 	REPLACE INTO TBL_HEURES
 		(uid, date, normales, instruction, simulateur, statut)
 		VALUES
-		(userid, dateH, normal, instruc, simul, 'unattr');
+		(uid_, dateH, normal, instruc, simul, 'unattr');
 END
 |
 

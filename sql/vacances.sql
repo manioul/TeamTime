@@ -15,7 +15,7 @@ ALTER TABLE TBL_VACANCES_A_ANNULER ADD edited BOOLEAN NOT NULL DEFAULT FALSE;
 
 DELIMITER |
 DROP PROCEDURE IF EXISTS attribAnneeConge|
-CREATE PROCEDURE attribAnneeConge( IN userid INT(11) , IN date_ DATE , IN annee_ SMALLINT(6) )
+CREATE PROCEDURE attribAnneeConge( IN uid_ SMALLINT(6) , IN date_ DATE , IN annee_ SMALLINT(6) )
 BEGIN
 	DECLARE shiftDid INT(11);
 	DECLARE dispoid INT(11);
@@ -25,7 +25,7 @@ BEGIN
 	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
 	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
 
-	CALL searchAffectation(userid, date_, centre_, team_, grad);
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
 
 	-- Recherche le sdid en vérifiant qu'il correspond à un congé
 	-- Recherche également le did pour les traitements spéciaux (cas des demi-cycles)
@@ -35,7 +35,7 @@ BEGIN
 	TBL_VACANCES AS v
 	WHERE l.sdid = v.sdid
 	AND date = date_
-	AND uid = userid;
+	AND uid = uid_;
 
 	IF dispoid = 1 THEN
 		-- Définit le début et fin du demi-cycle
@@ -48,13 +48,13 @@ BEGIN
 			TBL_VACANCES AS v
 			WHERE l.sdid = v.sdid
 			AND date = date_
-			AND uid = userid;
+			AND uid = uid_;
 			IF dispoid = 1 THEN
 				-- Attribue l'année du congé
 				CALL __attribAnneeConge(shiftDid, annee_);
 			ELSE
 				-- Le did n'est pas celui attendu : le type de congé ne correspond pas.
-				CALL messageSystem('Le type de congé ne correspond pas : on attendait un did de 1', 'ERREUR', 'attribAnneeConge', 'erreur de did', NULL, CONCAT('userid:', userid, ';date:', date_, ';annee_:', annee_, ';dispoid:', dispoid));
+				CALL messageSystem('Le type de congé ne correspond pas : on attendait un did de 1', 'ERREUR', 'attribAnneeConge', 'erreur de did', NULL, CONCAT('uid:', uid_, ';date:', date_, ';annee_:', annee_, ';dispoid:', dispoid));
 			END IF;
 			SET date_ = DATE_ADD(date_, INTERVAL 1 DAY);
 		UNTIL date_ > finDemiCycle END REPEAT;
@@ -72,7 +72,7 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS toggleAnneeConge|
-CREATE PROCEDURE toggleAnneeConge( IN userid INT(11) , IN date_ DATE )
+CREATE PROCEDURE toggleAnneeConge( IN uid_ SMALLINT(6) , IN date_ DATE )
 BEGIN
 	DECLARE annee, year_ SMALLINT(6) DEFAULT NULL;
 	DECLARE sdid_, did_ INT(11);
@@ -81,7 +81,7 @@ BEGIN
 	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
 	DECLARE grade_ VARCHAR(64); -- Le grade de l'utilisateur à la date date_
 
-	CALL searchAffectation(userid, date_, centre_, team_, grade_);
+	CALL searchAffectation(uid_, date_, centre_, team_, grade_);
 
 	SELECT year, l.sdid, did
 	INTO year_, sdid_, did_
@@ -89,7 +89,7 @@ BEGIN
 	, TBL_L_SHIFT_DISPO AS l
 	WHERE date = date_
 	AND l.sdid = v.sdid
-	AND uid = userid;
+	AND uid = uid_;
 
 	-- Traitement des V
 	IF did_ = 1 THEN
@@ -100,7 +100,7 @@ BEGIN
 			WHERE sdid IN (SELECT sdid
 				FROM TBL_L_SHIFT_DISPO AS l
 				WHERE date BETWEEN debutDemiCycle AND finDemiCycle
-				AND uid = userid);
+				AND uid = uid_);
 		ELSE
 			CALL dateLimiteConges(YEAR(date_) - 1, centre_, dateLimite);
 			IF date_ <= dateLimite THEN
@@ -110,7 +110,7 @@ BEGIN
 				WHERE sdid IN (SELECT sdid
 					FROM TBL_L_SHIFT_DISPO AS l
 					WHERE date BETWEEN debutDemiCycle AND finDemiCycle
-					AND uid = userid);
+					AND uid = uid_);
 			END IF;
 		END IF;
 	ELSE
@@ -202,7 +202,7 @@ END
 -- Passer NULL comme oldDisponibilite pour supprimer automatiquement l'ancienne dispo sur la date/l'utilisateur
 -- oldDisponibilite est systématiquement dixé à NULL dans la mesure où l'on n'utilise pas de dispo multiples
 DROP PROCEDURE IF EXISTS addDispo|
-CREATE PROCEDURE addDispo( IN userid INT(11) , IN date_ DATE , IN disponibilite VARCHAR(16) , IN oldDisponibilite VARCHAR(16) , IN perequation BOOLEAN )
+CREATE PROCEDURE addDispo( IN uid_ SMALLINT(6) , IN date_ DATE , IN disponibilite VARCHAR(16) , IN oldDisponibilite VARCHAR(16) , IN perequation BOOLEAN )
 BEGIN
 	-- /!\
 	-- La date détermine l'affectation de l'utilisateur
@@ -218,7 +218,7 @@ BEGIN
 	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
 	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
 
-	CALL searchAffectation(userid, date_, centre_, team_, grad);
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
 
 	-- oldDisponibilite est systématiquement fixé à NULL dans la mesure où l'on n'utilise pas de dispo multiples
 	SET oldDisponibilite = NULL;
@@ -272,7 +272,7 @@ BEGIN
 			FROM TBL_L_SHIFT_DISPO AS l
 			, TBL_DISPO AS d
 			WHERE date = date_
-			AND uid = userid
+			AND uid = uid_
 			AND l.did = d.did
 			AND (centre = centre_ OR centre = 'all')
 			AND (team = team_ OR team = 'all')
@@ -280,7 +280,7 @@ BEGIN
 		END IF;
 		-- Supprime l'ancienne dispo
 		IF oldDisponibilite != "" THEN
-			CALL delDispo( userid, date_, oldDisponibilite, FALSE);
+			CALL delDispo( uid_, date_, oldDisponibilite, FALSE);
 		END IF;
 		IF disponibilite != "" THEN
 			-- Vérifie si la nouvelle dispo est un congé
@@ -294,21 +294,21 @@ BEGIN
 			CALL messageSystem('La nouvelle dispo est-elle un congé ?', 'DEBUG', 'addDispo', NULL, CONCAT('dispoid:', dispoid, ';typeDecompte:', typeDecompte));
 			-- Si la dispo est un congé
 			IF typeDecompte = 'conges' THEN
-				CALL addConges( userid, date_, dispoid, perequation );
+				CALL addConges( uid_, date_, dispoid, perequation );
 			ELSE
 				INSERT INTO TBL_L_SHIFT_DISPO
 				(date, uid, did, pereq)
 				VALUES
-				(date_, userid, dispoid, perequation);
+				(date_, uid_, dispoid, perequation);
 			END IF;
 		END IF;
 	ELSE -- La date n'est pas éditable
-		CALL messageSystem("La date n'est pas éditable", 'USER', 'addDispo', 'read only', CONCAT("userid:", userid, ";date:", date_, ";dipo:", disponibilite, ";"));
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'addDispo', 'read only', CONCAT("uid_:", uid_, ";date:", date_, ";dipo:", disponibilite, ";"));
 	END IF;
 END
 |
 DROP PROCEDURE IF EXISTS addConges|
-CREATE PROCEDURE addConges( IN userid INT(11) , IN date_ DATE , IN dispoid INT(11) , IN perequation BOOLEAN )
+CREATE PROCEDURE addConges( IN uid_ SMALLINT(6) , IN date_ DATE , IN dispoid INT(11) , IN perequation BOOLEAN )
 BEGIN
 	DECLARE isReadOnly BOOLEAN DEFAULT 0;
 	DECLARE	congeDispo BOOLEAN DEFAULT 1;
@@ -322,7 +322,7 @@ BEGIN
 	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
 	DECLARE vac VARCHAR(8);
 
-	CALL searchAffectation(userid, date_, centre_, team_, grad);
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
 
 	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
 	IF NOT perequation THEN
@@ -392,9 +392,9 @@ BEGIN
 			WHERE l.did = dispoid
 			AND d.did = l.did
 			AND v.sdid = l.sdid
-			AND uid = userid
+			AND uid = uid_
 			AND year = YEAR(date_) - 1;
-			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_) - 1, ':', reliquat, ';uid:', userid, ';did:', dispoid));
+			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_) - 1, ':', reliquat, ';uid:', uid_, ';did:', dispoid));
 			IF reliquat > 0 THEN
 				SET anneeConge = YEAR(date_) - 1;
 			ELSE
@@ -408,15 +408,15 @@ BEGIN
 				WHERE l.did = dispoid
 				AND d.did = l.did
 				AND v.sdid = l.sdid
-				AND uid = userid
+				AND uid = uid_
 				AND year = YEAR(date_);
-				CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_), ':', reliquat, ';uid:', userid, ';did:', dispoid));
+				CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_), ':', reliquat, ';uid:', uid_, ';did:', dispoid));
 				IF reliquat > 0 THEN
 					SET anneeConge = YEAR(date_);
 				ELSE
 					-- Plus de congé de ce type disponible
 					SET congeDispo = FALSE;
-					CALL messageSystem('Plus de congé de ce type disponible', 'USER', 'addConges', 'Plus de congé', CONCAT('uid:', userid, ';reliquat_', YEAR(date_), ':', reliquat, ';did:', dispoid));
+					CALL messageSystem('Plus de congé de ce type disponible', 'USER', 'addConges', 'Plus de congé', CONCAT('uid:', uid_, ';reliquat_', YEAR(date_), ':', reliquat, ';did:', dispoid));
 				END IF;
 			END IF;
 		ELSE
@@ -430,15 +430,15 @@ BEGIN
 			WHERE l.did = dispoid
 			AND d.did = l.did
 			AND v.sdid = l.sdid
-			AND uid = userid
+			AND uid = uid_
 			AND year = YEAR(date_);
-			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat:', reliquat, ';uid:', userid, ';did:', dispoid));
+			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat:', reliquat, ';uid:', uid_, ';did:', dispoid));
 			IF reliquat > 0 THEN
 				SET anneeConge = YEAR(date_);
 			ELSE
 				-- Plus de congé de ce type disponible
 				SET congeDispo = FALSE;
-				CALL messageSystem('Plus de congé de ce type disponible', 'USER', 'addConges', 'Plus de congé', CONCAT('reliquat_', YEAR(date_), ':', reliquat, ';uid:', userid, ';did:', dispoid));
+				CALL messageSystem('Plus de congé de ce type disponible', 'USER', 'addConges', 'Plus de congé', CONCAT('reliquat_', YEAR(date_), ':', reliquat, ';uid:', uid_, ';did:', dispoid));
 			END IF;
 		END IF;
 
@@ -450,43 +450,43 @@ BEGIN
 					SET date_ = debutDemiCycle;
 					REPEAT
 					-- Suppression des anciennes occupations
-					CALL delDispo(userid, date_, 
+					CALL delDispo(uid_, date_, 
 								(SELECT dispo
 								FROM TBL_L_SHIFT_DISPO AS l
 								, TBL_DISPO AS d
 								WHERE date = date_
-								AND uid = userid
+								AND uid = uid_
 								AND l.did = d.did
 								AND (centre = centre_ OR centre = 'all')
 								AND (team = team_ OR team = 'all')
 								LIMIT 1)
 							, FALSE);
 					-- Ajout des congés dans la table
-					CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
+					CALL __addConges(uid_, date_, dispoid, anneeConge, perequation);
 					SET date_ = DATE_ADD(date_, INTERVAL 1 DAY);
 					UNTIL date_ > finDemiCycle END REPEAT;
 				ELSE
-					CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
-					CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
-					CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
+					CALL __addConges(uid_, date_, dispoid, anneeConge, perequation);
+					CALL __addConges(uid_, date_, dispoid, anneeConge, perequation);
+					CALL __addConges(uid_, date_, dispoid, anneeConge, perequation);
 				END IF;
 			ELSE
 				-- Ajout des congés dans la table
-				CALL __addConges(userid, date_, dispoid, anneeConge, perequation);
+				CALL __addConges(uid_, date_, dispoid, anneeConge, perequation);
 			END IF;
 		END IF;
 	ELSE -- La date n'est pas éditable
-		CALL messageSystem("La date n'est pas éditable", 'USER', 'addConges', 'read only', CONCAT("userid:", userid, ";date:", date_, ";dipoid:", dispoid, ";"));
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'addConges', 'read only', CONCAT("uid_:", uid_, ";date:", date_, ";dipoid:", dispoid, ";"));
 	END IF;
 END
 |
 DROP PROCEDURE IF EXISTS __addConges|
-CREATE PROCEDURE __addConges( IN userid INT(11) , IN date_ DATE , IN dispoid INT(11) , IN anneeConge INT(11) , IN perequation BOOLEAN )
+CREATE PROCEDURE __addConges( IN uid_ SMALLINT(6) , IN date_ DATE , IN dispoid INT(11) , IN anneeConge INT(11) , IN perequation BOOLEAN )
 BEGIN
 	INSERT INTO TBL_L_SHIFT_DISPO
 	(date, uid, did, pereq)
 	VALUES
-	(date_, userid, dispoid, perequation);
+	(date_, uid_, dispoid, perequation);
 	INSERT INTO TBL_VACANCES
 	(sdid, etat, year)
 	VALUES
@@ -494,7 +494,7 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS delDispo|
-CREATE PROCEDURE delDispo( IN userid INT(11), IN date_ DATE , IN disponibilite VARCHAR(16) , IN perequation BOOLEAN)
+CREATE PROCEDURE delDispo( IN uid_ SMALLINT(6), IN date_ DATE , IN disponibilite VARCHAR(16) , IN perequation BOOLEAN)
 BEGIN
 	-- /!\
 	-- La date déterrmine l'affectation de l'utilisateur
@@ -509,7 +509,7 @@ BEGIN
 	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
 	DECLARE vac VARCHAR(8);
 
-	CALL searchAffectation(userid, date_, centre_, team_, grad);
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
 
 	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
 	IF NOT perequation THEN
@@ -562,22 +562,22 @@ BEGIN
 
 		-- Si la dispo est un congé
 		IF typeDecompte = 'conges' THEN
-			CALL delConges( userid, date_, dispoid, NULL, perequation );
+			CALL delConges( uid_, date_, dispoid, NULL, perequation );
 		ELSE
 			DELETE FROM TBL_L_SHIFT_DISPO
-			WHERE uid = userid
+			WHERE uid = uid_
 			AND did = dispoid
 			AND date = date_
 			AND pereq = perequation
 			LIMIT 1;
 		END IF;
 	ELSE -- La date n'est pas éditable
-		CALL messageSystem("La date n'est pas éditable", 'USER', 'delDispo', 'read only', CONCAT("userid:", userid, ";date:", date_, ";dipo:", disponibilite, ";"));
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'delDispo', 'read only', CONCAT("uid_:", uid_, ";date:", date_, ";dipo:", disponibilite, ";"));
 	END IF;
 END
 |
 DROP PROCEDURE IF EXISTS delConges|
-CREATE PROCEDURE delConges( IN userid INT(11) , IN date_ DATE , IN dispoid INT(11) , IN anneeConge INT(11) , IN perequation BOOLEAN )
+CREATE PROCEDURE delConges( IN uid_ SMALLINT(6) , IN date_ DATE , IN dispoid INT(11) , IN anneeConge INT(11) , IN perequation BOOLEAN )
 BEGIN
 	-- anneeConge doit être NULL sauf dans le cas de péréquation
 	-- /!\
@@ -593,7 +593,7 @@ BEGIN
 	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
 	DECLARE vac VARCHAR(8);
 
-	CALL searchAffectation(userid, date_, centre_, team_, grad);
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
 
 	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
 	IF NOT perequation THEN
@@ -647,26 +647,26 @@ BEGIN
 				SET date_ = debutDemiCycle;
 				REPEAT
 				-- Supprime des congés de la table
-				CALL __delConges(userid, date_, dispoid, anneeConge, 0);
+				CALL __delConges(uid_, date_, dispoid, anneeConge, 0);
 				SET date_ = DATE_ADD(date_, INTERVAL 1 DAY);
 				UNTIL date_ > finDemiCycle END REPEAT;
 			ELSE
 				-- Supprime des congés de la table
-				CALL __delConges(userid, date_, dispoid, anneeConge, 1);
-				CALL __delConges(userid, date_, dispoid, anneeConge, 1);
-				CALL __delConges(userid, date_, dispoid, anneeConge, 1);
+				CALL __delConges(uid_, date_, dispoid, anneeConge, 1);
+				CALL __delConges(uid_, date_, dispoid, anneeConge, 1);
+				CALL __delConges(uid_, date_, dispoid, anneeConge, 1);
 			END IF;
 		ELSE
 			-- Supprime des congés de la table
-			CALL __delConges(userid, date_, dispoid, anneeConge, perequation);
+			CALL __delConges(uid_, date_, dispoid, anneeConge, perequation);
 		END IF;
 	ELSE -- La date n'est pas éditable
-		CALL messageSystem("La date n'est pas éditable", 'USER', 'delConges', 'read only', CONCAT("userid:", userid, ";date:", date_, ";dipoid:", dispoid, ";"));
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'delConges', 'read only', CONCAT("uid_:", uid_, ";date:", date_, ";dipoid:", dispoid, ";"));
 	END IF;
 END
 |
 DROP PROCEDURE IF EXISTS __delConges|
-CREATE PROCEDURE __delConges( IN userid INT(11) , IN date_ DATE , IN dispoid INT(11) , IN anneeConge INT(11) , IN perequation BOOLEAN )
+CREATE PROCEDURE __delConges( IN uid_ SMALLINT(6) , IN date_ DATE , IN dispoid INT(11) , IN anneeConge INT(11) , IN perequation BOOLEAN )
 BEGIN
 	DECLARE shiftDid INT(11); -- sdid du congé
 	DECLARE	dateLimite DATE; -- date limite des congés de l'année précédente
@@ -676,14 +676,14 @@ BEGIN
 	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
 	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
 
-	CALL searchAffectation(userid, date_, centre_, team_, grad);
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
 	
 	-- Recherche le sdid du congé
 	SELECT sdid
 	INTO shiftDid
 	FROM TBL_L_SHIFT_DISPO
 	WHERE date = date_
-	AND uid = userid
+	AND uid = uid_
 	AND pereq = perequation
 	LIMIT 1;
 	-- Supprime le congé
@@ -700,7 +700,7 @@ BEGIN
 			INSERT INTO TBL_VACANCES_A_ANNULER
 			(uid, did, date)
 			VALUES
-			(userid, dispoid, date_);
+			(uid_, dispoid, date_);
 		END IF;
 		-- Recherche l'année du congé
 		SELECT year
@@ -720,7 +720,7 @@ BEGIN
 			AND YEAR(date) = YEAR(date_)
 			AND date <= dateLimite
 			AND year = YEAR(date_)
-			AND uid = userid
+			AND uid = uid_
 			ORDER BY date ASC
 			LIMIT 1;
 			-- On attribue l'année au congé

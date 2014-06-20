@@ -66,7 +66,7 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS addAffectationTest|
-CREATE PROCEDURE addAffectationTest(IN userid INT(11), IN centr VARCHAR(50) , IN tea VARCHAR(10) , IN grad VARCHAR(64) , IN debut DATE , IN fin DATE)
+CREATE PROCEDURE addAffectationTest(IN uid_ SMALLINT(6), IN centr VARCHAR(50) , IN tea VARCHAR(10) , IN grad VARCHAR(64) , IN debut DATE , IN fin DATE)
 BEGIN
 	DECLARE codeRetour INT(11);
 	DECLARE currentBeginning, currentEnd, prevBeginning, prevEnd, nextBeginning, nextEnd DATE;
@@ -75,18 +75,18 @@ BEGIN
 	SELECT centre, team, grade, beginning, end
 	INTO prevCentre, prevTeam, prevGrade, prevBeginning, prevEnd
 	FROM TBL_AFFECTATION
-	WHERE uid = userid
+	WHERE uid = uid_
 	AND beginning < debut
 	AND end >= beginning
 	ORDER BY beginning DESC
 	LIMIT 0, 1;
 
-	CALL addAffectation(userid, centr, tea, grad, debut, fin, codeRetour );
+	CALL addAffectation(uid_, centr, tea, grad, debut, fin, codeRetour );
 
 	SELECT centre, team, grade, beginning, end
 	INTO currentCentre, currentTeam, currentGrade, currentBeginning, currentEnd
 	FROM TBL_AFFECTATION
-	WHERE uid = userid
+	WHERE uid = uid_
 	AND beginning = debut
 	AND end = fin;
 END
@@ -97,7 +97,7 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS addDispoTest|
-CREATE PROCEDURE addDispoTest(IN userid INT(11), IN dat DATE, IN disponibilite VARCHAR(16), IN oldDisponibilite VARCHAR(16), IN perequation BOOLEAN, IN centr VARCHAR(50), IN tea VARCHAR(10), codeRetourAttendu INT(11))
+CREATE PROCEDURE addDispoTest(IN uid_ SMALLINT(6), IN dat DATE, IN disponibilite VARCHAR(16), IN oldDisponibilite VARCHAR(16), IN perequation BOOLEAN, IN centr VARCHAR(50), IN tea VARCHAR(10), codeRetourAttendu INT(11))
 BEGIN
 END
 |
