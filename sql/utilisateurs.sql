@@ -1,7 +1,7 @@
 DELIMITER |
 -- CREATION/SUPPRESSION UTILISATEURS
 DROP PROCEDURE IF EXISTS __createUtilisateurDb|
-CREATE PROCEDURE __createUtilisateurDb ( IN uid_ INT(11) , IN passwd VARCHAR(64) )
+CREATE PROCEDURE __createUtilisateurDb ( IN uid_ SMALLINT(6) , IN passwd VARCHAR(64) )
 BEGIN
 	INSERT INTO mysql.user
 		(Host, User, Password)
@@ -38,7 +38,7 @@ BEGIN
 	DECLARE centre_ VARCHAR(50);
 	DECLARE team_, classe_ VARCHAR(10);
 	DECLARE beginning_, end_ DATE;
-	DECLARE uid_ INT(11);
+	DECLARE uid_ SMALLINT(6);
 	DECLARE count_ INT(11);
 
 	-- Recherche si le login est déjà utilisé
@@ -110,7 +110,7 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS __deleteUtilisateurDb|
-CREATE PROCEDURE __deleteUtilisateurDb (IN uid_ INT(11))
+CREATE PROCEDURE __deleteUtilisateurDb (IN uid_ SMALLINT(6))
 BEGIN
 	DELETE FROM mysql.db WHERE User = CONCAT('ttm.', uid_);
 	DELETE FROM mysql.user WHERE User = CONCAT('ttm.', uid_);
@@ -118,7 +118,7 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS deleteUser|
-CREATE PROCEDURE deleteUser( IN uid_ INT(11) )
+CREATE PROCEDURE deleteUser( IN uid_ SMALLINT(6) )
 BEGIN
 	CALL __deleteUtilisateurDb( uid_ );
 	UPDATE TBL_USERS
@@ -128,7 +128,7 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS reallyDeleteUser|
-CREATE PROCEDURE reallyDeleteUser( IN uid_ INT(11) )
+CREATE PROCEDURE reallyDeleteUser( IN uid_ SMALLINT(6) )
 BEGIN
 	CALL deleteUser(uid_);
 	DELETE FROM TBL_USERS WHERE uid = uid_;
@@ -143,7 +143,7 @@ END
 |
 -- ROLES
 DROP PROCEDURE IF EXISTS addRole|
-CREATE PROCEDURE addRole( IN uid_ INT(11), IN role_ VARCHAR(10), IN centre_ VARCHAR(50), IN team_ VARCHAR(10), IN beginning_ DATE, IN end_ DATE, IN commentaire_ VARCHAR(150), IN confirmed_ BOOLEAN )
+CREATE PROCEDURE addRole( IN uid_ SMALLINT(6), IN role_ VARCHAR(10), IN centre_ VARCHAR(50), IN team_ VARCHAR(10), IN beginning_ DATE, IN end_ DATE, IN commentaire_ VARCHAR(150), IN confirmed_ BOOLEAN )
 BEGIN
 	-- On ne vérifie pas si l'appelant a le droit d'attribuer le role
 	-- la vérification doit être effectuée côté front-office
@@ -190,7 +190,7 @@ END
 |
 -- AFFECTATIONS
 DROP PROCEDURE IF EXISTS searchAffectation|
-CREATE PROCEDURE searchAffectation( IN uid_ INT(11) , IN dat DATE , OUT centr VARCHAR(50) , OUT tea VARCHAR(10) , OUT grad VARCHAR(64) )
+CREATE PROCEDURE searchAffectation( IN uid_ SMALLINT(6) , IN dat DATE , OUT centr VARCHAR(50) , OUT tea VARCHAR(10) , OUT grad VARCHAR(64) )
 BEGIN
 	SELECT centre, team, grade
 	INTO centr, tea, grad
@@ -321,7 +321,7 @@ END
 |
 -- Cherche l'ancienneté qualifiée (statut C non comptabilisé) dans une affectation de l'agent
 DROP PROCEDURE IF EXISTS setAncienneteAffectQualif|
-CREATE PROCEDURE setAncienneteAffectQualif( IN uid_ INT(11), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
+CREATE PROCEDURE setAncienneteAffectQualif( IN uid_ SMALLINT(6), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
 BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE ancid_ INT(11);
@@ -397,7 +397,7 @@ END
 |
 -- Cherche l'ancienneté qualifiée (statut C non comptabilisé) dans la dernière affectation de l'agent
 DROP PROCEDURE IF EXISTS setAncienneteLastQualif|
-CREATE PROCEDURE setAncienneteLastQualif( IN uid_ INT(11) )
+CREATE PROCEDURE setAncienneteLastQualif( IN uid_ SMALLINT(6) )
 BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE ancid_ INT(11);
@@ -469,7 +469,7 @@ END
 |
 -- Cherche l'ancienneté globale (qualifié et non qualifié) dans une affectation de l'agent
 DROP PROCEDURE IF EXISTS setAncienneteAffectGlobal|
-CREATE PROCEDURE setAncienneteAffectGlobal( IN uid_ INT(11), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
+CREATE PROCEDURE setAncienneteAffectGlobal( IN uid_ SMALLINT(6), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
 BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE ancid_ INT(11);
@@ -538,7 +538,7 @@ END
 |
 -- Cherche l'ancienneté globale (qualifié et non qualifié) dans la dernière affectation de l'agent
 DROP PROCEDURE IF EXISTS setAncienneteLastGlobal|
-CREATE PROCEDURE setAncienneteLastGlobal( IN uid_ INT(11) )
+CREATE PROCEDURE setAncienneteLastGlobal( IN uid_ SMALLINT(6) )
 BEGIN
 	DECLARE done BOOLEAN DEFAULT 0;
 	DECLARE ancid_ INT(11);
@@ -603,7 +603,7 @@ END
 |
 -- Affecte toutes les anciennetés de l'utilisateur
 DROP PROCEDURE IF EXISTS setAncienneteUser|
-CREATE PROCEDURE setAncienneteUser( IN uid_ INT(11), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
+CREATE PROCEDURE setAncienneteUser( IN uid_ SMALLINT(6), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
 BEGIN
 	CALL setAncienneteAffectQualif(uid_, centre_, team_);
 	CALL setAncienneteAffectGlobal(uid_, centre_, team_);
@@ -612,14 +612,14 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS setAnciennete|
-CREATE PROCEDURE setAnciennete( IN uid_ INT(11) )
+CREATE PROCEDURE setAnciennete( IN uid_ SMALLINT(6) )
 BEGIN
 	CALL setAncienneteLastQualif(uid_);
 	CALL setAncienneteLastGlobal(uid_);
 END
 |
 DROP PROCEDURE IF EXISTS setAncienneteAffect|
-CREATE PROCEDURE setAncienneteAffect( IN uid_ INT(11), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
+CREATE PROCEDURE setAncienneteAffect( IN uid_ SMALLINT(6), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
 BEGIN
 	CALL setAncienneteAffectQualif(uid_, centre_, team_);
 	CALL setAncienneteAffectGlobal(uid_, centre_, team_);
@@ -629,7 +629,7 @@ END
 DROP PROCEDURE IF EXISTS ____attribAnciennete|
 CREATE PROCEDURE ____attribAnciennete()
 BEGIN
-	DECLARE uid_ INT(11);
+	DECLARE uid_ SMALLINT(6);
 	DECLARE centre_ VARCHAR(50);
 	DECLARE team_ VARCHAR(10);
 	DECLARE done BOOLEAN DEFAULT FALSE;
