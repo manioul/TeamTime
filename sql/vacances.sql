@@ -223,33 +223,25 @@ BEGIN
 	-- oldDisponibilite est systématiquement fixé à NULL dans la mesure où l'on n'utilise pas de dispo multiples
 	SET oldDisponibilite = NULL;
 
-	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
+	-- Recherche la vacation
+	SELECT vacation
+	INTO vac
+	FROM TBL_CYCLE AS c,
+	TBL_GRILLE AS g
+	WHERE c.cid = g.cid
+	AND date = date_
+	AND g.centre = centre_
+	AND g.team = team_
+	AND (c.centre = centre_ OR c.centre = 'all')
+	AND (c.team = team_ OR c.team = 'all');
+
 	IF NOT perequation THEN
-		SELECT vacation
-		INTO vac
-		FROM TBL_CYCLE AS c,
-		TBL_GRILLE AS g
-		WHERE c.cid = g.cid
-		AND date = date_
-		AND g.centre = centre_
-		AND g.team = team_
-		AND (c.centre = centre_ OR c.centre = 'all')
-		AND (c.team = team_ OR c.team = 'all');
+		-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
 		IF vac = 'Repos' THEN
 			SET isReadOnly = 1;
 		END IF;
 	ELSE
 		-- De même si il s'agit d'une péréquation, on vérifie que la date est un jour de repos
-		SELECT vacation
-		INTO vac
-		FROM TBL_CYCLE AS c,
-		TBL_GRILLE AS g
-		WHERE c.cid = g.cid
-		AND date = date_
-		AND g.centre = centre_
-		AND g.team = team_
-		AND (c.centre = centre_ OR c.centre = 'all')
-		AND (c.team = team_ OR c.team = 'all');
 		IF vac != 'Repos' THEN
 			SET isReadOnly = 1;
 		END IF;
@@ -288,6 +280,7 @@ BEGIN
 			INTO dispoid, typeDecompte
 			FROM TBL_DISPO
 			WHERE dispo = disponibilite
+			AND (`jours possibles` = 'all' OR FIND_IN_SET(vac, `jours possibles`))
 			AND (centre = centre_ OR centre = 'all')
 			AND (team = team_ OR team = 'all');
 
