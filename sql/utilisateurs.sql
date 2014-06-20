@@ -84,7 +84,7 @@ BEGIN
 	OR login = login_;
 
 	IF count_ = 0 THEN
-		CALL messageSystem(CONCAT("Création de l'utilisateur ", nom_, "USER", 'createUser', "Création utilissateur", CONCAT('nom:', nom_, ';prenom:', prenom_, ';login:', login_, ';email:', email_, ';via:', USER())));
+		CALL messageSystem(CONCAT("Création de l'utilisateur ", nom_), "USER", 'createUser', "Création utilissateur", CONCAT('nom:', nom_, ';prenom:', prenom_, ';login:', login_, ';email:', email_, ';via:', USER()));
 
 		INSERT INTO TBL_USERS
 		(nom, prenom, login, email, sha1, locked, poids, actif, showtipoftheday, page)
