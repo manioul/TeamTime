@@ -947,6 +947,7 @@ class utilisateursDeLaGrille {
 			AND `c`.`end` >= '$from'
 			AND `actif`  IS TRUE
 			ORDER BY `poids` ASC
+			, `nom` ASC
 			";
 		$oldUid = -1; // Pour gérer des classes multiples
 		$i = 0;
