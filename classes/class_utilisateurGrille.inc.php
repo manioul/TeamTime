@@ -133,7 +133,7 @@ class utilisateurGrille extends utilisateur {
 	public static function createUser($row) {
 		$dateD = new Date($row['dateD']);
 		$dateF = new Date($row['dateF']);
-		$sql = sprintf("CALL createUser('%s', '%s', '%s', '%s', '%s', %s, %d, %s, %s, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+		$sql = sprintf("CALL createUser('%s', '%s', '%s', '%s', %s, %d, %s, %s, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
 			", $_SESSION['db']->db_real_escape_string($row['nom'])
 			, $_SESSION['db']->db_real_escape_string($row['prenom'])
 			, $_SESSION['db']->db_real_escape_string($row['login'])
@@ -148,7 +148,6 @@ class utilisateurGrille extends utilisateur {
 			, $_SESSION['db']->db_real_escape_string($row['centre'])
 			, $_SESSION['db']->db_real_escape_string($row['team'])
 			, $_SESSION['db']->db_real_escape_string($row['grade'])
-			, $_SESSION['db']->db_real_escape_string($row['classe'])
 			, $dateD->date()
 			, $dateF->date()
 		);

@@ -71,9 +71,10 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS createUser|
-CREATE PROCEDURE createUser( IN nom_ VARCHAR(64), IN prenom_ VARCHAR(64), IN login_ VARCHAR(15), IN email_ VARCHAR(128), IN password_ VARCHAR(255), IN locked_ BOOLEAN, IN poids_ SMALLINT(6), IN actif_ BOOLEAN, IN showtipoftheday_ BOOLEAN, IN page_ VARCHAR(255), IN dbpasswd_ VARCHAR(64), IN centre_ VARCHAR(50), IN team_ VARCHAR(10), IN grade_ VARCHAR(64), IN classe_ VARCHAR(10), IN beginning_ DATE, IN end_ DATE )
+CREATE PROCEDURE createUser( IN nom_ VARCHAR(64), IN prenom_ VARCHAR(64), IN login_ VARCHAR(15), IN email_ VARCHAR(128), IN password_ VARCHAR(255), IN locked_ BOOLEAN, IN poids_ SMALLINT(6), IN actif_ BOOLEAN, IN showtipoftheday_ BOOLEAN, IN page_ VARCHAR(255), IN dbpasswd_ VARCHAR(64), IN centre_ VARCHAR(50), IN team_ VARCHAR(10), IN grade_ VARCHAR(64), IN beginning_ DATE, IN end_ DATE )
 BEGIN
 	DECLARE count_ INT(11);
+	DECLARE uid_ SMALLINT(6);
 
 	-- Recherche un email ou un login identique
 	SELECT COUNT(*)
@@ -100,11 +101,6 @@ BEGIN
 		(aid, uid, centre, team, grade, beginning, end, validated)
 		VALUES
 		(NULL, uid_, centre_, team_, grade_, beginning_, end_, TRUE);
-		
-		INSERT INTO TBL_CLASSE
-		(clid, uid, classe, beginning, end, commentaire)
-		VALUES
-		(NULL, uid_, classe_, beginning_, end_, '');
 
 		-- Ajoute les anciennetés de l'utilisateur
 		CALL setAncienneteUser(uid_, centre_, team_);
