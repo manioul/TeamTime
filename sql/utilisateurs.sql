@@ -83,7 +83,7 @@ BEGIN
 	OR login = login_;
 
 	IF count_ = 0 THEN
-		CALL messageSystem(CONCAT("Création de l'utilisateur ", nom_, "USER", 'createUser', "Création utilissateur", CONCAT('nom:', nom_, ';prenom:', prenom_, ';login:', login_, ';email:', email_, ';via:', USER()));
+		CALL messageSystem(CONCAT("Création de l'utilisateur ", nom_, "USER", 'createUser', "Création utilissateur", CONCAT('nom:', nom_, ';prenom:', prenom_, ';login:', login_, ';email:', email_, ';via:', USER())));
 
 		INSERT INTO TBL_USERS
 		(nom, prenom, login, email, sha1, locked, poids, actif, showtipoftheday, page)
@@ -606,7 +606,8 @@ BEGIN
 END
 |
 -- Affecte toutes les anciennetés de l'utilisateur
-CREATE PROCEDURE IF NOT EXISTS setAncienneteUser( IN uid_ INT(11), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
+DROP PROCEDURE IF EXISTS setAncienneteUser|
+CREATE PROCEDURE setAncienneteUser( IN uid_ INT(11), IN centre_ VARCHAR(50), IN team_ VARCHAR(10) )
 BEGIN
 	CALL setAncienneteAffectQualif(uid_, centre_, team_);
 	CALL setAncienneteAffectGlobal(uid_, centre_, team_);
