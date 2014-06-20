@@ -1,6 +1,6 @@
 {* Smarty *}
 <div>
-<form name="fCc" method="post" action="" onsubmit="subCc()">
+<form name="fCc" method="post" onsubmit="subCc()" action="">
 <table class="genElem">
 <tr>
 <td><label for="sCcnom">nom</label></td>
@@ -18,7 +18,7 @@
 <td><label for="iCcemail">adresse mail</label></td><td><input type="text" name="email" id="iCcemail" /></td>
 </tr><tr>
 <td><label for="sendmail">Envoyer un mail</label><input type="checkbox" checked="checked" name="sendmail" id="sendmail" value="svp" /></td>
-<td><button class="bouton" value="Envoyer" onclick="subCc()">Envoyer</button></td>
+<td><input type="submit" value="Envoyer" onclick="subCc();return false;" /></td>
 </tr>
 </table>
 </form>
