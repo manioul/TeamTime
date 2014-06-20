@@ -119,7 +119,7 @@ Bonne utilisation.
 
 		$mail =& Mail::factory('mail');
 		if (TRUE === $mail->send($to, $hdrs, $body)) {
-			$sql = sprintf("UPDATE `TBL_USERS` SET `login` = '%s', `email` = '%s', `sha1` = SHA1('%s') WHERE `nom` = '%s'", $_SESSION[db]->db_real_escape_string($login), $_SESSION[db]->db_real_escape_string($to), $_SESSION[db]->db_real_escape_string($login . $passwd), $_SESSION[db]->db_real_escape_string($nom));
+			$sql = sprintf("UPDATE `TBL_USERS` SET `login` = '%s', `email` = '%s', `sha1` = SHA1('%s') WHERE `nom` = '%s'", $_SESSION['db']->db_real_escape_string($login), $_SESSION['db']->db_real_escape_string($to), $_SESSION['db']->db_real_escape_string($login . $passwd), $_SESSION['db']->db_real_escape_string($nom));
 			$_SESSION['db']->db_interroge($sql);
 			$err = mysql_error();
 			firePhpLog($sql, '$sql');
@@ -127,7 +127,7 @@ Bonne utilisation.
 			$err = "Échec : le mail n'a pas été envoyé...";
 		}
 	} else {
-		$sql = sprintf("UPDATE `TBL_USERS` SET `login` = '%s', `email` = '%s', `sha1` = SHA1('%s') WHERE `nom` = '%s'", $_SESSION[db]->db_real_escape_string($login), $_SESSION[db]->db_real_escape_string($to), $_SESSION[db]->db_real_escape_string($login . $passwd), $_SESSION[db]->db_real_escape_string($nom));
+		$sql = sprintf("UPDATE `TBL_USERS` SET `login` = '%s', `email` = '%s', `sha1` = SHA1('%s') WHERE `nom` = '%s'", $_SESSION['db']->db_real_escape_string($login), $_SESSION['db']->db_real_escape_string($to), $_SESSION['db']->db_real_escape_string($login . $passwd), $_SESSION['db']->db_real_escape_string($nom));
 		$_SESSION['db']->db_interroge($sql);
 		$err = mysql_error();
 		firePhpLog($sql, '$sql');
