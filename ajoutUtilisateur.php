@@ -129,7 +129,7 @@ require_once 'Mail/mime.php';
 if (sizeof($_POST) > 1) {
 	utilisateurGrille::createUser($_POST);
 	// Envoi d'un mail
-	if (isset($_POST['sendmail']) && $_POST['sendmail'] == "on") {
+	if (array_key_exists('sendmail', $_POST) && $_POST['sendmail'] == "on") {
 		$crlf = "\n";
 		$message = sprintf("Bonjour %s,
 
