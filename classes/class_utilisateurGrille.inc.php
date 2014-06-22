@@ -133,7 +133,7 @@ class utilisateurGrille extends utilisateur {
 	public static function createUser($row) {
 		$dateD = new Date($row['dateD']);
 		$dateF = new Date($row['dateF']);
-		$sql = sprintf("CALL createUser('%s', '%s', '%s', '%s', %s, %d, %s, %s, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+		$sql = sprintf("CALL createUser('%s', '%s', '%s', '%s', '%s', %s, %d, %s, %s, '%s', '%s', '%s', '%s', '%s', '%s', '%s')
 			", $_SESSION['db']->db_real_escape_string($row['nom'])
 			, $_SESSION['db']->db_real_escape_string($row['prenom'])
 			, $_SESSION['db']->db_real_escape_string($row['login'])
@@ -151,7 +151,7 @@ class utilisateurGrille extends utilisateur {
 			, $dateD->date()
 			, $dateF->date()
 		);
-		$_SESSION['db']->db_interroge($sql);
+		return $_SESSION['db']->db_interroge($sql);
 	}
 	// Méthode permettant d'accepter un nouvel utilisateur dans TTm
 	// $id est l'index dans la table TBL_SIGNUP_ON_HOLD
