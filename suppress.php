@@ -88,9 +88,8 @@ case 'affectation' :
 	break;
 case 'dispatchSchema' :
 	$sql = sprintf("
-		DELETE FROM `TBL_DISPATCH_HEURES`
-		WHERE `rid` = %d
-		", $_POST['id']
+		CALL suppressDispatchSchema(%d)
+		", $_REQUEST['id']
 	);
 	$_SESSION['db']->db_interroge($sql);
 	print "Mise à jour effectuée";
@@ -118,6 +117,5 @@ case 'dispo' :
 	}
 	break;
 }
-
 
 ?>
