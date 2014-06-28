@@ -119,7 +119,13 @@ BEGIN
 			FROM TBL_DISPO
 			WHERE absence IS TRUE
 			OR dispo = 'fmp'
-			OR dispo = 'cds');
+			OR dispo = 'cds')
+		AND uid IN (
+			SELECT uid
+			FROM TBL_AFFECTATION
+			WHERE date_ BETWEEN `beginning` AND `end`
+			AND centre = centre_
+			AND team = team_);
 	-- Liste les heures fixes attribuées à des dispos qui sont présentes dans la grille ce jour
 	-- Au cas où plusieurs règles sont susceptibles de s'appliquer, celle dont ordre est le plus élevé est retenue (traitée en dernier)
 	DECLARE curFixed CURSOR FOR SELECT rid, grades, type, heures, dids
@@ -131,6 +137,8 @@ BEGIN
 				AND centre = centre_
 				AND team = team_)
 			, cids)
+		AND centre = centre_
+		AND team = team_
 		ORDER BY ordre ASC;
 	-- Recherche deux pc qui ont le moins d'heures d'instruction pour leur attribuer les heures disponibles
 	-- Ils doivent avoir une certaine ancienneté dans l'affectation (4 mois)
