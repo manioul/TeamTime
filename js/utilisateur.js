@@ -135,4 +135,5 @@ function supprInfo(q, id, uid)
 	var sRequest = "q="+q+"&id="+id+"&uid="+uid;
 	submitRequest(sRequest, 'suppress.php');
 	$('#'+q+id).hide('slow');
+	return false;
 }

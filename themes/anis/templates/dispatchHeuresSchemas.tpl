@@ -14,14 +14,14 @@
 </thead>
 <tbody>
 {foreach $aSchemas as $schema}
-<tr>
+<tr id="dispatchSchema{$schema.rid}">
 <td>{$schema.cycles}</td>
 <td>{$schema.grades}</td>
 <td>{$schema.dispos}</td>
 <td>{$schema.type}</td>
 <td>{$schema.statut}</td>
 <td>{$schema.heures}</td>
-<td><div class="imgwrapper12" onclick='supprInfo("dispatchSchema", {$schema.rid}, null);setTimeout(location.assign(location.href), 1000);'><img class="cnl" alt="supprimer" src="{$image}" /></div></td>
+<td><div class="imgwrapper12" onclick='supprInfo("dispatchSchema", {$schema.rid}, null);'><img class="cnl" alt="supprimer" src="{$image}" /></div></td>
 </tr>
 {/foreach}
 </tbody>
