@@ -142,7 +142,7 @@ if (!is_a($utilisateur, 'utilisateurGrille')) {
 }
 
 if (sizeof($_POST) > 0) {
-	if (!array_key_exists('EDITEURS', $_SESSION) && $_POST['uid'] != $_SESSION['utilisateur']->uid()) {
+	if (!array_key_exists('EDITEURS', $_SESSION) && array_key_exists('uid', $_POST) && $_POST['uid'] != $_SESSION['utilisateur']->uid()) {
 		$err = "Vous n'êtes pas autorisé à modifier ce compte...";
 		die ($err);
 	}
