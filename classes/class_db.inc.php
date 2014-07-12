@@ -37,13 +37,17 @@ class database {
 		} else {
 			$this->DSN = $GLOBALS['DSN']['nobody'];
 		}
-		$this->_db_connect();
+		if (FALSE === $this->_db_connect()) {
+			return FALSE;
+		}
 		if ( !mysqli_set_charset($this->link, $this->DSN['NAMES']) ) {
 			// Erreur du passage en utf8 du dialogue avec la base de données
 			firePHPInfo(sprintf('Erreur du passage en %s du dialogue avec la base.', $this->DSN['NAMES']));
+			return FALSE;
 		} else {
 			firePHPInfo(sprintf('Passage en %s du dialogue avec la base.', $this->character_set()));
 		}
+		return TRUE;
 	}
 	function __destruct() {
 		$this->_db_ferme();
@@ -79,7 +83,8 @@ class database {
 	private function _db_connect() {
 		if (! is_array($this->DSN)) { $this->DSN = $GLOBALS['DSN']['nobody']; }
 		if ( ERR_DB_CONN === $this->_uns_db_connect() ) {
-			die ( 'Erreur de connexion (' . mysqli_connect_errno() . ') ' . mysqli_connect_error() );
+			print ( 'Erreur de connexion (' . mysqli_connect_errno() . ') ' . mysqli_connect_error() );
+			return FALSE;
 		}
 		$this->_uns_db_set_NAMES();
 	}
