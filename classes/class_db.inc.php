@@ -21,6 +21,10 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+set_include_path(implode(PATH_SEPARATOR, array(realpath('.'), get_include_path())));
+
+require_once 'constantes.inc.php';
+
 class database {
 	private $link;
 	private $DSN;
