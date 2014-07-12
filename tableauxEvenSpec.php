@@ -128,13 +128,14 @@ $sql = sprintf("
 	AND `type decompte` != 'conges'
 	AND (`centre` = 'all' OR `centre` = '%s')
 	AND (`team` = 'all' OR `team` = '%s')
+	GROUP BY `type decompte`
 	", $affectation['centre']
 	, $affectation['team']
 );
 $results = $_SESSION['db']->db_interroge($sql);
-$index = 0;
 while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$onglets[$index] = array('nom'	=> htmlspecialchars(ucfirst($res['type decompte']), ENT_COMPAT, 'UTF-8')
+	if (!array_key_exists('type decompte', $res)) continue;
+	$onglets[$res['type decompte']] = array('nom'	=> htmlspecialchars(ucfirst($res['type decompte']), ENT_COMPAT, 'UTF-8')
 		,'quantity'		=> 10
 		,'param'		=> $res['did']
 	);
@@ -147,7 +148,12 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 		FROM `TBL_L_SHIFT_DISPO` AS `l`
 		, `TBL_ANCIENNETE_EQUIPE` AS `a`
 		, `TBL_USERS` AS `u`
-		WHERE `did` = %d
+		WHERE `did` IN (SELECT `did`
+			FROM `TBL_DISPO`
+			WHERE `type decompte` = '%s'
+			AND `centre` = '%s'
+			AND `team` = '%s'
+		)
 		AND `l`.`uid` = `u`.`uid`
 		AND `a`.`uid` = `l`.`uid`
 		AND `l`.`date` >= `a`.`beginning`
@@ -159,7 +165,9 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 		AND `team` = '%s'
 		GROUP BY `l`.`uid`
 		ORDER BY `compte` ASC
-		", $res['did']
+		", $res['type decompte']
+		, $affectation['centre']
+		, $affectation['team']
 		, $year
 		, $year
 		, $affectation['centre']
@@ -174,7 +182,7 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 			if (!$i++) {
 				$min = $row[1] - 1; // On veut au moins une date pour l'utilisateur ayant le moins d'entrées
 			} else {
-				$onglets[$index]['quantity'] = $row[1] - $min;
+				$onglets[$res['type decompte']]['quantity'] = $row[1] - $min;
 			}
 		}
 	}
@@ -184,20 +192,27 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 	// lorsque la différence (min, max) est importante
 	mysqli_free_result($result);
 
-	// et on limite l'affichage des évènement à partir de ce nombre minimal
+	// et on limite l'affichage des évènements à partir de ce nombre minimal
 	// pour chaque utilisateur
 	foreach ($uids as $uid) {
 		$sql = sprintf("
 			SELECT `uid`, `did`, `date`
 			FROM `TBL_L_SHIFT_DISPO`
-			WHERE `did` = %d
+			WHERE `did` IN (SELECT `did`
+				FROM `TBL_DISPO`
+				WHERE `type decompte` = '%s'
+				AND `centre` = '%s'
+				AND `team` = '%s'
+			)
 			AND `uid` = %d
 			ORDER BY `date` ASC
 			LIMIT %d, %d
-			", $res['did']
+			", $res['type decompte']
+			, $affectation['centre']
+			, $affectation['team']
 			, $uid
 			, $min
-			, $onglets[$index]['quantity']
+			, $onglets[$res['type decompte']]['quantity']
 		);
 
 		$r = $_SESSION['db']->db_interroge($sql);
@@ -213,10 +228,14 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 	$index++;
 }
 mysqli_free_result($results);
+$ong = array();
+foreach ($onglets as $onglet) {
+	$ong[] = $onglet;
+}
 
 $smarty->assign('year', $year);
 $smarty->assign('titre', $titre);
-$smarty->assign('onglets', $onglets);
+$smarty->assign('onglets', $ong);
 $smarty->assign('users', $users);
 $smarty->assign('tab', $tab);
 
