@@ -145,36 +145,26 @@ while($row = $_SESSION['db']->db_fetch_assoc($result)) {
 }
 mysqli_free_result($result);
 
-// Recherche les grades et classes disponibles
+// Recherche les grades disponibles
 $grades = array();
-$classes = array();
 $i = 0;
-$j = 0;
 $sql = "SELECT `nom`, `description`, `type`
 	FROM `TBL_CONFIG_AFFECTATIONS`
-	WHERE `type` = 'grade'
-	OR `type` = 'classe'";
+	WHERE `type` = 'grade'";
 $result = $_SESSION['db']->db_interroge($sql);
 while($row = $_SESSION['db']->db_fetch_assoc($result)) {
 	if ($row['type'] == 'grade') {
 		$grades['options'][$i]['value'] = $row['nom'];
 		$grades['options'][$i]['content'] = $row['nom'];
 		$i++;
-	} else {
-		$classes['options'][$j]['value'] = $row['nom'];
-		$classes['options'][$j]['content'] = $row['nom'];
-		$j++;
 	}
 }
 mysqli_free_result($result);
 $grades['name'] = "grade";
 $grades['label'] = "En tant que ";
-$classes['name'] = "classe";
-$classes['label'] = "Classe d'utilisateur";
 
 $smarty->assign('users', $users);
 $smarty->assign('grades', $grades);
-$smarty->assign('classes', $classes);
 
 $smarty->display('confirmUser.tpl');
 
