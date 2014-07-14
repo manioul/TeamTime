@@ -888,7 +888,11 @@ class utilisateursDeLaGrille {
 				AND `TA`.`end`  >= \"$from\"";
 			if (1 == $active) $sql .= "
 			       	AND `TU`.`actif` = 1 ";
-			$sql .= "ORDER BY `TU`.`poids` ASC";
+			if (array_key_exists('ADMIN', $_SESSION)) {
+				$sql .= "ORDER BY `TU`.`nom` ASC";
+			} else {
+				$sql .= "ORDER BY `TU`.`poids` ASC";
+			}
 		} elseif ('all' == $team) {
 			$sql = "SELECT DISTINCT `TU`.`uid`,
 				`TU`.*,
@@ -903,7 +907,11 @@ class utilisateursDeLaGrille {
 				AND `TA`.`end`  >= \"$from\"";
 			if (1 == $active) $sql .= "
 			       	AND `TU`.`actif` = 1 ";
-			$sql .= "ORDER BY `TU`.`poids` ASC";
+			if (array_key_exists('ADMIN', $_SESSION)) {
+				$sql .= "ORDER BY `TU`.`nom` ASC";
+			} else {
+				$sql .= "ORDER BY `TU`.`poids` ASC";
+			}
 		} else {
 			$sql = "SELECT DISTINCT `TU`.`uid`,
 				`TU`.*,
@@ -919,7 +927,11 @@ class utilisateursDeLaGrille {
 				AND `TA`.`end`  >= \"$from\"";
 			if (1 == $active) $sql .= "
 			       	AND `TU`.`actif` = 1 ";
-			$sql .= "ORDER BY `TU`.`poids` ASC";
+			if (array_key_exists('ADMIN', $_SESSION)) {
+				$sql .= "ORDER BY `TU`.`nom` ASC";
+			} else {
+				$sql .= "ORDER BY `TU`.`poids` ASC";
+			}
 		}
 		return $this->retourneUsers($sql);
 	}
