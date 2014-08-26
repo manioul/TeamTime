@@ -125,11 +125,43 @@ $checked = array();
 
 $affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 
-$dd = '01-01-2013';
+$previousYear = (int) date('Y');
+$previousYear--;
 
-$smarty->assign('defaultD', $dd);
+$fIntervalHeures = array(
+	'name'	=> "fIntervalHeures"
+	, 'id'	=> "fIntervalHeures"
+	, 'method'	=> "POST"
+	, 'action'	=> ""
+	, 'classe'	=> "ng w24"
+	, 'fieldsets'	=> array(
+		array(
+		'display'	=> "none"
+		, 'row'	=> array(
+			array(
+				'name'	=> "dateD"
+				, 'id'	=> "dateD"
+				, 'type'	=> "date"
+				, 'label'	=> "Début des heures"
+				, 'value'	=> '01/01/' . $previousYear
+				)
+				, array(
+				'name'	=> "dateF"
+				, 'id'	=> "dateF"
+				, 'type'	=> "date"
+				, 'label'	=> "Fin des heures"
+				)
+				, array(
+				, 'type'	=> "submit"
+				)
+			)
+		)
+	)
+);
 
-$smarty->display('debutHeuresForm.tpl');
+$smarty->assign('form', $fIntervalHeures);
+
+$smarty->display('html.form_ul.tpl');
 
 
 /*
