@@ -143,31 +143,34 @@ $fIntervalHeures = array(
 	, 'method'	=> "POST"
 	, 'action'	=> ""
 	, 'classe'	=> "ng w24"
-	, 'legend'	=> ""
 	, 'fieldsets'	=> array(
-		'display'	=> "true"
-		, 'row'		=> array(
-			array(
-				'name'		=> "dateD"
-				, 'id'		=> "dateD"
-				, 'type'	=> "date"
-				, 'label'	=> "Début des heures"
-				, 'value'	=> '01/01/' . $previousYear
-			)
-			, array(
-				'name'		=> "dateF"
-				, 'id'		=> "dateF"
-				, 'type'	=> "date"
-				, 'label'	=> "Fin des heures"
-			)
-			, array(
-				, 'type'	=> "submit"
+		array(
+			'display'	=> "none"
+			, 'row'		=> array(
+				array(
+					'name'		=> "dateD"
+					, 'id'		=> "dateD"
+					, 'type'	=> "date"
+					, 'label'	=> "Début des heures"
+					, 'value'	=> '01/01/' . $previousYear
+				)
+				, array(
+					'name'		=> "dateF"
+					, 'id'		=> "dateF"
+					, 'type'	=> "date"
+					, 'label'	=> "Fin des heures"
+				)
+				, array(
+					, 'type'	=> "submit"
+				)
 			)
 		)
 	)
 );
 
-$smarty->display('debutHeuresForm.tpl');
+$smarty->assign('form', $fIntervalHeures);
+
+$smarty->display('html.form_ul.tpl');
 
 $smarty->display('saisieHeuresIndividuelles.tpl');
 
