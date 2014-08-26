@@ -136,7 +136,36 @@ $affectation = $_SESSION['utilisateur']->affectationOnDate($dateDebut);
 
 $previousYear = (int) date('Y');
 $previousYear--;
-$smarty->assign('defaultD', '01/01/' . $previousYear);
+
+$fIntervalHeures = array(
+	'name'		=> "fIntervalHeures"
+	, 'id'		=> "fIntervalHeures"
+	, 'method'	=> "POST"
+	, 'action'	=> ""
+	, 'classe'	=> "ng w24"
+	, 'legend'	=> ""
+	, 'fieldsets'	=> array(
+		'display'	=> "true"
+		, 'row'		=> array(
+			array(
+				'name'		=> "dateD"
+				, 'id'		=> "dateD"
+				, 'type'	=> "date"
+				, 'label'	=> "Début des heures"
+				, 'value'	=> '01/01/' . $previousYear
+			)
+			, array(
+				'name'		=> "dateF"
+				, 'id'		=> "dateF"
+				, 'type'	=> "date"
+				, 'label'	=> "Fin des heures"
+			)
+			, array(
+				, 'type'	=> "submit"
+			)
+		)
+	)
+);
 
 $smarty->display('debutHeuresForm.tpl');
 
@@ -201,6 +230,8 @@ if (!empty($dateDebut)) {
 		, $exclude
 	);
 	$aTotaux = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+
+	
 
 	$smarty->assign('dateDebut', $dateDebut->formatDate('fr'));
 	$smarty->assign('dateFin', $dateFin->formatDate('fr'));
