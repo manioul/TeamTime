@@ -93,13 +93,13 @@ ob_start(); // Obligatoire pour firePHP
 
 
 	// Utilisation de jquery
-	$conf['page']['javascript']['jquery'] = false;
+	$conf['page']['javascript']['jquery'] = true;
 	// Utilisation de ajax
-	$conf['page']['javascript']['ajax'] = false;
+	$conf['page']['javascript']['ajax'] = true;
 	// Utilisation de grille2.js.php
 	$conf['page']['javascript']['grille2'] = false;
 	// Utilisation de utilisateur.js
-	$conf['page']['javascript']['utilisateur'] = false;
+	$conf['page']['javascript']['utilisateur'] = true;
 
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
