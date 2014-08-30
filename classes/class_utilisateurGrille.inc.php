@@ -857,6 +857,17 @@ class utilisateursDeLaGrille {
 	public function getActiveUsersFromTo($from = NULL, $to = NULL, $centre = NULL, $team = NULL) {
 		return $this->getUsersFromTo($from, $to, $centre, $team, 1);
 	}
+	/**
+	 * Retourne une table d'utilisateurGrille actif pour une affectation précise.
+	 *
+	 * La liste des utilisateurs peut être classée à l'aide de $_REQUEST['order']
+	 * - nom classe les utilisateurs selon leur nom
+	 * - aff classe les utilisateurs selon leur affectation puis par leur poids
+	 * - aff classe les utilisateurs selon leur affectation puis par leur nom
+	 *
+	 *
+	 * @return array tableau d'objets utilisateurGrille
+	 */
 	public function getUsersFromTo($from = NULL, $to = NULL, $centre = NULL, $team = NULL, $active = 1) {
 		if (is_null($from)) $from = date('Y-m-d');
 		if (is_null($to)) $to = date('Y-m-d');
@@ -888,8 +899,16 @@ class utilisateursDeLaGrille {
 				AND `TA`.`end`  >= \"$from\"";
 			if (1 == $active) $sql .= "
 			       	AND `TU`.`actif` = 1 ";
-			if (array_key_exists('ADMIN', $_SESSION)) {
-				$sql .= "ORDER BY `TU`.`nom` ASC";
+			if (array_key_exists('order', $_REQUEST)) {
+				if ($_REQUEST['order'] == 'nom') {
+					$sql .= "ORDER BY `TU`.`nom` ASC";
+				} elseif ($_REQUEST['order'] == 'uid') {
+					$sql .= "ORDER BY `TU`.`uid` ASC";
+				} elseif ($_REQUEST['order'] == 'aff') {
+					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+				} elseif ($_REQUEST['order'] == 'affn') {
+					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
+				}
 			} else {
 				$sql .= "ORDER BY `TU`.`poids` ASC";
 			}
@@ -907,8 +926,16 @@ class utilisateursDeLaGrille {
 				AND `TA`.`end`  >= \"$from\"";
 			if (1 == $active) $sql .= "
 			       	AND `TU`.`actif` = 1 ";
-			if (array_key_exists('ADMIN', $_SESSION)) {
-				$sql .= "ORDER BY `TU`.`nom` ASC";
+			if (array_key_exists('order', $_REQUEST)) {
+				if ($_REQUEST['order'] == 'nom') {
+					$sql .= "ORDER BY `TU`.`nom` ASC";
+				} elseif ($_REQUEST['order'] == 'uid') {
+					$sql .= "ORDER BY `TU`.`uid` ASC";
+				} elseif ($_REQUEST['order'] == 'aff') {
+					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+				} elseif ($_REQUEST['order'] == 'affn') {
+					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
+				}
 			} else {
 				$sql .= "ORDER BY `TU`.`poids` ASC";
 			}
@@ -927,8 +954,16 @@ class utilisateursDeLaGrille {
 				AND `TA`.`end`  >= \"$from\"";
 			if (1 == $active) $sql .= "
 			       	AND `TU`.`actif` = 1 ";
-			if (array_key_exists('ADMIN', $_SESSION)) {
-				$sql .= "ORDER BY `TU`.`nom` ASC";
+			if (array_key_exists('order', $_REQUEST)) {
+				if ($_REQUEST['order'] == 'nom') {
+					$sql .= "ORDER BY `TU`.`nom` ASC";
+				} elseif ($_REQUEST['order'] == 'uid') {
+					$sql .= "ORDER BY `TU`.`uid` ASC";
+				} elseif ($_REQUEST['order'] == 'aff') {
+					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+				} elseif ($_REQUEST['order'] == 'affn') {
+					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
+				}
 			} else {
 				$sql .= "ORDER BY `TU`.`poids` ASC";
 			}
