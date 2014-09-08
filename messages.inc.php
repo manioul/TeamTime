@@ -57,6 +57,7 @@ if (array_key_exists('EDITEURS', $_SESSION)) {
 	$sql = sprintf("SELECT * FROM `TBL_SIGNUP_ON_HOLD`
 		WHERE `centre` = '%s'
 		AND `team` = '%s'
+		AND `url` IS NULL
 		", $_SESSION['utilisateur']->centre()
 		, $_SESSION['utilisateur']->team()
 	);
