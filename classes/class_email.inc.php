@@ -119,15 +119,23 @@ class Email {
 		} elseif ($array['description'] == 'account created') {
 			$row = Email::accountCreated($array);
 		} else {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Type de message inconnu", "DEBUG", "%s", "unknown message", "%s")'
+				, __METHOD__
+				, $_SESSION['db']->db_real_escape_string(json_encode($array)))
+			);
 			print "Huh ?";
 			return FALSE;
 		}
+		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Tentative d\'envoi d\'un mail.", "DEBUG", "%s", "sending mail", "%s")'
+			, __METHOD__
+			, $_SESSION['db']->db_real_escape_string(json_encode($row)))
+		);
 		if (array_key_exists('to', $row) && array_key_exists('subject', $row) && array_key_exists('content', $row)) {
 			return Email::QuickMail($row['to'], $row['subject'], $row['content']);
 		} else {
 			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Le message n\'a pas été envoyé car il manquait des valeurs dans le tableau array", "DEBUG", "%s", "short", "%s")'
 				, __METHOD__
-				, $_SESSION['db']->db_real_escape_string(json_encode($array)))
+				, $_SESSION['db']->db_real_escape_string(json_encode($row)))
 			);
 			return FALSE;
 		}	
@@ -207,6 +215,10 @@ class Email {
 			WHERE `email` = '%s'
 			AND `description` = 'reset password'
 			", $_SESSION['db']->db_real_escape_string(filter_var(trim($array['email']), FILTER_SANITIZE_EMAIL))
+		);
+		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Requête de construction du mail", "DEBUG", "%s", "short", "%s")'
+			, __METHOD__
+			, $_SESSION['db']->db_real_escape_string($sql))
 		);
 		$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
 		return array(
