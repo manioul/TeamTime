@@ -1451,7 +1451,7 @@ class utilisateursDeLaGrille {
 			$results = $_SESSION['db']->db_interroge($sql);
 			while ($res = $_SESSION['db']->db_fetch_array($results)) {
 				$evenSpec[$res[0]] = array(
-					'nomLong'	=> htmlspecialchars($res[1], ENT_COMPAT)
+					'nomLong'	=> htmlspecialchars($res[0], ENT_COMPAT)
 				);
 			}
 			mysqli_free_result($results);
