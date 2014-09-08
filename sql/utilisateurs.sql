@@ -16,14 +16,13 @@ END
 |
 -- Accepte l'inscription d'un utilisateur prépare les informations pour le compte
 DROP PROCEDURE IF EXISTS acceptUser|
-CREATE PROCEDURE acceptUser( IN id_ INT(11), IN dateD_ DATE, IN dateF_ DATE, IN grade_ VARCHAR(64), IN classe_ VARCHAR(10) )
+CREATE PROCEDURE acceptUser( IN id_ INT(11), IN dateD_ DATE, IN dateF_ DATE, IN grade_ VARCHAR(64) )
 BEGIN
 	UPDATE TBL_SIGNUP_ON_HOLD
 		SET url = SHA1(CONCAT(NOW(), RAND()))
 		, beginning = dateD_
 		, end = dateF_
 		, grade = grade_
-		, classe = classe_
 		WHERE id = id_;
 
 END
