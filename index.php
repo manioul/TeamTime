@@ -82,6 +82,8 @@ $conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
 	$conf['page']['javascript']['jquery'] = true;
 	// Utilisation de ajax
 	$conf['page']['javascript']['ajax'] = true;
+	// Utilisation de utilisateur
+	$conf['page']['javascript']['utilisateur'] = true;
 	// Utilisation de grille2.js.php
 	$conf['page']['javascript']['grille2'] = false;
 	// Pour l'affichage du formulaire de connexion
@@ -149,7 +151,12 @@ $form = array(
 			'titre'		=> "Création de compte"
 			, 'display'	=> "none"
 			, 'row'		=> array(
-				array(
+				array( 
+					'type'		=> "hidden"
+					, 'name'	=> "ajax"
+					, 'value'	=> 'true'
+				)
+				, array(
 					'type'	=> 'text'
 					, 'label'	=> 'Nom'
 					, 'name'	=> 'iNom'
