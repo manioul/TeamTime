@@ -395,19 +395,22 @@ div#version {
 /*
  * Fenêtre d'information
  */
-div#info {
-	position: relative;
+#info {
+	position:absolute;
 	font-size: 2em;
 	display: none;
-	background-color: rgba(255,255,255,.9);
+	background: rgba(255,255,255,.9);
 	padding: 5px;
 	margin:auto;
+	top:50%;
+	right:35%;
+	width:30%;
 	max-width:600px;
-	top: 300px;
 	z-index:9999;
 	-moz-border-radius: 5px;
 	-webkit-border-radius: 5px;
 	-ms-border-radius: 5px;
 	-o-border-radius: 5px;
 	border-radius: 5px;
+	text-align:center;
 }
