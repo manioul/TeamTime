@@ -154,7 +154,7 @@ function subCc()
 		}
 	}
 	sRequest = sRequest.substr(0, sRequest.length-sAmpersand.length);
-	submitRequest(sRequest, 'updateCc.php');
+	submitRequest(sRequest, 'ajax.php');
 }
 
 $(function() {
