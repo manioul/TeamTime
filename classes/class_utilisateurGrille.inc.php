@@ -283,7 +283,7 @@ class utilisateurGrille extends utilisateur {
 			, $_SESSION['db']->db_real_escape_string($row['login'])
 			, $_SESSION['db']->db_real_escape_string($row['email'])
 			, $_SESSION['db']->db_real_escape_string($row['password'])
-			, $row['locked'] == 'on' ? 'TRUE' : 'FALSE'
+			, array_key_exists('locked', $row) && $row['locked'] == 'off' ? 'FALSE' : 'TRUE'
 			, (int) $row['poids']
 			, array_key_exists('actif', $row) && $row['actif'] == 'off' ? 'FALSE' : 'TRUE'
 			, array_key_exists('showtipoftheday', $row) && $row['showtipoftheday'] == 'on' ? 'TRUE' : 'FALSE'
