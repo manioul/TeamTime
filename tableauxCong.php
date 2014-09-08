@@ -114,7 +114,7 @@ require 'required_files.inc.php';
 $year = (!empty($_GET['year']) ? sprintf("%04d", $_GET['year']) : date('Y'));
 $titre = "Congés";
 
-$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y') . '-01-01');
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 
 $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $affectation['centre'], $affectation['team']);
 
