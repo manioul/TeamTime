@@ -130,6 +130,144 @@ class utilisateurGrille extends utilisateur {
 		);
 		parent::_fieldsDefinition($correspondances, $regen);
 	}
+	/**
+	 * Méthode permettant l'authentification de l'utilisateur
+	 * dont le login et le mot de passe sont passés en paramètre.
+	 *
+	 * @param string $login est le login de l'utilisateur
+	 * @param string $pwd est le mot de passe de l'utilisateur
+	 *
+	 * @return void
+	 */
+	public static function logon($login, $pwd) {
+		$db = new database($GLOBALS['DSN']['admin']);
+
+		$sql = sprintf("
+			SELECT `uid`, `nblogin` FROM `TBL_USERS`
+			WHERE `login` = '%s'
+			AND `sha1` = SHA1('%s')
+			", $db->db_real_escape_string($login)
+			, $db->db_real_escape_string($login . $pwd)
+		);
+		//*
+		$db->db_interroge(sprintf("
+			CALL messageSystem('Tentative de connexion [%s]', 'DEBUG', 'logon', NULL, 'sql:%s;')
+			", $_SERVER['REMOTE_ADDR']
+			, $db->db_real_escape_string($sql)
+		));
+		//*/
+		$result = $db->db_interroge($sql);
+		if (mysqli_num_rows($result) > 0) {
+			session_regenerate_id(); // Éviter les attaques par fixation de session
+			$row = $db->db_fetch_assoc($result);
+			mysqli_free_result($result);
+			$DSN = $GLOBALS['DSN']['user'];
+			$DSN['username'] = 'ttm.5';
+			if (FALSE === ($_SESSION['db'] = new database($DSN))) {
+				// Interdit l'accès aux utilisateurs qui n'ont pas d'identifiant sur la base de données
+				unset($_SESSION);
+				header('Location:index.php');
+			}
+			$_SESSION['utilisateur'] = new utilisateurGrille((int) $row['uid']);
+			$_SESSION['AUTHENTICATED'] = true;
+			// Mise à jour des informations de connexion
+			$upd = sprintf("
+				UPDATE `TBL_USERS`
+				SET `lastlogin` = NOW()
+				, `nblogin` = %d
+				WHERE `uid` = %d"
+				, $row['nblogin'] + 1
+				, $row['uid']);
+			$_SESSION['db']->db_interroge($upd);
+			$sql = sprintf("
+				SELECT `role`
+				FROM `TBL_ROLES`
+				WHERE `uid` = %d
+				AND beginning <= NOW()
+				AND end >= NOW()"
+				, $row['uid']);
+			$result2 = $_SESSION['db']->db_interroge($sql);
+			while ($row = $_SESSION['db']->db_fetch_array($result2)) {
+				$_SESSION[strtoupper($row[0])] = true;
+			}
+			mysqli_free_result($result2);
+		} else {
+			$db->db_interroge(sprintf("
+				CALL messageSystem('Tentative de connexion échouée [%s]', 'DEBUG', 'logon.php', NULL, 'login:%s;password:%s;')
+				", $_SERVER['REMOTE_ADDR']
+				, $db->db_real_escape_string($login)
+				, $db->db_real_escape_string($pwd))
+			);
+			mysqli_free_result($result);
+		}
+	}
+	/**
+	 * Méthode permettant d'accepter un nouvel utilisateur dans une équipe.
+	 *
+	 * Cette méthode permet à un editeur d'accepter un nouvel utilisateur
+	 * dans son équipe pour une période qu'il définit.
+	 * L'utilisateur reçoit un message pour lui signifier qu'il doit compléter
+	 * son compte pour être définitivement enregistré sur TeamTime.
+	 * Ce n'est que lorsque l'utilisateur aura complété son compte qu'il sera
+	 * définitivement créé sur TeamTime.
+	 *
+	 * @param int $id est l'index dans la table TBL_SIGNUP_ON_HOLD
+	 * @param string $dateD la date d'arrivée dans l'équipe acceptant l'utilisateur (formats acceptés par la classe date)
+	 * @param string $dateF la date de fin dans l'équipe acceptant l'utilisateur (formats acceptés par la classe date)
+	 * @param string $grade est le grade de l'utilisateur
+	 *
+	 * @return boolean TRUE si le mail a été correctement envoyé, FALSE sinon
+	 */
+	public static function acceptUser($id, $dateD, $dateF, $grade) {
+		$dateD = new Date($dateD);
+		$dateF = new Date($dateF);
+		$_SESSION['db']->db_interroge(sprintf("
+			CALL acceptUser(%d, '%s', '%s', '%s')
+			", $id
+			, $dateD->date()
+			, $dateF->date()
+			, $_SESSION['db']->db_real_escape_string($grade)));
+		//
+		// Préparation du mail
+		//
+		$row = array(
+			'description'	=> 'account accepted'
+			, 'id'		=> (int) $id
+		);
+		//
+		// Envoi du mail à l'utilisateur
+		//
+		if (TRUE === Email::QuickMailFromArticle($row)) {
+			return TRUE;
+		} else {
+			return FALSE;
+		}
+	}
+	/**
+	 * Méthode créant un utilisateur de TeamTime.
+	 *
+	 * Cette méthode fait appel à la fonction SQL createUser
+	 * qui crée l'utilisateur dans la base (TBL_USERS et TBL_AFFECTATION ainsi que l'utilisateur MySQL)
+	 * et lui attribue les rôles minimum (my_edit).
+	 *
+	 * @param array $row Le paramètre $row comprend :
+	 * - nom
+	 * - prénom (prenom)
+	 * - login
+	 * - password
+	 * - locked
+	 * - poids
+	 * - actif
+	 * - showtipoftheday
+	 * - page
+	 * - centre
+	 * - team
+	 * - grade
+	 * - date d'arrivée dans l'équipe (dateD)
+	 * - date de départ de l'équipe (dateF)
+	 *
+	 * @return string SQL statement
+	 */
 	public static function createUser($row) {
 		$dateD = new Date($row['dateD']);
 		$dateF = new Date($row['dateF']);
@@ -153,19 +291,134 @@ class utilisateurGrille extends utilisateur {
 		);
 		return $_SESSION['db']->db_interroge($sql);
 	}
-	// Méthode permettant d'accepter un nouvel utilisateur dans TTm
-	// $id est l'index dans la table TBL_SIGNUP_ON_HOLD
-	// $dateD et $dateF sont les dates de début et de fin (en littéral,
-	// formats acceptés par l'objet Date) dans l'équipe acceptant l'utilisateur
-	// $grade est le grade de l'utilisateur
-	// $classe est la classe à laquelle appartient l'utilisateur
-	public static function acceptUser($id, $dateD, $dateF, $grade, $classe) {
-		$dateD = new Date($dateD);
-		$dateF = new Date($dateF);
-		$_SESSION['db']->db_interroge(sprintf("CALL acceptUser(%d, '%s', '%s', '%s', '%s')", $id, $dateD->date(), $dateF->date(), $_SESSION['db']->db_real_escape_string($grade), $_SESSION['db']->db_real_escape_string($classe)));
+	/**
+	 * Méthode permettant de récupérer un mot de passe à partir de l'adresse mail.
+	 *
+	 * Cette méthode envoie un mail à un utilisateur contenant un lien qui lui permettra
+	 * de mettre à jour son mot de passe.
+	 *
+	 * La méthode se charge de filtrer l'adresse mail passée en paramètre.
+	 *
+	 * @param string $email est l'adresse mail de l'utilisateur du compte à récupérer.
+	 *
+	 * @return string chaîne informant l'utilisateur de vérifier son mail si tout s'est bien passé ou indiquant l'erreur sinon.
+	 */
+	public static function resetPwd($email) {
+		$row['description'] = 'reset password';
+		$row['email'] = filter_var(trim($email), FILTER_SANITIZE_EMAIL);
+		$row['k'] = sha1(microtime() . rand());
+		//
+		// Envoi du mail à l'utilisateur
+		//
+		if (TRUE === Email::QuickMailFromArticle($row)) {
+			// ajout de la clé dans la bdd
+			$sql = sprintf("
+				REPLACE INTO `TBL_SIGNUP_ON_HOLD`
+				(`email`, `timestamp`, `url`)
+				VALUES
+				('%s', NOW(), '%s')
+				", $row['email']
+				, $row['k']
+			);
+			$_SESSION['db']->db_interroge($sql);
+			return "Vous devriez recevoir un mail sous peu. Vérifiez éventuellement dans les spams si vous ne recevez rien.";
+		} else {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Le mail n\'a pas été envoyé.", "DEBUG", "%s", "short", "%s")'
+				, __METHOD__
+				, $_SESSION['db']->db_real_escape_string(json_encode($row)))
+			);
+			return "Le mail n'a pas été envoyé. Contactez l'administrateur...";
+		}
 	}
-	// Liste les pages accessibles par tous les utilisateurs à partir des entrées de menus
-	// et retourne un tableau utilisable par un html.form.select.tpl
+	/**
+	 * Méthode modifiant le mot de passe suite à un resetPwd.
+	 *
+	 * @param string $k la clé sauvegardée dans TBL_SIGNUP_ON_HOLD.url
+	 * @param string $password le nouveau mot de passe
+	 *
+	 * @return boolean TRUE si tout s'est bien passé, FALSE sinon
+	 */
+	public static function resetDaPwd($k, $password) {
+		$sql = sprintf("
+			SELECT `email`
+			FROM `TBL_SIGNUP_ON_HOLD`
+			WHERE `url` = '%s'
+			", $_SESSION['db']->db_real_escape_string($k)
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		// Aucune entrée ne correspond à la clé proposée ou plusieurs entrées lui correspondent.
+		if (mysqli_num_rows($result) != 1) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Plusieurs noms ou aucun pour l\'uid ?!", "DEBUG", "%s", "uid multiples", "k:%s")'
+				, __METHOD__
+				, $_SESSION['db']->db_real_escape_string($k))
+			);
+			return FALSE;
+		}
+		$row = $_SESSION['db']->db_fetch_assoc($result);
+		mysqli_free_result($result);
+		if (FALSE === utilisateurGrille::updatePwd($row['email'], $password, TRUE)) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("La mise à jour du mot de passe n\'a pas été effectuée.", "DEBUG", "%s", "short", "k:%s;email:%s")'
+				, __METHOD__
+				, $k
+				, $row['email'])
+			);
+			return FALSE;
+		}
+		$sql = sprintf("
+			DELETE FROM `TBL_SIGNUP_ON_HOLD`
+			WHERE `url` = '%s'
+			", $_SESSION['db']->db_real_escape_string($k)
+		);
+		$_SESSION['db']->db_interroge($sql);
+		return TRUE;
+	}
+	/**
+	 * Méthode permettant de modifier le mot de passe d'un utilisateur.
+	 *
+	 * Cette méthode met à jour le mot de passe de l'utilisateur à partir de son adresse mail.
+	 * Si plusieurs utilisateurs avaient une adresse mail identique, ce qui ne devrait pas se produire,
+	 * tous les comptes ayant cette adresse mail seraient modifiés.
+	 *
+	 * @param string $email est le mail de l'utilisateur. La méthode prend soin de filtrer la valeur de $email.
+	 * @param string $password est le nouveau mot de passe.
+	 * @param int optional si $sendmail est vrai (valeur par défaut), l'utilisateur recevra un mail confirmant la modification de mot de passe et lui rappelant son login.
+	 *
+	 * @return boolean TRUE si tout s'est bien passé, FALSE sinon
+	 */
+	public static function updatePwd($email, $password, $sendmail = TRUE) {
+		$sql = sprintf("
+			UPDATE `TBL_USERS`
+			SET `sha1` = SHA1(CONCAT(`login`, '%s'))
+			WHERE email = '%s'
+			", $_SESSION['db']->db_real_escape_string($password)
+			, $_SESSION['db']->db_real_escape_string(filter_var(trim($email), FILTER_SANITIZE_EMAIL))
+		);
+		$_SESSION['db']->db_interroge($sql);
+		//
+		// Préparation du mail
+		//
+		$row = array(
+			'description'	=> 'password updated'
+			, 'uid'		=> $uid
+		);
+		//
+		// Envoi du mail à l'utilisateur
+		//
+		if (TRUE === Email::QuickMailFromArticle($row)) {
+			return TRUE;
+		} else {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Le mail n\'a pas été envoyé.", "DEBUG", "%s", "short", "uid:%s")'
+				, __METHOD__
+				, $uid)
+			);
+			return FALSE;
+		}
+	}
+	/**
+	 * Méthode listant les pages accessibles par tous les utilisateurs à partir des entrées de menus.
+	 *
+	 * @return array un tableau utilisable par un html.form.select.tpl
+	 */
 	public static function listAvailablePages() {
 		$select = array('label' => 'Première page', 'name' => 'page');
 		$sql = "SELECT `titre` AS `content`, `lien` AS `value`
