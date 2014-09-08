@@ -48,6 +48,10 @@ $DEBUG = false;
 			setcookie('theme', $conf['theme']['default'], $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
 		}
 	$conf['theme']['current'] = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : $conf['theme']['default'];
+	
+// Gestion des emails
+	// adresse mail d'expédition des emails
+	$GLOBALS['emailsender'] = 'noreply@mail.com';
 
 /* 
  * Chargement des valeurs par défaut
