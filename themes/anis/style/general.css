@@ -308,6 +308,11 @@ label, .label {
 	color:#060;
 }
 
+.panel {
+	max-width:800px;
+	margin:auto;
+}
+
 .ng {
 	color:#060;
 	background-color:#beb;
@@ -327,6 +332,17 @@ label, .label {
 	margin:10px 5px;
 	border:1px solid #060;
 	width:220px;
+}
+.panel .w24 {
+	float:left;
+	margin-right:5px;
+}
+.panel ul {
+	list-style:none;
+}
+.panel p {
+	font-size:200%;
+	margin:20px 0;
 }
 .bloc {
 	float:left;
