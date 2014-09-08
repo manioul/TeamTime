@@ -35,3 +35,4 @@
 	</div>
 	{/if}
 	<div id="version">v{$VERSION}</div>
+<div id="info"></div>
