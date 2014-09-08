@@ -20,10 +20,10 @@
 </td>
 </tr><tr>
 <td><label for="dateD">Date de début des {$titre.intitule}</label></td>
-<td><input type="text" name="dateD" id="dateD" /></td>
+<td><input type="date" name="dateD" id="dateD" /></td>
 </tr><tr>
 <td><label for="dateF">Date de fin des {$titre.intitule}</label></td>
-<td><input type="text" name="dateF" id="dateF" /></td>
+<td><input type="date" name="dateF" id="dateF" /></td>
 </tr><tr>
 <td colspan="2"><input type="submit" value="Envoyer" /></td>
 </tr>
