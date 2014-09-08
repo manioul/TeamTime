@@ -190,6 +190,54 @@ $form = array(
 		)
 	)
 );
+$fRecover = array(
+	'name'		=> "fRecover"
+	, 'id'		=> "fRecover"
+	, 'method'	=> "POST"
+	, 'action'	=> "ajax.php"
+	, 'classe'	=> "ng"
+	, 'fieldsets'	=> array(
+		array(
+			'display'	=> "yes"
+			, 'legend'	=> "Mot de passe oublié ?"
+			, 'row'		=> array(
+				array(
+					'type'		=> "hidden"
+					, 'name'	=> "ajax"
+					, 'value'	=> 'true'
+				)
+				, array(
+					'type'		=> 'hidden'
+					, 'name'	=> 'form'
+					, 'value'	=> 'RP'
+				)
+				, array(
+					'type'		=> 'hidden'
+					, 'name'	=> 'cachemoi'
+					, 'value'	=> '1'
+				)
+				, array(
+					'type'		=> "hidden"
+					, 'name'	=> "w"
+					, 'value'	=> "resetPwd"
+				)
+				, array(
+					'type'		=> "text"
+					, 'label'	=> ""
+					, 'name'	=> "email"
+					, 'placeholder'	=> "recover@my.id"
+					, 'title'	=> "Saisissez votre email pour récupérer vos identifiants"
+				)
+				, array(
+					'type'		=> "submit"
+					, 'name'	=> "reset"
+					, 'value'	=> "Envoyer"
+				)
+			)
+		)
+	)
+);
+$smarty->assign('fRecover', $fRecover);
 $smarty->assign('fcon', $fcon);
 $smarty->assign('form', $form);
 
@@ -321,6 +369,7 @@ if (isset($_SESSION['AUTHENTICATED'])) {
 }
 
 $smarty->display('indexTtm.tpl');
+$smarty->display('resetPwd.tpl');
 
 /*
  * Informations de debug
