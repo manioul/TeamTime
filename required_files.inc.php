@@ -30,7 +30,7 @@ if (isset($conf['page']['include']['class_debug']))		require_once 'classes/class
 if (isset($conf['page']['include']['globalConfig']))		require_once 'config.inc.php';
 if (isset($conf['page']['include']['globals_db']))		require_once 'globals_db.inc.php';
 if (isset($conf['page']['include']['class_db']))		require_once 'classes/class_db.inc.php';
-if (isset($conf['page']['include']['mail']))			require_once 'classes/class_email.inc.php';
+if (isset($conf['page']['include']['class_email']))		require_once 'classes/class_email.inc.php';
 if (isset($conf['page']['include']['class_utilisateurGrille']))	require_once 'classes/class_utilisateurGrille.inc.php';
 if (isset($conf['page']['include']['class_affectation']))		require_once 'classes/class_affectations.inc.php';
 if (isset($conf['page']['include']['class_date']))		require_once 'classes/class_date.inc.php';
