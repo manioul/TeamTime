@@ -31,8 +31,13 @@ require_once 'config.inc.php';
 require_once 'class_contacts.inc.php';
 require_once 'class_affectations.inc.php';
 require_once 'class_message.inc.php';
+require_once 'class_email.inc.php';
 
 
+/**
+ * La classe utilisateurGrille étend la classe utilisateur aux utilisateurs de la grille.
+ *
+ */
 class utilisateurGrille extends utilisateur {
 	private $uid;
 	private $nom;
@@ -76,6 +81,7 @@ class utilisateurGrille extends utilisateur {
 				  , 'uri'	=> 'utilisateur.php'
 				  , 'gid'	=> 0)
 	);
+// Méthodes statiques
 	protected static function _label($index) {
 		if (isset(self::$label[$index])) {
 			return self::$label[$index];
@@ -538,23 +544,39 @@ class utilisateurGrille extends utilisateur {
 			}
 		}
 	}
-	// Retourne le centre actuel de l'utilisateur
+	/**
+	 * Retourne le centre actuel de l'utilisateur.
+	 *
+	 * @return string centre actuel de l'utilisateur
+	 */
 	public function centre() {
 		$affectation = $this->affectationOnDate(date('Y-m-d'));
 		return $affectation['centre'];
 	}
-	// Retourne le team actuel de l'utilisateur
+	/**
+	 * Retourne le team actuel de l'utilisateur.
+	 *
+	 * @return string équipe actuelle de l'utilisateur
+	 */
 	public function team() {
 		$affectation = $this->affectationOnDate(date('Y-m-d'));
 		return $affectation['team'];
 	}
-	// Retourne le grade actuel de l'utilisateur
+	/**
+	 * Retourne le grade actuel de l'utilisateur.
+	 *
+	 * @return string grade actuel de l'utilisateur
+	 */
 	public function grade() {
 		$affectation = $this->affectationOnDate(date('Y-m-d'));
 		return $affectation['grade'];
 	}
-	/*
-	 * Ajoute un téléphone unique
+	/**
+	 * Ajoute un téléphone unique.
+	 *
+	 * @param array $row
+	 *
+	 * @return int $phoneid
 	 */
 	public function addPhone($row) {
 		$row['uid'] = $this->uid();
@@ -564,14 +586,18 @@ class utilisateurGrille extends utilisateur {
 		$this->phone[$phoneid] = $phone;
 		return $phoneid;
 	}
-	/*
-	 * Ajoute les téléphones venant d'un tableau
-	 * $array = ( 0 => ('numéro' => '1010101010'
+	/**
+	 * Ajoute les téléphones venant d'un tableau.
+	 *
+	 * @param array $array
+	 * 	 = ( 0 => ('numéro' => '1010101010'
 	 * 		'description'	=> 'maison'
 	 * 		'principal'	=> 'on'
 	 * 		)
 	 * 	      1 => (...)
 	 * 	      )
+	 *
+	 * @return int nombre de numéros de téléphone de l'utilisateur
 	 */
 	public function addPhoneTableau($array) {
 		$valid = true;
@@ -592,8 +618,13 @@ class utilisateurGrille extends utilisateur {
 		$this->phone[$phoneid]->delete();
 		unset($this->phone[$phoneid]);
 	}
-	// Retourne la table des objets Phone
-	// Si $index est passé, retourné l'objet Phone indexé par $index
+	/**
+	 * Retourne la table des objets Phone.
+	 *
+	 * @param int $param optional retourne l'objet Phone indexé par $param
+	 *
+	 * @return object phone object
+	 */
 	public function phone($param = NULL) {
 		if (sizeof($this->phone) == 0) { // Si on n'a pas encore récupéré les téléphones dans la bdd
 			$this->_retrievePhone($param);
@@ -608,8 +639,12 @@ class utilisateurGrille extends utilisateur {
 		}
 		return $this->phone;
 	}
-	/*
-	 * Ajoute une adresse unique
+	/**
+	 * Ajoute une adresse postale unique.
+	 *
+	 * @param array $row les données d'adresse
+	 *
+	 * @return int adresseid index de la nouvelle adresse
 	 */
 	public function addAdresse($row) {
 		$row['uid'] = $this->uid();
@@ -618,14 +653,18 @@ class utilisateurGrille extends utilisateur {
 		$this->adresse[$adresseid] = $adresse;
 		return $adresseid;
 	}
-	/*
-	 * Ajoute les adresses venant d'un tableau
-	 * $array = ( 0 => ('adresse' => '10 rue des alouettes'
+	/**
+	 * Ajoute les adresses venant d'un tableau.
+	 *
+	 * @param array $array =
+	 *            ( 0 => ('adresse' => '10 rue des alouettes'
 	 * 		'cp'	=> '70000'
 	 * 		'ville'	=> 'ville de lumière'
 	 * 		)
 	 * 	      1 => (...)
 	 * 	      )
+	 *
+	 * @return int nombre d'adresses de l'utilisateur
 	 */
 	public function addAdresseTableau($array) {
 		$valid = true;
@@ -696,11 +735,19 @@ class utilisateurGrille extends utilisateur {
 			$this->roles[] = $row['role'];
 		}
 	}
-	// Ajoute un rôle à l'utilisateur
-	// $param est un tableau :
-	// ('role' => role, 'beginning' => beginning, 'end' => end, 'centre' => centre, 'team' => team, 'comment' => comment )
-	// si beginning et end ne sont pas définis, beginning prend la valeur de la date courante et end est fixé à 2050-12-31
-	// si centre et team ne sont pas définis, on utilise l'affectation courante de l'utilisateur
+	/**
+	 * Ajoute un rôle à l'utilisateur.
+	 *
+	 * @param array $param est un tableau :
+	 * ('role' => role
+	 * , 'beginning' => beginning
+	 * , 'end' => end
+	 * , 'centre' => centre
+	 * , 'team' => team
+	 * , 'comment' => comment )
+	 * Si beginning et end ne sont pas définis, beginning prend la valeur de la date courante et end est fixé à 2050-12-31
+	 * si centre et team ne sont pas définis, on utilise l'affectation courante de l'utilisateur
+	 */
 	public function addRole($param) {
 		if (!is_array($param) || !isset($param['role'])) {
 			$msg = sprintf("\$param devrait être un array (%s) et \$param['role'] doit être défini", $param);
@@ -747,7 +794,15 @@ class utilisateurGrille extends utilisateur {
 			); 
 		}
 	}
-	// Retire un rôle à l'utilsiateur
+	/**
+	 * Retire un rôle à l'utilisateur.
+	 *
+	 * La méthode vérifie si l'utilisateur possède déjà ce rôle.
+	 *
+	 * @param string $role le rôle à attribuer.
+	 *
+	 * @return void
+	 */
 	public function dropRole($role) {
 		if ( $_SESSION['utilisateur']->hasRole($role) ) {
 			$sql = sprintf("
@@ -769,9 +824,19 @@ class utilisateurGrille extends utilisateur {
 		}
 		return $this->vismed;
 	}
-	// Ajoute une affectation à l'utilisateur
-	// à partir de $row = array('centre' => , 'team' => , 'beginning' => , 'end' => , 'grade' => );
-	// la bdd est mise à jour
+	/**
+	 * Ajoute une affectation à l'utilisateur.
+	 *
+	 * la bdd est mise à jour.
+	 *
+	 * @param array $row
+	 * - 'centre' => 
+	 * - 'team' => 
+	 * - 'beginning' => 
+	 * - 'end' => 
+	 * - 'grade' => 
+	 * 
+	 */
 	public function addAffectation($row) {
 		if (!is_array($row)) return false;
 		$row['uid'] = $this->uid();
@@ -779,9 +844,10 @@ class utilisateurGrille extends utilisateur {
 		$aid = $affectation->insert();
 		return true;
 	}
-	/*
-	 * Ajoute les affectations venant d'un tableau
-	 * $array = ( 0 => ('aid' => 5
+	/**
+	 * Ajoute les affectations venant d'un tableau.
+	 *
+	 * @param array $array = ( 0 => ('aid' => 5
 	 * 		'centre'	=> 'athis'
 	 * 		'team'	=> '9e'
 	 * 		'beginning'	=> '1990-01-01'
@@ -825,8 +891,12 @@ class utilisateurGrille extends utilisateur {
 		$this->cacheAffectation[$date->date()] = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
 		return $this->cacheAffectation[$date->date()];
 	}
-	/*
-	 * Retourne un tableau des affectations en ordre croissant
+	/**
+	 * Retourne un tableau des affectations en ordre croissant.
+	 *
+	 * @param void
+	 *
+	 * @return array tableau des affectations
 	 */
 	public function orderedAffectations() {
 		$result = $_SESSION['db']->db_interroge(sprintf("
@@ -874,8 +944,14 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	/*
-	 * Retourne les pages disponibles après la connexion pour l'utilisateur
+	/**
+	* Retourne les pages disponibles après la connexion pour l'utilisateur.
+	*
+	* @param string $titre
+	* @param int $index
+	*
+	* @return array les pages accessibles à l'utilisateur
+	* @return boolean NULL si les paramètres ne sont pas corrects
 	 */
 	public function availablePages($type = 'titre', $index = NULL) {
 		firePhpLog("In availablePages");
@@ -951,8 +1027,11 @@ class utilisateurGrille extends utilisateur {
 		$this->dbRetrRoles();
 		$this->_retrieveContact();
 	}
-	// Vérifie si l'utilisateur existe déjà dans la base de données
-	// Pour cela, on vérifie si l'email est déjà présent dans la bdd
+	/**
+	 * Vérifie si l'utilisateur existe déjà dans la base de données.
+	 *
+	 * Pour cela, on vérifie si l'email est déjà présent dans la bdd.
+	 */
 	public function emailAlreadyExistsInDb() {
 		$result = $_SESSION['db']->db_interroge(sprintf("
 			SELECT `nom`
@@ -967,8 +1046,11 @@ class utilisateurGrille extends utilisateur {
 		mysqli_free_result($result);
 		return $return;
 	}
-	// Vérifie si le login est déjà utilisé
-	// Retourne true si un utilisateur existant utilise déjà le login
+	/**
+	 * Vérifie si le login est déjà utilisé.
+	 * 
+	 * @return boolean TRUE si un utilisateur existant utilise déjà le login.
+	 */
 	public function loginAlreadyExistsInDb() {
 		$result = $_SESSION['db']->db_interroge(sprintf("
 			SELECT `nom`
@@ -1092,8 +1174,12 @@ class utilisateursDeLaGrille {
 
 	public function __construct() {
 	}
-	// Retourne une table d'utilisateurGrille
-	// en fonction de la requête sql passée en argument
+	/** Retourne une table d'utilisateurGrille en fonction de la requête sql passée en argument.
+	 *
+	 * @param string requête SQL
+	 *
+	 * @return array
+	 */
 	public function retourneUsers($sql) {
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
@@ -1102,11 +1188,15 @@ class utilisateursDeLaGrille {
 		mysqli_free_result($result);
 		return $this->users;
 	}
-	// Efface la table des utilisateurGrille
+	/**
+	 * Efface la table des utilisateurGrille.
+	 */
 	public function flushUsers() {
 		$this->users = array();
 	}
-	// Retourne une table d'utilisateurGrille d'utilisateurs actifs pour une affectation précise
+	/**
+	 * Retourne une table d'utilisateurGrille d'utilisateurs actifs pour une affectation précise.
+	 */
 	public function getActiveUsersFromTo($from = NULL, $to = NULL, $centre = NULL, $team = NULL) {
 		return $this->getUsersFromTo($from, $to, $centre, $team, 1);
 	}
