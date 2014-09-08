@@ -119,64 +119,22 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
-// Ce script nécessite Pear::Mail et Pear::Mail_Mime
-// pear install mail
-// pear install Mail_Mime
-//
-require_once 'Mail.php';
-require_once 'Mail/mime.php';
 
 if (sizeof($_POST) > 1) {
 	utilisateurGrille::createUser($_POST);
 	// Envoi d'un mail
 	if (array_key_exists('sendmail', $_POST) && $_POST['sendmail'] == "on") {
-		$crlf = "\n";
-		$message = sprintf("Bonjour %s,
-
-Votre compte pour utiliser TeamTime a été créé.
-Vous pouvez désormais y accéder sur :
-https://teamtime.me
-à l'aide des identifiants suivants (gare aux majuscules/minuscules) :
-login : %s
-mot de passe : %s
-
-Grâce à TeamTime, vous pouvez déposer vos congés, récup, stages où que
-vous soyez et quand vous le souhaitez.
-Vous pouvez également vérifier les prochaines vacations, et voir qui sera
-présent.
-Vous visualisez, aisément, les briefings à venir, la période de charge,
-les vacances scolaires.
-Vous suivez votre décompte de congés et de récup, à tout moment.
-Vous accédez, également, à votre décompte d'heures très facilement.
-
-Pour toute question, n'hésitez pas à contater le webmaster.
-Mail : webmaster@teamtime.me
-XMPP : manioul@teamtime.me
-Friendica : https://titoux.info/profile/teamtime
-
-Bonne utilisation.
-
-++ ;)"
-			, ucfirst($_POST['prenom'])
-			, $_POST['login']
-			, $_POST['password']
+		//
+		// Préparation du mail
+		//
+		$row = array(
+			'description'	=> 'account created'
+			, 'prenom'	=> htmlspecialchars($_POST['prenom'])
 		);
-		$hdrs = array(
-			'From'		=> "noreply@teamtime.me"
-			,'Subject'	=> 'Création de votre compte TeamTime'
-		);
-		$mime = new Mail_mime(array(
-			'eol'		=> $crlf
-			,'head_charset'	=> 'utf-8'
-			,'text_charset'	=> 'utf-8'
-		));
-		$mime->setTXTBody($message);
-		$body = $mime->get();
-		$hdrs = $mime->headers($hdrs);
-
-		$mail =& Mail::factory('mail');
-		if (TRUE === $mail->send($_POST['email'], $hdrs, $body)) {
-
+		//
+		// Envoi du mail à l'utilisateur
+		//
+		if (TRUE === Email::QuickMailFromArticle($row)) {
 		} else {
 			$err = "Échec : le mail n'a pas été envoyé...";
 		}
