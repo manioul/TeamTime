@@ -342,7 +342,7 @@ class database {
 		$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
 		preg_match('/^(set|enum)\((.*)\)$/', $row['Type'], $enum);
 		$aEnum = preg_split("/[,'+]/", $enum[2], NULL, PREG_SPLIT_NO_EMPTY);
-		$aEnum['Type'] = $row[1]; // Le type SET ou ENUM
+		$aEnum['Type'] = $enum[1]; // Le type SET ou ENUM
 		return $aEnum;
 	}
 }
