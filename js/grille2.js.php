@@ -758,7 +758,7 @@ $(function() {
 		var a = {'W':'E','E':'W'};
 		var id = this.id;
 		var sreq = 'id='+id+'&conf='+a[$(this).text()];
-		submitRequest(sreq, 'updateConf.php');
+		submitRequest(sreq, 'ajax.php');
 		$(this).contents().replaceWith(a[$(this).text()]);
 	});
 });
