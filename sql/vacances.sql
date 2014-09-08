@@ -1,17 +1,12 @@
 -- Requiert utilisateurs.sql pour searchAffectation
 -- source utilisateurs.sql
 
--- Attribue les congés à toutes les équipes
-UPDATE TBL_DISPO SET team = 'all' WHERE `type decompte` = 'conges';
-ALTER TABLE `TBL_DISPO` CHANGE `absence` `absence` DECIMAL( 2, 1  ) NOT NULL COMMENT 'Indique si la dispo correspond à une absence (0), à une présence (1) ou à une demi-équipe (.5)';
 
 CREATE TABLE IF NOT EXISTS TBL_VACANCES_A_ANNULER (
 	uid INT(11) NOT NULL,
 	did INT(11) NOT NULL,
 	date DATE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-ALTER TABLE TBL_VACANCES_A_ANNULER ADD edited BOOLEAN NOT NULL DEFAULT FALSE;
 
 DELIMITER |
 DROP PROCEDURE IF EXISTS attribAnneeConge|

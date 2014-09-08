@@ -117,6 +117,12 @@ BEGIN
 		PRIMARY KEY (id)
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+	-- Attribue les congés à toutes les équipes
+	UPDATE TBL_DISPO SET team = 'all' WHERE `type decompte` = 'conges';
+	ALTER TABLE `TBL_DISPO` CHANGE `absence` `absence` DECIMAL( 2, 1  ) NOT NULL COMMENT 'Indique si la dispo correspond à une absence (0), à une présence (1) ou à une demi-équipe (.5)';
+
+	ALTER TABLE TBL_VACANCES_A_ANNULER ADD edited BOOLEAN NOT NULL DEFAULT FALSE;
+
 --	INSERT INTO TBL_CONFIG_AFFECTATIONS
 --	(caid, type, nom, description)
 --	VALUES
@@ -219,11 +225,136 @@ BEGIN
 	ALTER TABLE `TBL_DISPATCH_HEURES_USER` ADD KEY `rid` (`rid`), ADD CONSTRAINT `TBL_DISPATCH_HEURES_USER_ibfk_1` FOREIGN KEY (`rid`) REFERENCES `TBL_DISPATCH_HEURES` (`rid`) ON DELETE CASCADE ON UPDATE CASCADE;
 	DROP TRIGGER IF EXISTS updateDispatchSchema;
 	DROP TRIGGER IF EXISTS deleteDispatchSchema;
+	ALTER TABLE `TBL_L_SHIFT_DISPO` CHANGE `uid` `uid` SMALLINT NOT NULL ,
+		CHANGE `did` `did` SMALLINT NOT NULL;
+	-- email doit être unique pour notamment la récupération des mots de passe et l'inscription
+	ALTER TABLE `TBL_SIGNUP_ON_HOLD` ADD UNIQUE (`email`);
+	-- Ajout de la catégorie TRACE pour les messages système
+	ALTER TABLE `TBL_MESSAGES_SYSTEME` CHANGE `catégorie` `catégorie` SET( 'DEBUG', 'INFO', 'ERREUR', 'LOG', 'USER', 'TRACE'  ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'USER';
+	INSERT INTO `ttm`.`TBL_ARTICLES` (`idx`, `titre`, `description`, `texte`, `analyse`, `creation`, `modification`, `restricted`, `actif`) VALUES (NULL, 'Création de votre compte TeamTime', 'account created', 'Bonjour %s,
+		
+Un administrateur vous a créé un compte sur TeamTime et la communauté de
+ses utilisateurs vous souhaite la bienvenue.
+
+Vous pouvez compléter votre inscription en cliquant sur le lien suivant :
+http%s://%s/createAccount.php?k=%s
+(Ce lien est valable une semaine ; au-delà, vous devrez effectuer une
+nouvelle inscription ou demander à votre administrateur de vous créer un
+nouveau compte)
+
+Nous vous recommandons de choisir un mot de passe suffisamment complexe
+et unique afin de protéger vos données personnelles et les données des
+autres utilisateurs de TeamTime.
+
+Grâce à TeamTime, vous pouvez déposer vos congés, récup, stages
+où que vous soyez et quand vous le souhaitez.
+Vous pouvez également vérifier les prochaines vacations, et voir qui sera
+présent.
+Vous visualisez, aisément, les briefings à venir, la période de charge,
+les vacances scolaires.
+Vous suivez votre décompte de congés et de récup, à tout moment.
+Vous accédez, également, à votre décompte d''heures très facilement.
+
+Ne Répondez pas à cet email, svp.
+
+Pour toute question, contactez le webmaster :
+Mail : webmaster@teamtime.me
+XMPP : manioul@teamtime.me
+Friendica : https://titoux.info/profile/teamtime
+
+Bonne utilisation.
+
+++ ;)', '0', NOW(), CURRENT_TIMESTAMP, '1', '1');
+	INSERT INTO `ttm`.`TBL_ARTICLES` (`idx`, `titre`, `description`, `texte`, `analyse`, `creation`, `modification`, `restricted`, `actif`) VALUES (NULL, 'Mise à jour de votre compte TeamTime', 'account updated', 'Bonjour %s,
+
+Votre compte pour utiliser TeamTime a été mis à jour.
+Vous pouvez désormais y accéder sur :
+http%s://%s
+à l''aide des identifiants suivant (gare aux majuscules/minuscules)
+login : %s
+mot de passe : %s
+
+Grâce à TeamTime, vous pouvez déposer vos congés, récup, stages
+où que vous soyez et quand vous le souhaitez.
+Vous pouvez également vérifier les prochaines vacations, et voir qui sera
+présent.
+Vous visualisez, aisément, les briefings à venir, la période de charge,
+les vacances scolaires.
+Vous suivez votre décompte de congés et de récup, à tout moment.
+Vous accédez, également, à votre décompte d''heures très facilement.
+
+Ne Répondez pas à cet email, svp.
+
+Pour toute question, contactez le webmaster :
+Mail : webmaster@teamtime.me
+XMPP : manioul@teamtime.me
+Friendica : https://titoux.info/profile/teamtime
+
+Bonne utilisation.
+
+++ ;)', '0', NOW(), CURRENT_TIMESTAMP, '1', '1');
+	INSERT INTO `ttm`.`TBL_ARTICLES` (`idx`, `titre`, `description`, `texte`, `analyse`, `creation`, `modification`, `restricted`, `actif`) VALUES (NULL, 'Validation de votre inscription sur TeamTime', 'account accepted', 'Bonjour %s,
+
+Félicitations, votre inscription sur TeamTime vient d''etre acceptée.
+
+Vous pouvez maintenant renseigner votre compte sur la page suivante :
+http%s://%s/createAccount.php?k=%s
+(Ce lien est valable une semaine ; au-delà, vous devrez à nouveau
+compléter une inscription).
+
+Nous vous conseillons instamment de créer un mot de passe complexe et unique
+afin de protéger vos données et celles des autres utilisateurs de TeamTime.
+
+Ne Répondez pas à cet email, svp.
+
+Pour toute question, contactez le webmaster :
+Mail : webmaster@teamtime.me
+XMPP : manioul@teamtime.me
+Friendica : https://titoux.info/profile/teamtime
+
+Bonne utilisation.
+
+++ ;)', '0', NOW(), CURRENT_TIMESTAMP, '1', '1');
+	INSERT INTO `ttm`.`TBL_ARTICLES` (`idx`, `titre`, `description`, `texte`, `analyse`, `creation`, `modification`, `restricted`, `actif`) VALUES (NULL, 'Demande de réinitialisation de votre mot de passe TeamTime', 'reset password', 'Bonjour %s,
+
+Vous avez demandé à réinitialiser votre mot de passe pour utiliser TeamTime.
+Pour cela, il vous suffit de suivre le lien ci-dessous :
+http%s://%s/createAccount.php?k=%s
+(Ce lien est valable une semaine ; au-delà, vous devrez reformuler une
+demande de réinitialisation de votre mot de passe).
+
+Si vous n''avez pas fait de demande de modification de votre mot de passe,
+merci de nous signaler cet abus en cliquant le lien ci-dessous :
+http%s://%s/abuse.php?k=%s&t=pwdchg
+
+Ne Répondez pas à cet email, svp.
+
+Pour toute question, contactez le webmaster :
+Mail : webmaster@teamtime.me
+XMPP : manioul@teamtime.me
+Friendica : https://titoux.info/profile/teamtime
+
+++ ;)', '0', NOW(), CURRENT_TIMESTAMP, '1', '1');
+	INSERT INTO `ttm`.`TBL_ARTICLES` (`idx`, `titre`, `description`, `texte`, `analyse`, `creation`, `modification`, `restricted`, `actif`) VALUES (NULL, 'Mise à jour de votre mot de passe TeamTime', 'password updated', 'Bonjour %s,
+
+Votre mot de passe a été mis à jour avec succès.
+Votre login est : %s
+
+Ne Répondez pas à cet email, svp.
+
+Pour toute question, contactez le webmaster :
+Mail : webmaster@teamtime.me
+XMPP : manioul@teamtime.me
+Friendica : https://titoux.info/profile/teamtime
+
+++ ;)', '0', NOW(), CURRENT_TIMESTAMP, '1', '1');
+		
 END
 |
 
 DELIMITER ;
 
 -- CALL post_2_1c();
+CALL post_2_2a();
 
 
