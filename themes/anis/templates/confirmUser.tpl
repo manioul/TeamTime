@@ -1,26 +1,35 @@
 {* Smarty *}
-<div class="ng w24">
+<div class="panel">
 <h1>Validation des utilisateurs</h1>
 {if sizeof($users) > 0}
+<p>Les utilisateurs suivant ont demandé à créer un compte :</p>
 <ul>
 {/if}
 {foreach $users as $user}
 <li id="cf{$user.id}">
+<div class="ng w24">
 <ul>
-<form name="user{$user.id}" action="post.php" method="POST">
+<form name="user{$user.id}" action="ajax.php" method="POST">
 <li>
-{$user.prenom|capitalize} {$user.nom|capitalize} vient-il dans votre équipe ?
+{$user.prenom|capitalize} <strong>{$user.nom|capitalize}</strong> ({$user.email})
+vient-il dans votre équipe ?
 </li><li>
+<input type="hidden" name="form" value="CU" />
+<input type="hidden" name="ajax" value="true" />
+<input type="hidden" name="cachemoi" value="1" />
+<input type="hidden" name="submit" value="confirm" id="subValue" />
 <input type="hidden" name="id" value="{$user.id}" />
-<label for="dateD">À partir du </label><input type="text" name="dateD" value="{$user.dateD|date_format:"%d-%m-%Y"}" />
-<label for="dateF">jusqu'au </label><input type="text" name="dateF" value="{$user.dateF|date_format:"%d-%m-%Y"}" />
+<label for="dateD">À partir du </label><input type="date" name="dateD" value="{$user.dateD|date_format:"%d-%m-%Y"}" />
+</li><li>
+<label for="dateF">jusqu'au </label><input type="date" name="dateF" value="{$user.dateF|date_format:"%d-%m-%Y"}" />
+</li><li>
 {include file='html.form.select.tpl' select=$grades}
-{include file='html.form.select.tpl' select=$classes}
-<input type="submit" name="infirm" value="Utilisateur inconnu" />
-<input type="submit" name="confirm" value="Confirmer le compte" />
+<input type="submit" name="inf" value="Utilisateur inconnu" onclick="$('#subValue').val('infirm')" />
+<input type="submit" name="conf" value="Confirmer le compte" />
 </li>
 </form>
 </ul>
+</div>
 </li>
 {/foreach}
 {if sizeof($users) > 0}
