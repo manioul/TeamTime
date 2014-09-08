@@ -1,7 +1,9 @@
 <?php
 // ajax.php
 //
-// Traitement des requêtes ajax
+/**
+ * Traitement des requêtes ajax.
+ */
 
 /*
 	TeamTime is a software to manage people working in team on a cyclic shift.
@@ -21,9 +23,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Require authenticated user
-// L'utilisateur doit être logué pour accéder à cette page
-$requireAdmin = true;
 
 ob_start(); // Obligatoire pour firePHP
 
@@ -41,7 +40,8 @@ ob_start(); // Obligatoire pour firePHP
 	$conf['page']['include']['session'] = 1; // Le script utilise les sessions par session.imc
 	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
-	$conf['page']['include']['class_cycle'] = NULL; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
+	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
+	$conf['page']['include']['class_email'] = 1; // La classe Email est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['class_menu'] = NULL; // La classe menu est nécessaire à ce script
 	$conf['page']['include']['smarty'] = NULL; // Smarty sera utilisé sur cette page
 	$conf['page']['compact'] = NULL; // Compactage des scripts javascript et css
@@ -116,43 +116,125 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
-$err = "";
+
+$err = "Formulaire non traité";
 
 if (sizeof($_REQUEST) > 0) {
 	/*
 	 * Actions des admins
 	 */
 	if (array_key_exists('ADMIN', $_SESSION)) {
-		if ($_POST['id']) {
-			switch ($_POST['op']) { 
-			case 'del':
-				$err = $_SESSION['db']->db_interroge("DELETE FROM `TBL_L_SHIFT_DISPO` WHERE `sdid` = " . (int) $_POST['id']);
-				$err .= $_SESSION['db']->db_interroge("DELETE FROM `TBL_VACANCES` WHERE `sdid` = " . (int) $_POST['id']);
-				break;
-			case 'upd':
-				if ($_POST['t'] == 'l') {
-					switch ($_POST['field']) {
-					case 'pereq':
-						$val = empty($_POST['val']) ? 'FALSE' : 'TRUE';
-						// On met à jour le statut de péréquation à condition que la date ne soit pas nul
-						// (lequel cas ne pourrait correspondre qu'à une péréq)
-						$sql = sprintf("
-							UPDATE `TBL_L_SHIFT_DISPO`
-							SET `pereq` = %s
-							WHERE `sdid` = %d
-							AND `date` != '0000-00-00'
-							", $val
-							, $_POST['id']
-						);
-						$err = $_SESSION['db']->db_interroge($sql);
-						break;
+		if (array_key_exists('id', $_POST)) {
+			if (array_key_exists('op', $_POST)) {
+				switch ($_POST['op']) { 
+				case 'del':
+					$err = $_SESSION['db']->db_interroge("
+						DELETE FROM `TBL_L_SHIFT_DISPO`
+						WHERE `sdid` = " . (int) $_POST['id']);
+					$err .= $_SESSION['db']->db_interroge("
+						DELETE FROM `TBL_VACANCES`
+						WHERE `sdid` = " . (int) $_POST['id']);
+					break;
+				case 'upd':
+					if ($_POST['t'] == 'l') {
+						switch ($_POST['field']) {
+						case 'pereq':
+							$val = empty($_POST['val']) ? 'FALSE' : 'TRUE';
+							// On met à jour le statut de péréquation à condition que la date ne soit pas nul
+							// (lequel cas ne pourrait correspondre qu'à une péréq)
+							$sql = sprintf("
+								UPDATE `TBL_L_SHIFT_DISPO`
+								SET `pereq` = %s
+								WHERE `sdid` = %d
+								AND `date` != '0000-00-00'
+								", $val
+								, $_POST['id']
+							);
+							$err = $_SESSION['db']->db_interroge($sql);
+							break;
+						}
 					}
+					break;
 				}
-				break;
+				// Si les deux requêtes se sont bien passées, elles renvoient chacune 1
+				// d'où $err === "11" si tout s'est bien passé
+				if ($err === "11") $err = "Mise à jour effectuée";
 			}
-			// Si les deux requêtes se sont bien passées, elles renvoient chacune 1
-			// d'où $err === "11" si tout s'est bien passé
-			if ($err === "11") $err = "";
+		} elseif (array_key_exists('login', $_POST) && array_key_exists('nom', $_POST) && array_key_exists('email', $_POST)) {
+		// Gestion du formulaire creationCompte.php
+			// FIXME Les mails doivent être gérés par la classe Email
+			$to = $_POST['email'];
+			$login = $_POST['login'];
+			$passwd = $_POST['password'];
+			$nom = $_POST['nom'];
+			if (isset($_POST['sendmail']) && $_POST['sendmail'] == "svp") {
+				$sql = "SELECT `titre` AS `subject`
+					, `texte`
+					FROM `TBL_ARTICLES`
+					WHERE `description` = 'account update'
+					LIMIT 1";
+				$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+				$crlf = "\n";
+				$message = sprintf($row['texte']
+				, ucfirst($login)
+				, dirname($_SERVER['HTTP_REFERER'])
+				, $login
+				, $passwd
+				);
+				$hdrs = array(
+					'From'		=> "noreply@teamtime.me"
+					,'Subject'	=> $row['subject']
+				);
+				$mime = new Mail_mime(array(
+					'eol'		=> $crlf
+					,'head_charset'	=> 'utf-8'
+					,'text_charset'	=> 'utf-8'
+				));
+				$mime->setTXTBody($message);
+				$body = $mime->get();
+				$hdrs = $mime->headers($hdrs);
+
+				$mail =& Mail::factory('mail');
+				if (TRUE === $mail->send($to, $hdrs, $body)) {
+					$sql = sprintf("
+						UPDATE `TBL_USERS`
+						SET `login` = '%s',
+						`email` = '%s',
+						`sha1` = SHA1('%s')
+						WHERE `nom` = '%s'
+						", $_SESSION['db']->db_real_escape_string($login)
+						, $_SESSION['db']->db_real_escape_string($to)
+						, $_SESSION['db']->db_real_escape_string($login . $passwd)
+						, $_SESSION['db']->db_real_escape_string($nom)
+				);
+					$_SESSION['db']->db_interroge($sql);
+					$err = mysql_error();
+					firePhpLog($sql, '$sql');
+				} else {
+					$err = "Échec : le mail n'a pas été envoyé...";
+				}
+			} else {
+				$sql = sprintf("
+					UPDATE `TBL_USERS`
+					SET `login` = '%s',
+					`email` = '%s',
+					`sha1` = SHA1('%s')
+					WHERE `nom` = '%s'
+					"
+					, $_SESSION['db']->db_real_escape_string($login)
+					, $_SESSION['db']->db_real_escape_string($to)
+					, $_SESSION['db']->db_real_escape_string($login . $passwd)
+					, $_SESSION['db']->db_real_escape_string($nom)
+				);
+				$_SESSION['db']->db_interroge($sql);
+				$err = mysql_error();
+				firePhpLog($sql, '$sql');
+			}
+			if ($err != "") {
+				die((nl2br(htmlspecialchars($err))));
+			} else {
+				die(htmlspecialchars("Mise à jour effectuée."));
+			}
 		} else {
 			exit;
 		}
@@ -161,28 +243,128 @@ if (sizeof($_REQUEST) > 0) {
 	 * Actions des éditeurs
 	 */
 	if (array_key_exists('EDITEURS', $_SESSION)) {
-		// Suppression des comptes créés par des inconnus (confirmUser.php)
-		//
-		// id contient l'identifiant de l'entrée dans la table TBL_SIGNUP_ON_HOLD
-		if (array_key_exists('infirm', $_REQUEST)) {
-			if (array_key_exists('id', $_REQUEST)) {
-				// On précise centre et équipe pour éviter
-				// la suppression d'inscription dans
-				// d'autres équipes que celle de l'utilisateur
-				$_SESSION['db']->db_interroge(sprintf(
-					"DELETE FROM `TBL_SIGNUP_ON_HOLD`
-					WHERE `id` = %d
-					AND `centre` = '%s'
-					AND `team` = '%s'
-					", $_REQUEST['id']
-					, $_SESSION['utilisateur']->centre()
-					, $_SESSION['utilisateur']->team()
-				));
+		if (array_key_exists('form', $_REQUEST)) {
+			/*
+			 * Validation des utilisateurs ayant créés un compte.
+			 * Les editeurs peuvent valider ou invalider l'inscription
+			 * d'un nouvel utilisateur.
+			 */
+			if ($_REQUEST['form'] === 'CU') {
+				// Suppression des comptes créés par des inconnus (confirmUser.php)
+				//
+				// id contient l'identifiant de l'entrée dans la table TBL_SIGNUP_ON_HOLD
+				if (array_key_exists('submit', $_REQUEST) && $_REQUEST['submit'] == "infirm") {
+					if (array_key_exists('id', $_REQUEST)) {
+						// On précise centre et équipe pour éviter
+						// la suppression d'inscription dans
+						// d'autres équipes que celle de l'utilisateur
+						$_SESSION['db']->db_interroge(sprintf(
+							"DELETE FROM `TBL_SIGNUP_ON_HOLD`
+							WHERE `id` = %d
+							AND `centre` = '%s'
+							AND `team` = '%s'
+							", $_REQUEST['id']
+							, $_SESSION['utilisateur']->centre()
+							, $_SESSION['utilisateur']->team()
+						));
+						die(htmlspecialchars("Utilisateur Supprimé"));
+					}
+				} elseif (array_key_exists('submit', $_REQUEST) && $_REQUEST['submit'] == "confirm" && array_key_exists('dateD', $_REQUEST) && array_key_exists('dateF', $_REQUEST) && array_key_exists('grade', $_REQUEST)) {
+					// Confirme l'existence d'un utilisateur et création du compte utilisateur
+					if (TRUE === utilisateurGrille::acceptUser($_REQUEST['id'], $_REQUEST['dateD'], $_REQUEST['dateF'], $_REQUEST['grade'])) {
+						print(htmlspecialchars("Utilisateur accepté."));
+					} else {
+						print(htmlspecialchars("Le mail n'a pas été envoyé à l'utilisateur."));
+					}
+					exit;
+				}
 			}
 		}
-		// Confirme l'existence d'un utilisateur et création du compte utilisateur
-		if (array_key_exists('confirm', $_REQUEST) && array_key_exists('dateD', $_REQUEST) && array_key_exists('dateF', $_REQUEST) && array_key_exists('grade', $_REQUEST)) {
-			utilisateurGrille::acceptUser($_REQUEST['id'], $_REQUEST['dateD'], $_REQUEST['dateF'], $_REQUEST['grade'], $_REQUEST['classe']);
+	}
+	if (array_key_exists('TEAMEDIT', $_SESSION)) {
+		// Gestion de la configuration sur la grille
+		if (array_key_exists('conf', $_POST) && array_key_exists('id', $_POST)) {
+			if ($_POST['conf'] != 'W' && $_POST['conf'] != 'E') {
+				$err = 'Conf inconnue...';
+			} else {
+				if (preg_match('/confa(\d{4})m(\d*)j(\d*)/', $_POST['id'], $array)) {
+					firePhpLog($array, 'arr');
+					$date = new Date(sprintf("%04d-%02d-%02d", $array[1], $array[2], $array[3]));
+					$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
+					$sql = sprintf("
+						UPDATE `TBL_GRILLE`
+						SET `conf` = '%s'
+						WHERE `readonly` = FALSE
+						AND `date` BETWEEN '%s' AND '%s'
+						AND `centre` = '%s'
+						AND `team` = '%s'
+						", $_POST['conf']
+						, $date->date()
+						, $date->addJours(Cycle::getCycleLength($affectation['centre'], $affectation['team'])-1)->date()
+						, $affectation['centre']
+						, $affectation['team']
+					);
+
+					$_SESSION['db']->db_interroge($sql);
+					if ($_SESSION['db']->db_affected_rows() < Cycle::getCycleLength($affectation['centre'], $affectation['team'])) { // Le verrouillage ne verrouille pas les jours de REPOS, d'où un nombre de données affectées même lorsque la grille n'est pas modifiable
+						$err = "Modification impossible...";
+						$_SESSION['db']->db_interroge(sprintf('
+							CALL messageSystem("Modification de la configuration impossible.", "DEBUG", "updateConf.php", "mod failed", "affected_rows:%d;shouldBe:%d;POST:%s;SESSION:%s")'
+							, $_SESSION['db']->db_affected_rows()
+							, Cycle::getCycleLength($affectation['centre'], $affectation['team'])
+							, $_SESSION['db']->db_real_escape_string(json_encode($_POST))
+							, $_SESSION['db']->db_real_escape_string(json_encode($_SESSION))
+							)
+						);
+					} else {
+						$err = mysql_error();
+					}
+					firePhpLog($sql, 'SQL');
+				} else {
+					$err = "Date inconnue";
+				}
+
+			}
+		}
+	}
+	if (array_key_exists('MY_EDIT', $_SESSION)) {
+		if (array_key_exists('id', $_POST)) {
+			if (preg_match('/u(.+)d(\d{2,4}-\d{2}-\d{2,4})/', $_POST['id'], $array)) { // La date doit respecter les formats fr et us
+				$date = new Date($array[2]);
+				// Changer l'année d'un congé
+				if (array_key_exists('y', $_POST) && $_POST['y'] == 1) {
+					if ($_SESSION['utilisateur']->hasRole('teamEdit') || $_SESSION['utilisateur']->uid() == $array[1]) {
+						$_SESSION['db']->db_interroge(sprintf("
+							CALL toggleAnneeConge(%d, '%s')
+							", $array[1]
+							, $date->date()));
+					}
+				// Changer le statut d'un congé
+				} elseif (array_key_exists('f', $_POST) && $_SESSION['utilisateur']->hasRole('teamEdit')) {
+					$etat = ($_POST['f'] >= 2 ? 2 : 1);
+					$sql = sprintf("
+						UPDATE `TBL_VACANCES`
+						SET `etat` = %d
+						WHERE `sdid` = (SELECT `sdid`
+							FROM `TBL_L_SHIFT_DISPO`
+							WHERE `date` = '%s'
+							AND `uid` = %d
+							LIMIT 1)
+						"
+						, $etat
+						, $date->date()
+						, $array[1]);
+					$_SESSION['db']->db_interroge($sql);
+				}
+			} else {
+				$err = "Date inconnue";
+			}
+		}
+	}
+	if (array_key_exists('w', $_POST)) {
+		if ($_POST['w'] == "resetPwd") {
+			// La chaîne 'email' est filtrée par la méthode resetPwd
+			die(utilisateurGrille::resetPwd($_POST['email']));
 		}
 	}
 }
