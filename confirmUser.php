@@ -148,16 +148,14 @@ mysqli_free_result($result);
 // Recherche les grades disponibles
 $grades = array();
 $i = 0;
-$sql = "SELECT `nom`, `description`, `type`
+$sql = "SELECT `nom`, `description`
 	FROM `TBL_CONFIG_AFFECTATIONS`
 	WHERE `type` = 'grade'";
 $result = $_SESSION['db']->db_interroge($sql);
 while($row = $_SESSION['db']->db_fetch_assoc($result)) {
-	if ($row['type'] == 'grade') {
-		$grades['options'][$i]['value'] = $row['nom'];
-		$grades['options'][$i]['content'] = $row['nom'];
-		$i++;
-	}
+	$grades['options'][$i]['value'] = $row['nom'];
+	$grades['options'][$i]['content'] = $row['description'];
+	$i++;
 }
 mysqli_free_result($result);
 $grades['name'] = "grade";
