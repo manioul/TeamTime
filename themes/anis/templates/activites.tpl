@@ -1,4 +1,5 @@
 {* Smarty *}
+<div class="panel">
 <form name="{$form.name}"{if isset($form.id)} id="{$form.id}"{/if}{if isset($form.classe)} class="{$form.classe}"{/if} method="{$form.method}" action="{$form.action}">
 <fieldset><legend>{$form.legend}</legend>
 <ul>
@@ -47,3 +48,4 @@
 </ul>
 </fieldset>
 </form>
+</div>
