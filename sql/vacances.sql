@@ -555,6 +555,7 @@ BEGIN
 		INTO dispoid, typeDecompte
 		FROM TBL_DISPO
 		WHERE dispo = disponibilite
+		AND (`jours possibles` = 'all' OR FIND_IN_SET(vac, `jours possibles`))
 		AND (centre = centre_ OR centre = 'all')
 		AND (team = team_ OR team = 'all');
 		CALL messageSystem('La date est éditable', 'TRACE', 'delDispo', NULL, CONCAT('dispoid:', dispoid, ';typeDecompte:', typeDecompte));
