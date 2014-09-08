@@ -172,6 +172,7 @@ foreach (array_keys($arr) as $uid) {
 			if ($arr[$uid][$date]['did'] == 1) {
 				$nbCong = (string) $nbCong / 6;
 				$nbCong = preg_replace('/\./', ',', $nbCong);
+				$dateFin->addJours(3); // Un congé demi-cycle comprend les trois jours de repos
 			}
 			$titreConges->editTitreConges($arr[$uid][$date]['nom'], $arr[$uid][$date]['did'], $nbCong, $dateDebut->formatDate(), $dateFin->formatDate(), $dateReprise, $dateTitre, $affectation['team']);
 		}

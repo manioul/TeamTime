@@ -165,17 +165,24 @@ foreach (array_keys($arr) as $uid) {
 		$dateFin = clone $prochainJt;
 		$lendemain->incDate();
 		$dateReprise = $prochainJt->nextWorkingDay()->formatDate(); // La date de reprise est la prochaine date de jour travaillé
-			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Long", "DEBUG", "", "%s", "did:%d;oldDid:%d;compareDate:%d;date:%s;lendemain:%s")'
-				, $arr[$uid][$date]['nom']
-				, $arr[$uid][$date]['did']
-				, $oldDid
-				, $lendemain->compareDate($date)
-				, $date
-				, $lendemain->formatDate()
-				)
-			); 
+		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Long", "DEBUG", "", "%s", "did:%d;oldDid:%d;compareDate:%d;date:%s;lendemain:%s")'
+			, $arr[$uid][$date]['nom']
+			, $arr[$uid][$date]['did']
+			, $oldDid
+			, $lendemain->compareDate($date)
+			, $date
+			, $lendemain->formatDate()
+			)
+		); 
 	}
 	if ($nbCong > 0) {
+		if ($arr[$uid][$date]['did'] == 1) {
+			$nbCong = (string) $nbCong / 6;
+			$nbCong = preg_replace('/\./', ',', $nbCong);
+			$dateFin->addJours(3); // Un congé demi-cycle comprend les trois jours de repos
+			$dateReprise = clone $dateFin;
+			$dateReprise = $dateReprise->incDate()->formatDate();
+		}
 		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Édition titre", "DEBUG", "", "%s", "nbCong:%s;did:%d;dateDebut:%s;dateFin:%s;dateReprise:%s")'
 			, $arr[$uid][$date]['nom']
 			, $nbCong
@@ -183,12 +190,8 @@ foreach (array_keys($arr) as $uid) {
 			, $dateDebut->formatDate()
 			, $dateFin->formatDate()
 			, $dateReprise
-		)
-	);
-		if ($arr[$uid][$date]['did'] == 1) {
-			$nbCong = (string) $nbCong / 6;
-			$nbCong = preg_replace('/\./', ',', $nbCong);
-		}
+			)
+		);
 		$titreConges->editTitreConges($arr[$uid][$date]['nom'], $arr[$uid][$date]['did'], $nbCong, $dateDebut->formatDate(), $dateFin->formatDate(), $dateReprise, date('d-m-Y'), $affectation['team']);
 		$sql = sprintf("
 			UPDATE `TBL_VACANCES_A_ANNULER`
