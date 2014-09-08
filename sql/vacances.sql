@@ -267,6 +267,7 @@ BEGIN
 		END IF;
 		-- Supprime l'ancienne dispo
 		IF oldDisponibilite != "" THEN
+			CALL messageSystem('Une ancienne dispo existe et doit être effacée : appel delDispo', 'TRACE', 'addDispo', NULL, CONCAT('date:', date_, ';oldDisponibilite:', oldDisponibilite, ';uid:', uid_));
 			CALL delDispo( uid_, date_, oldDisponibilite, FALSE);
 		END IF;
 		IF disponibilite != "" THEN
@@ -284,6 +285,7 @@ BEGIN
 			IF typeDecompte = 'conges' THEN
 				CALL addConges( uid_, date_, dispoid, perequation );
 			ELSE
+				CALL messageSystem('Ajout de la dispo', 'TRACE', 'addDispo', NULL, CONCAT('dispoid:', dispoid, ';uid:', uid_, 'date:', date_, 'pereq:', perequation));
 				INSERT INTO TBL_L_SHIFT_DISPO
 				(date, uid, did, pereq)
 				VALUES
@@ -499,8 +501,11 @@ BEGIN
 
 	CALL searchAffectation(uid_, date_, centre_, team_, grad);
 
+	CALL messageSystem('This is delDispo', 'TRACE', 'delDispo', NULL, CONCAT('uid:', uid_, ';date:', date_, ';disponibilite:', disponibilite, ';pereq:', perequation, ';centre:', centre_, ';team:', team_, ';grade:', grad));
+
 	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
 	IF NOT perequation THEN
+		CALL messageSystem('Vérifie que la date est un jour travaillé (!pereq)', 'TRACE', 'delDispo', NULL, '_');
 		SELECT vacation
 		INTO vac
 		FROM TBL_CYCLE AS c,
@@ -514,8 +519,10 @@ BEGIN
 		IF vac = 'Repos' THEN
 			SET isReadOnly = 1;
 		END IF;
+		CALL messageSystem('Vérifie que la date est un jour travaillé (!pereq)', 'TRACE', 'delDispo', NULL, CONCAT('isReadOnly:', isReadOnly, ';vac:', vac));
 	ELSE
 		-- De même si il s'agit d'une péréquation, on vérifie que la date est un jour de repos
+		CALL messageSystem('Vérifie que la date est un jour de repos (pereq)', 'TRACE', 'delDispo', NULL, NULL);
 		SELECT vacation
 		INTO vac
 		FROM TBL_CYCLE AS c,
@@ -529,8 +536,10 @@ BEGIN
 		IF vac != 'Repos' THEN
 			SET isReadOnly = 1;
 		END IF;
+		CALL messageSystem('Vérifie que la date est un jour de repos (pereq)', 'TRACE', 'delDispo', NULL, CONCAT('isReadOnly:', isReadOnly, ';vac:', vac));
 	END IF;
 
+	CALL messageSystem('La date est-elle éditable ?', 'TRACE', 'delDispo', NULL, CONCAT('_'));
 	-- Vérifie si la date est éditable
 	SELECT readOnly
 	INTO isReadOnly
@@ -538,6 +547,7 @@ BEGIN
 	WHERE date = date_
 	AND (centre = centre_ OR centre = 'all')
 	AND (team = team_ OR team = 'all');
+	CALL messageSystem('La date est-elle éditable ?', 'TRACE', 'delDispo', NULL, CONCAT('isReadOnly:', isReadOnly));
 
 	IF NOT isReadOnly THEN
 		-- Vérifie si la dispo est un congé
@@ -547,11 +557,14 @@ BEGIN
 		WHERE dispo = disponibilite
 		AND (centre = centre_ OR centre = 'all')
 		AND (team = team_ OR team = 'all');
+		CALL messageSystem('La date est éditable', 'TRACE', 'delDispo', NULL, CONCAT('dispoid:', dispoid, ';typeDecompte:', typeDecompte));
 
 		-- Si la dispo est un congé
 		IF typeDecompte = 'conges' THEN
+			CALL messageSystem('La dispo est un congé : appel delConges', 'TRACE', 'delDispo', NULL, CONCAT('dispoid:', dispoid, ';typeDecompte:', typeDecompte));
 			CALL delConges( uid_, date_, dispoid, NULL, perequation );
 		ELSE
+			CALL messageSystem('Suppression de la dispo', 'TRACE', 'delDispo', NULL, CONCAT('dispoid:', dispoid, ';typeDecompte:', typeDecompte, 'date:', date_));
 			DELETE FROM TBL_L_SHIFT_DISPO
 			WHERE uid = uid_
 			AND did = dispoid
