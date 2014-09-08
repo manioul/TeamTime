@@ -25,8 +25,6 @@ if (empty($_POST['login']) || empty($_POST['pwd'])) {
 	header("Location:index.php?norights=1");
 }
 
-$login = $_POST['login'];
-$pwd = $_POST['pwd'];
 
 $conf['page']['include']['constantes'] = NULL; // Ce script nécessite la définition des constantes
 $conf['page']['include']['errors'] = NULL; // le script gère les erreurs avec errors.inc.php
@@ -42,65 +40,8 @@ $conf['page']['include']['class_cycle'] = NULL; // La classe cycle est nécessai
 
 require 'required_files.inc.php';
 
-$_SESSION['db'] = new database($GLOBALS['DSN']['admin']);
+utilisateurGrille::logon($_POST['login'], $_POST['pwd']);
 
-$sql = sprintf("
-	SELECT `uid`, `nblogin` FROM `TBL_USERS`
-	WHERE `login` = '%s'
-	AND `sha1` = SHA1('%s')
-	", $_SESSION['db']->db_real_escape_string($login)
-	, $_SESSION['db']->db_real_escape_string($login . $pwd)
-);
-	/*$_SESSION['db']->db_interroge(sprintf("
-		CALL messageSystem('Tentative de connexion [%s]', 'DEBUG', 'logon.php', NULL, 'sql:%s;')
-		", $_SERVER['REMOTE_ADDR']
-		, $_SESSION['db']->db_real_escape_string($sql)
-	));*/
-$result = $_SESSION['db']->db_interroge($sql);
-if (mysqli_num_rows($result) > 0) {
-	session_regenerate_id(); // Éviter les attaques par fixation de session
-	$row = $_SESSION['db']->db_fetch_assoc($result);
-	mysqli_free_result($result);
-	$DSN = $GLOBALS['DSN']['user'];
-	$DSN['username'] = 'ttm.'.$row['uid'];
-	if (!$_SESSION['db']->change_user($DSN)) {
-		// Interdit l'accès aux utilisateurs qui n'ont pas d'identifiant sur la base de données
-		unset($_SESSION);
-		mysqli_free_result($result);
-		header('Location:index.php');
-	}
-	$_SESSION['utilisateur'] = new utilisateurGrille((int) $row['uid']);
-	$_SESSION['AUTHENTICATED'] = true;
-	// Mise à jour des informations de connexion
-	$upd = sprintf("
-		UPDATE `TBL_USERS`
-		SET `lastlogin` = NOW()
-		, `nblogin` = %d
-		WHERE `uid` = %d"
-		, $row['nblogin'] + 1
-		, $row['uid']);
-	$_SESSION['db']->db_interroge($upd);
-	$sql = sprintf("
-		SELECT `role`
-		FROM `TBL_ROLES`
-		WHERE `uid` = %d
-		AND beginning <= NOW()
-		AND end >= NOW()"
-		, $row['uid']);
-	$result2 = $_SESSION['db']->db_interroge($sql);
-	while ($row = $_SESSION['db']->db_fetch_array($result2)) {
-		$_SESSION[strtoupper($row[0])] = true;
-	}
-	mysqli_free_result($result2);
-} else {
-	$_SESSION['db']->db_interroge(sprintf("
-		CALL messageSystem('Tentative de connexion échouée [%s]', 'DEBUG', 'logon.php', NULL, 'login:%s;password:%s;')
-		", $_SERVER['REMOTE_ADDR']
-		, $_SESSION['db']->db_real_escape_string($login)
-		, $_SESSION['db']->db_real_escape_string($pwd))
-	);
-}
-mysqli_free_result($result);
 header('Location:index.php');
 
 
