@@ -2,6 +2,7 @@
 // class_utilisateur.inc.php
 //
 // classe implémentant les informations et la gestion des utilisateurs
+//
 
 /*
 	TeamTime is a software to manage people working in team on a cyclic shift.
@@ -107,6 +108,7 @@ class utilisateur {
 	// $correspondances est un tableau contenant des correspondances
 	// entre les champs de la table et une étiquette à afficher dans le tableau html
 	// $regen permet de régénérer la définition si positionné
+// Méthodes statiques
 	protected static function _fieldsDefinition($correspondances, $regen = NULL) {
 		if (is_null($regen) || is_null($this->fieldsDefinition)) {
 			// Recherche les champs de la table des utilisateurs
