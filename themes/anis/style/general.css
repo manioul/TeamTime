@@ -240,7 +240,6 @@ input, textarea, select {
 	-ms-border-radius: 3px;
 	-o-border-radius: 3px;
 	border-radius: 3px;
-	width:100%;
 }
 .bouton, input[type=submit] {
 	width:100%;
@@ -267,7 +266,7 @@ input, textarea, select {
 
 	box-shadow: 2px 2px 2px #88aa88;
 
-	padding:4px;
+	padding:0 15px;
 	margin:0 auto;
 
 	cursor:pointer;)
@@ -359,6 +358,24 @@ div#dConnexion input {
 	font-size: 7pt;
 }
 
+input,
+select {
+	height:1.5em;
+	margin-top:5px;
+	margin-bottom:5px;
+}
+input[!type=submit]:last-of-type,
+select:last-of-type {
+	height:1.5em;
+	margin-top:5px;
+	margin-bottom:0;
+}
+input[type=date] {
+	width:5.5em;
+}
+input#poids {
+	max-width:1.5em;
+}
 /*
  * Formulaire de péréquations
  */
@@ -447,18 +464,20 @@ div#dConnexion input {
 		width:120px;
 		font-weight:bold;
 	}
-	form#fContact input[type=text],
-	form#fContact input[type=email],
-	form#fContact select,
-	form#fContact textarea {
-		width:200px;
+	input[type=text],
+	input[type=tel],
+	input[type=password],
+	input[type=email],
+	select[not(multiple=multiple)],
+	textarea {
+		max-width:15em;
+	}
+	select[multiple=multiple] {
+		height:4em;
+		text-align:center;
 	}
 	form#fContact input[type=button] {
 		width:100%;
-	}
-	form#fAffectation input,
-	form#fAffectation select {
-		width:100px;
 	}
 	form#fAffectation table {
 		border-left:1px solid #3f7f00;
@@ -679,6 +698,7 @@ div#dConnexion input {
  */
 	form#fActvt {
 		width:430px;
+		margin:auto;
 	}
 	form#fActvt li {
 		margin-top:5px;
