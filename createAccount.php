@@ -2,6 +2,9 @@
 // createAccount.php
 //
 // Permet à un utilisateur dont le compte vient d'être validé de créer son compte
+// Permet également à un utilisateur de recréer son mot de passe
+// Dans ce dernier cas, les date de début et de fin dans TBL_SIGNUP_ON_HOLD sont NULL
+// et le nom contient le uid
 
 /*
 	TeamTime is a software to manage people working in team on a cyclic shift.
@@ -95,7 +98,7 @@ ob_start(); // Obligatoire pour firePHP
 	// Utilisation de grille2.js.php
 	$conf['page']['javascript']['grille2'] = false;
 	// Utilisation de utilisateur.js
-	$conf['page']['javascript']['utilisateur'] = false;
+	$conf['page']['javascript']['utilisateur'] = true;
 
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
@@ -113,55 +116,143 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
-/* FIXME
- * Décommenter en prod
- * if (!array_key_exists('k', $_GET) || sizeof($_GET['k'] != 40)) {
+if (!array_key_exists('k', $_REQUEST) || (array_key_exists('k', $_REQUEST) && strlen($_REQUEST['k']) != 40)) {
 	header('Location:index.php');
-}*/
+}
 
+//
+// Recherche la clé dans la base
+//
 $sql = sprintf("
 	SELECT *
 	FROM `TBL_SIGNUP_ON_HOLD`
 	WHERE `url` = '%s'
+	AND NOW() <= DATE_ADD(`timestamp`, INTERVAL 1 WEEK)
 	", $_SESSION['db']->db_real_escape_string($_REQUEST['k'])
 );
 $result = $_SESSION['db']->db_interroge($sql);
-/* FIXME
- * Décommenter en prod
- * if (mysqli_num_rows($result) != 1) {
-	die "Something wen't wrong... Sorry.";
-}*/
+/*
+ * Erreur sur la clé
+ */
+if (mysqli_num_rows($result) > 1) {
+	$_SESSION['db']->db_interroge(sprintf("
+		CALL messageSystem('La clé existe plusieurs fois dans la table.', 'DEBUG', 'createAccount.php', 'key error', 'key:%s;sql:%s')
+		", $_SESSION['db']->db_real_escape_string($_REQUEST['k'])
+		, $_SESSION['db']->db_real_escape_string($sql)
+	));
+	die("Quelque chose s'est mal passé. Les administrateurs ont été avertis. Nous sommes désolés pour la gêne occasionnée.");
+} elseif (mysqli_num_rows($result) == 0) {
+	$_SESSION['db']->db_interroge(sprintf("
+		CALL messageSystem('La clé n\'existe pas', 'DEBUG', 'createAccount.php', 'key error', 'key:%s;sql:%s')
+		", $_SESSION['db']->db_real_escape_string($_REQUEST['k'])
+		, $_SESSION['db']->db_real_escape_string($sql)
+	));
+	die("Aucune clé ne correspond. Les administrateurs ont été avisés. Si vous êtes certain de l'adresse contactez un administrateur. Désolés pour la gêne occasionnée.");
+}
 $row = $_SESSION['db']->db_fetch_assoc($result);
 mysqli_free_result($result);
 
 $err = array();
+/*
+ * Traitement du formulaire
+ */
 if (sizeof($_POST) > 0) {
-	$_SESSION['db']->db_interroge(sprintf("
-		CALL createFromSignup('%s', '%s', '%s', '%s')
-		", $_SESSION['db']->db_real_escape_string($_REQUEST['k'])
-		, $_SESSION['db']->db_real_escape_string($_REQUEST['login'])
-		, $_SESSION['db']->db_real_escape_string($_REQUEST['pwd'])
-		, $_SESSION['db']->db_real_escape_string($GLOBALS['DSN']['user']['password'])
-	));
-
-	// Recherche d'erreur
-	$sql = sprintf("SELECT *
-		FROM `TBL_MESSAGES_SYSTEM`
-		WHERE `utilisateur` = '%s'
-		", $_SESSION['db']->db_real_escape_string($_REQUEST['k'])
-	);
-	$result = $_SESSION['db']->db_interroge($sql);
-	if (mysqli_num_rows($result) > 0) {
-		// Une erreur est survenue et le compte n'a pas été créé
-		while($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$err[] = $row;
-		}
+	if (is_null($row['beginning']) && is_null($row['end'])) {
+		// Récupération de compte
+		utilisateurGrille::resetDaPwd($_POST['k'], $_POST['pwd']);
 	} else {
-		// Le compte a été correctement créé
-		header('Location:/index.php?k=compteok');
+		// Création de compte
+		$_SESSION['db']->db_interroge(sprintf("
+			CALL createFromSignup('%s', '%s', '%s', '%s')
+			", $_SESSION['db']->db_real_escape_string($_POST['k'])
+			, $_SESSION['db']->db_real_escape_string($_POST['login'])
+			, $_SESSION['db']->db_real_escape_string($_POST['pwd'])
+			, $_SESSION['db']->db_real_escape_string($GLOBALS['DSN']['user']['password'])
+		));
+
+		// Recherche d'erreur
+		$sql = sprintf("
+			SELECT *
+			FROM `TBL_MESSAGES_SYSTEM`
+			WHERE `utilisateur` = '%s'
+			", $_SESSION['db']->db_real_escape_string($_POST['k'])
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		if (mysqli_num_rows($result) > 0) {
+			// Une erreur est survenue et le compte n'a pas été créé
+			while($row = $_SESSION['db']->db_fetch_assoc($result)) {
+				$err[] = $row;
+			}
+		} else {
+			// Le compte a été correctement créé
+			header('Location:/index.php?k=compteok');
+		}
+		mysqli_free_result($result);	
 	}
-	mysqli_free_result($result);	
 } else {
+	// Si il s'agit d'un reset password
+	if (is_null($row['beginning']) && is_null($row['end'])) {
+		// Les champs du formulaire
+		$champs = array(
+			array(
+				'type'		=> 'hidden'
+				, 'name'	=> 'k'
+				, 'value'	=> htmlentities($_REQUEST['k'])
+			)
+			, array(
+				'type'		=> 'hidden'
+				, 'name'	=> 'uid'
+				, 'value'	=> (int) $row['nom']
+			)
+			, array(
+				'type'		=> 'password'
+				, 'label'	=> 'Nouveau mot de passe'
+				, 'name'	=> 'pwd'
+				, 'placeholder'	=> '****'
+			)
+			, array(
+				'type'		=> 'password'
+				, 'label'	=> 'Répétez le mot de passe'
+				, 'name'	=> 'pwdchk'
+				, 'placeholder'	=> '****'
+			)
+			, array(
+				'type'		=> 'submit'
+				, 'value'	=> 'Mettre à jour'
+			)
+		);
+	} else {
+		// Si il s'agit d'une création de compte
+		$champs = array(
+			array(
+				'type'		=> 'hidden'
+				, 'name'	=> 'k'
+				, 'value'	=> htmlentities($_REQUEST['k'])
+			)
+			, array(
+				'type'		=> 'text'
+				, 'label'	=> 'Login'
+				, 'name'	=> 'login'
+				, 'placeholder'	=> 'Mon_login'
+			)
+			, array(
+				'type'		=> 'password'
+				, 'label'	=> 'Mot de passe'
+				, 'name'	=> 'pwd'
+				, 'placeholder'	=> '****'
+			)
+			, array(
+				'type'		=> 'password'
+				, 'label'	=> 'Répétez le mot de passe'
+				, 'name'	=> 'pwd1'
+				, 'placeholder'	=> '****'
+			)
+			, array(
+				'type'		=> 'submit'
+				, 'value'	=> 'Créer mon compte'
+			)
+		);
+	}
 	$form = array(
 	'name'		=> 'fcrtAcct'
 	, 'id'		=> 'fcrtAcct'
@@ -171,37 +262,9 @@ if (sizeof($_POST) > 0) {
 		array(
 			'legend'	=> 'Création de mon compte'
 			, 'display'	=> 'none'
-			, 'row'		=> array(
-				array(
-					'type'		=> 'hidden'
-					, 'name'	=> 'k'
-					, 'value'	=> $_GET['k']
-				)
-				, array(
-					'type'		=> 'text'
-					, 'label'	=> 'Login'
-					, 'name'	=> 'login'
-					, 'placeholder'	=> 'mon login'
-				)
-				, array(
-					'type'		=> 'password'
-					, 'label'	=> 'Mot de passe'
-					, 'name'	=> 'pwd'
-					, 'placeholder'	=> '****'
-				)
-//				, array(
-//					'type'		=> 'password'
-//					, 'label'	=> 'Répétez le mot de passe'
-//					, 'name'	=> 'pwd1'
-//					, 'placeholder'	=> '****'
-//				)
-				, array(
-					'type'		=> 'submit'
-					, 'value'	=> 'Créer mon compte'
-				)
+			, 'row'		=> $champs
 			)
 		)
-	)
 	);
 
 	$smarty->assign('header', array('content' => 'TeamTime v' . VERSION));
