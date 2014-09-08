@@ -347,7 +347,6 @@ if (isset($_GET['k'])) {
 
 if (isset($_SESSION['AUTHENTICATED']) && !isset($_GET['norights'])) {
 	unset($nav[2]);
-	$nav[1] = "shift";
 }
 
 foreach ($nav as $key => $val) {
@@ -358,10 +357,10 @@ foreach ($nav as $key => $val) {
 }
 
 $smarty->assign('nav', $nav);
-if (isset($content[1])) $smarty->assign('content1', $content[1]);
-if (isset($content[2])) $smarty->assign('content2', $content[2]);
-if (isset($content[3])) $smarty->assign('content3', $content[3]);
-if (isset($content[4])) $smarty->assign('content4', $content[4]);
+if (!empty($content[1])) $smarty->assign('content1', $content[1]);
+if (!empty($content[2])) $smarty->assign('content2', $content[2]);
+if (!empty($content[3])) $smarty->assign('content3', $content[3]);
+if (!empty($content[4])) $smarty->assign('content4', $content[4]);
 if (!empty($contenu)) $smarty->assign('contenu', $contenu);
 
 if (isset($_SESSION['AUTHENTICATED'])) {
