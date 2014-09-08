@@ -155,13 +155,10 @@ class utilisateurGrille extends utilisateur {
 			", $db->db_real_escape_string($login)
 			, $db->db_real_escape_string($login . $pwd)
 		);
-		//*
-		$db->db_interroge(sprintf("
-			CALL messageSystem('Tentative de connexion [%s]', 'DEBUG', 'logon', NULL, 'sql:%s;')
-			", $_SERVER['REMOTE_ADDR']
-			, $db->db_real_escape_string($sql)
-		));
-		//*/
+		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Tentative de connexion", "TRACE", "%s", "connection attempt", "%s")'
+			, __METHOD__
+			, $_SESSION['db']->db_real_escape_string(json_encode($_SERVER['REMOTE_ADDR'])))
+		);
 		$result = $db->db_interroge($sql);
 		if (mysqli_num_rows($result) > 0) {
 			session_regenerate_id(); // Éviter les attaques par fixation de session
