@@ -4,7 +4,6 @@
 {if sizeof($users) > 0}
 <p>Les utilisateurs suivant ont demandé à créer un compte :</p>
 <ul>
-{/if}
 {foreach $users as $user}
 <li id="cf{$user.id}">
 <div class="ng w24">
@@ -32,7 +31,6 @@ vient-il dans votre équipe ?
 </div>
 </li>
 {/foreach}
-{if sizeof($users) > 0}
 </ul>
 {/if}
 </div>
