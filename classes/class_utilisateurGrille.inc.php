@@ -165,7 +165,7 @@ class utilisateurGrille extends utilisateur {
 			$row = $db->db_fetch_assoc($result);
 			mysqli_free_result($result);
 			$DSN = $GLOBALS['DSN']['user'];
-			$DSN['username'] = 'ttm.5';
+			$DSN['username'] = 'ttm.' . $row['uid'];
 			if (FALSE === ($_SESSION['db'] = new database($DSN))) {
 				// Interdit l'accès aux utilisateurs qui n'ont pas d'identifiant sur la base de données
 				unset($_SESSION);
