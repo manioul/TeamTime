@@ -1,5 +1,7 @@
 {* Smarty *}
 <form id="fSaisieHeuresInd" class="ng w24" method="POST" action="">
+<ul>
+<li>
 <fieldset>
 <legend>Ajout</legend>
 <ul>
@@ -25,9 +27,11 @@
 </li>
 </fieldset>
 </li>
+</ul>
+</fieldset>
+</li>
 <li>
 <input type="submit" />
 </li>
 </ul>
-</fieldset>
 </form>
