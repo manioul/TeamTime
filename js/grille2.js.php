@@ -46,7 +46,7 @@ while ($x = $_SESSION['db']->db_fetch_assoc($result)) {
 mysqli_free_result($result);
 $sDispos = substr($dispos, 0, -1);
 
-$affectation = $_SESSION['utilisateur']->->affectationOnDate(date('Y-m-d'));
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 
 //***********************
 // Fonctions principales
@@ -62,7 +62,7 @@ function getAvailableOccupations(oThis) {
 <?
 	$find_in_set = "";
 	if (!array_key_exists('ADMIN', $_SESSION)) { // Les non admins ont des restrictions sur les dispo qu'ils peuvent poser
-		foreach (array_flip(array_flip(array_merge(array('all', $_SESSION['utilisateur']->login()), $_SESSION['utilisateur']->roles(), $affectation['grade']))) as $set) {
+		foreach (array_flip(array_flip(array_merge(array('all', $_SESSION['utilisateur']->login(), $affectation['grade']), $_SESSION['utilisateur']->roles()))) as $set) {
 			$find_in_set .= sprintf("FIND_IN_SET('%s', `peut poser`) OR ", $_SESSION['db']->db_real_escape_string($set));
 		}
 		$find_in_set = " AND (" . substr($find_in_set, 0, -4) . ")";
