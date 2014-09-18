@@ -63,7 +63,9 @@ $dispo = array(
 	'uid'		=> sprintf('%02d', $_POST['uid'])
 	,'date'		=> $date->date()
 	,'dispo'	=> $_SESSION['db']->db_real_escape_string($_POST['dispo'])
+	,'did'		=> (int) $_POST['did']
 	,'oldDispo'	=> $_SESSION['db']->db_real_escape_string($_POST['oldDispo'])
+	,'oldDid'	=> (int) $_POST['oldDid']
 );
 $affectation = $_SESSION['utilisateur']->affectationOnDate($date);
 
