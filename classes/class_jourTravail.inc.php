@@ -47,7 +47,7 @@ class jourTravail extends Date {
 	//-----------------------------------------
 	public static function addDispo($dispo, $centre, $team, $log=false) {
 		$return = "";
-		if (isset($_SESSION['MY_EDIT']) && $dispo['uid'] != $_SESSION['utilisateur']->uid() && !isset($_SESSION['ADMIN']) && !isset($_SESSION['EDITEURS'])) {
+		if (isset($_SESSION['MY_EDIT']) && $dispo['uid'] != $_SESSION['utilisateur']->uid() && !isset($_SESSION['ADMIN']) && !isset($_SESSION['EDITEURS']) && !isset($_SESSION['TEAMEDIT'])) {
 			return "N'éditez que votre ligne, svp.";
 		}
 		$sql = sprintf("CALL addDispo(%d, '%s', '%s', NULL, %s)"
