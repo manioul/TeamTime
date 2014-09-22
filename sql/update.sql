@@ -352,9 +352,39 @@ Friendica : https://titoux.info/profile/teamtime
 END
 |
 
+-- Mise à jour à partir de la version 2.3a
+DROP PROCEDURE IF EXISTS post_2_3a|
+CREATE PROCEDURE post_2_3a()
+BEGIN
+	UPDATE `TBL_ARTICLES` SET `description` = 'licence' WHERE `TBL_ARTICLES`.`titre` = 'Licence' LIMIT 1;
+	INSERT INTO `ttm`.`TBL_ARTICLES` (
+		`idx` ,
+		`titre` ,
+		`description` ,
+		`texte` ,
+		`analyse` ,
+		`creation` ,
+		`modification` ,
+		`restricted` ,
+		`actif`
+
+	)
+	VALUES (
+		NULL , 'Mise à jour de votre mot de passe', 'reset password ok', 'Votre mot de passe a été mis à jour. Vous allez recevoir un email avec votre identifiant.{br}Vous pouvez vous connecter avec votre nouveau mot de passe dès maintenant.', '1', NOW(  ) ,
+		CURRENT_TIMESTAMP , '0', '1'
+
+		), (
+		NULL , 'Mise à jour de votre mot passe échouée', 'reset password failed', 'Désolé, la mise à jour de votre mot de passe a échouée...', '', NOW(  ) ,
+		CURRENT_TIMESTAMP , '', '1'
+
+	);
+END
+|
+
 DELIMITER ;
 
 -- CALL post_2_1c();
-CALL post_2_2a();
+-- CALL post_2_2a();
+CALL post_2_3a();
 
 

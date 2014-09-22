@@ -159,7 +159,13 @@ $err = array();
 if (sizeof($_POST) > 0) {
 	if (is_null($row['beginning']) && is_null($row['end'])) {
 		// Récupération de compte
-		utilisateurGrille::resetDaPwd($_POST['k'], $_POST['pwd']);
+		if (TRUE === utilisateurGrille::resetDaPwd($_POST['k'], $_POST['pwd'])) {
+			// Le mot de passe a été mis à jour
+			header('Location:/index.php?k=rpok');
+		} else {
+			// Le reset de mot de passe ne s'est pas fait correctement
+			header('Location:/index.php?k=rpfail');
+		}
 	} else {
 		// Création de compte
 		$_SESSION['db']->db_interroge(sprintf("
@@ -185,7 +191,7 @@ if (sizeof($_POST) > 0) {
 			}
 		} else {
 			// Le compte a été correctement créé
-			header('Location:/index.php?k=compteok');
+			header('Location:/index.php?k=cptok');
 		}
 		mysqli_free_result($result);	
 	}

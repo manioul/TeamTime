@@ -19,7 +19,11 @@ class article {
 // Constructeurs
 	public function __construct($param = NULL) { // $param est l'idx pour un article existant
 		if ($param != NULL) {
-			$this->idx = $param;
+			if (is_int($param)) {
+				$this->idx = $param;
+			} elseif (is_string($param)) {
+				$this->description = $param;
+			}
 			$this->db_setFromDB();
 		}
 	}
@@ -103,11 +107,21 @@ class article {
 	}
 // Méthodes travaillant avec la bdd
 	public function db_setFromDB() {
-		$requete = sprintf("SELECT * FROM `TBL_ARTICLES` WHERE idx = %d", $this->idx);
-		$result = $_SESSION['db']->db_interroge($requete);
+		$where = 'WHERE ';
+		if (!is_null($this->idx) && is_int($this->idx)) {
+			$where .= "`idx` = " . $this->idx;
+		} elseif (!is_null($this->description)) {
+			$where .= "`description` = '" . $_SESSION['db']->db_real_escape_string($this->description) . "'";
+		}
+		$sql = "SELECT *
+			FROM `TBL_ARTICLES`
+			$where
+			LIMIT 1";
+		$result = $_SESSION['db']->db_interroge($sql);
 		if ($result->num_rows != 1) return false;
 		$row = $_SESSION['db']->db_fetch_assoc($result);
 		mysqli_free_result($result);
+		$this->idx = (int) $row['idx'];
 		$this->analyse($row['analyse']);
 		$this->titre($row['titre']);
 		$this->description($row['description']);

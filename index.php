@@ -251,7 +251,7 @@ $smarty->assign('form', $form);
 if (isset($_GET['k'])) {
 	switch($_GET['k']) {
 	case 'licence':
-		$article = new Article(1);
+		$article = new Article('licence');
 		if ($article->actif()) {
 			$contenu = array(
 				"id1" => array(
@@ -271,7 +271,7 @@ if (isset($_GET['k'])) {
 		$content[1] = ""; // On ne veut pas du message affiché au survol d'accueil
 		break;
 	case 'source':
-		$article = new Article(2);
+		$article = new Article('source');
 		if ($article->actif()) {
 			$contenu = array(
 				"id1" => array(
@@ -291,7 +291,7 @@ if (isset($_GET['k'])) {
 		$content[1] = ""; // On ne veut pas du message affiché au survol d'accueil
 		break;
 	case 'contrib':
-		$article = new Article(3);
+		$article = new Article('contrib');
 		if ($article->actif()) {
 			$contenu = array(
 				"id1" => array(
@@ -310,8 +310,44 @@ if (isset($_GET['k'])) {
 		);
 		$content[1] = ""; // On ne veut pas du message affiché au survol d'accueil
 		break;
-	case 'compteok':
-		$article = new Article(2);
+	case 'cptok':
+		$article = new Article('compteok');
+		if ($article->actif()) {
+			$contenu = array(
+				"id1" => array(
+					'titre'	=> $article->titre()
+					,'texte' => $article->texte()
+				)
+			);
+		}
+		$nav = array(
+			'1'	=> "accueil"
+			,'2'	=> "connexion"
+			,'3'	=> "support"
+			,'4'	=> "signup"
+		);
+		$content[1] = ""; // On ne veut pas du message affiché au survol d'accueil
+		break;
+	case 'rpok':
+		$article = new Article('reset password ok');
+		if ($article->actif()) {
+			$contenu = array(
+				"id1" => array(
+					'titre'	=> $article->titre()
+					,'texte' => $article->texte()
+				)
+			);
+		}
+		$nav = array(
+			'1'	=> "accueil"
+			,'2'	=> "connexion"
+			,'3'	=> "support"
+			,'4'	=> "signup"
+		);
+		$content[1] = ""; // On ne veut pas du message affiché au survol d'accueil
+		break;
+	case 'rpfail':
+		$article = new Article('reset password failed');
 		if ($article->actif()) {
 			$contenu = array(
 				"id1" => array(

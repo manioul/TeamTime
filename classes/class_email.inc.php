@@ -239,7 +239,8 @@ class Email {
 	 * password updated : Ce message confirme que l'utilisateur a mis à jour son mot de passe.
 	 *
 	 * @param array $array Le paramètre $array comprend :
-	 * - uid		=> l'identifiant (doit être int) référent l'utilisateur dans TBL_USERS
+	 * - to			=> l'adresse mail de l'utilisateur dans TBL_USERS
+	 * l'adresse mail doit avoir été filtrée, car la présente méthode ne la filtre pas
 	 *
 	 * @return array 
 	 * - to			=> destinataire du mail
@@ -248,19 +249,24 @@ class Email {
 	 *
 	 */
 	private static function passwordUpdated($array) {
-		$uid = $array['uid'];
-		$sql = "SELECT `email`, `prenom`, `login`, `titre` AS `subject`, `texte`
+		$sql = sprintf("
+			SELECT `prenom`,
+			`login`,
+			`titre` AS `subject`,
+			`texte`
 			FROM `TBL_USERS`,
 			`TBL_ARTICLES`
-			WHERE `uid` = $uid
-			AND `description` = 'password updated'";
+			WHERE `email` = '%s'
+			AND `description` = 'password updated'
+			", $array['to']
+		);
 		$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
 		return array(
-			'to'		=> $row['email']
+			'to'		=> $array['to']
 			, 'subject'	=> $row['subject']
 			, 'content'	=> sprintf($row['texte']
 					, htmlentities(ucfirst($row['prenom']))
-					, htmlentities(ucfirst($row['login']))
+					, htmlentities($row['login'])
 			)
 		);
 	}

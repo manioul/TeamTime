@@ -389,12 +389,13 @@ class utilisateurGrille extends utilisateur {
 	 * @return boolean TRUE si tout s'est bien passé, FALSE sinon
 	 */
 	public static function updatePwd($email, $password, $sendmail = TRUE) {
+		$to = filter_var(trim($email), FILTER_SANITIZE_EMAIL);
 		$sql = sprintf("
 			UPDATE `TBL_USERS`
 			SET `sha1` = SHA1(CONCAT(`login`, '%s'))
 			WHERE email = '%s'
 			", $_SESSION['db']->db_real_escape_string($password)
-			, $_SESSION['db']->db_real_escape_string(filter_var(trim($email), FILTER_SANITIZE_EMAIL))
+			, $_SESSION['db']->db_real_escape_string($to)
 		);
 		$_SESSION['db']->db_interroge($sql);
 		//
@@ -402,7 +403,7 @@ class utilisateurGrille extends utilisateur {
 		//
 		$row = array(
 			'description'	=> 'password updated'
-			, 'uid'		=> $uid
+			, 'to'		=> $to
 		);
 		//
 		// Envoi du mail à l'utilisateur
