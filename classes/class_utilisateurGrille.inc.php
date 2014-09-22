@@ -717,6 +717,14 @@ class utilisateurGrille extends utilisateur {
 	public function hasRole($role) {
 		return in_array($role, $this->roles());
 	}
+	/**
+	 * Teste si l'utilisateur est admin.
+	 *
+	 * @return boolean true si l'utilisateur est admin, false sinon.
+	 */
+	public function isAdmin() {
+		return in_array('ADMIN', $this->roles());
+	}
 	// Attribue les rôles en fonction de la base de données
 	public function dbRetrRoles() {
 		$sql = sprintf("
@@ -769,7 +777,7 @@ class utilisateurGrille extends utilisateur {
 			return true;
 		}
 		$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
-		if ( $_SESSION['utilisateur']->hasRole($param['role']) ) {
+		if ( $_SESSION['utilisateur']->hasRole($param['role']) || $_SESSION['utilisateur']->isAdmin() ) {
 			$_SESSION['db']->db_interroge(sprintf("
 				CALL addRole(%d, '%s', '%s', '%s', '%s', '%s', '%s', TRUE)
 				", $this->uid
