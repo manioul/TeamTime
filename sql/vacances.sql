@@ -278,7 +278,8 @@ BEGIN
 			WHERE dispo = disponibilite
 			AND (`jours possibles` = 'all' OR FIND_IN_SET(vac, `jours possibles`))
 			AND (centre = centre_ OR centre = 'all')
-			AND (team = team_ OR team = 'all');
+			AND (team = team_ OR team = 'all')
+			LIMIT 1;
 
 			CALL messageSystem('La nouvelle dispo est-elle un congé ?', 'DEBUG', 'addDispo', NULL, CONCAT('dispoid:', dispoid, ';typeDecompte:', typeDecompte));
 			-- Si la dispo est un congé
