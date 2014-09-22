@@ -707,7 +707,13 @@ class utilisateurGrille extends utilisateur {
 		}
 		return $this->roles;
 	}
-	// Retourne vrai si l'utilisateur a le rôle $role
+	/**
+	 * Teste si un utilisateur a un rôle en particulier.
+	 *
+	 * @param $role le nom du rôle à tester.
+	 *
+	 * @return boolean vrai si l'utilisateur a le rôle $role, false sinon.
+	 */
 	public function hasRole($role) {
 		return in_array($role, $this->roles());
 	}
@@ -734,6 +740,8 @@ class utilisateurGrille extends utilisateur {
 	}
 	/**
 	 * Ajoute un rôle à l'utilisateur.
+	 *
+	 * L'utilisateur qui ajoute un rôle à un autre utilisateur doit au moins disposer dudit rôle.
 	 *
 	 * @param array $param est un tableau :
 	 * ('role' => role
