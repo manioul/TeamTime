@@ -41,6 +41,7 @@ ob_start(); // Obligatoire pour firePHP
 	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = NULL; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
+	$conf['page']['include']['class_article'] = 1; // Le script utilise class_article.inc.php'affichage de certaines pages (licence)
 	$conf['page']['include']['class_menu'] = NULL; // La classe menu est nécessaire à ce script
 	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
 	$conf['page']['compact'] = false; // Compactage des scripts javascript et css
@@ -157,14 +158,21 @@ $err = array();
  * Traitement du formulaire
  */
 if (sizeof($_POST) > 0) {
+	if ($_POST['pwd'] != $_POST['pwdchk']) {
+		// Le reset de mot de passe ne s'est pas fait correctement
+		header('Location:' . $_SERVER['REQUEST_URI'] . '&e=pwdmm');
+		exit;
+	}
 	if (is_null($row['beginning']) && is_null($row['end'])) {
 		// Récupération de compte
 		if (TRUE === utilisateurGrille::resetDaPwd($_POST['k'], $_POST['pwd'])) {
 			// Le mot de passe a été mis à jour
 			header('Location:/index.php?k=rpok');
+			exit;
 		} else {
 			// Le reset de mot de passe ne s'est pas fait correctement
 			header('Location:/index.php?k=rpfail');
+			exit;
 		}
 	} else {
 		// Création de compte
@@ -192,10 +200,19 @@ if (sizeof($_POST) > 0) {
 		} else {
 			// Le compte a été correctement créé
 			header('Location:/index.php?k=cptok');
+			exit;
 		}
 		mysqli_free_result($result);	
 	}
 } else {
+	if (array_key_exists('e', $_GET)) {
+		switch($_GET['e']) {
+		case 'pwdmm':
+			$article = new Article('password mismatch');
+			$smarty->assign('erreur', $article->texte());
+			break;
+		}
+	}
 	// Si il s'agit d'un reset password
 	if (is_null($row['beginning']) && is_null($row['end'])) {
 		// Les champs du formulaire
@@ -275,6 +292,7 @@ if (sizeof($_POST) > 0) {
 
 	$smarty->assign('header', array('content' => 'TeamTime v' . VERSION));
 	$smarty->display('header.tpl');
+	$smarty->display('erreur.tpl');
 	$smarty->assign('form', $form);
 	$smarty->display('html.form_ul.tpl');
 }

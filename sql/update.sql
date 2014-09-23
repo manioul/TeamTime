@@ -376,6 +376,9 @@ BEGIN
 		), (
 		NULL , 'Mise à jour de votre mot passe échouée', 'reset password failed', 'Désolé, la mise à jour de votre mot de passe a échouée...', '', NOW(  ) ,
 		CURRENT_TIMESTAMP , '', '1'
+		), (
+		NULL , 'Mise à jour de votre mot passe échouée', 'password mismatch', 'Les mots de passe étaient différents.{br}Saississez le même mot de passe dans les deux champs.', '1', NOW(  ) ,
+		CURRENT_TIMESTAMP , '', '1'
 
 	);
 END
@@ -384,7 +387,7 @@ END
 DELIMITER ;
 
 -- CALL post_2_1c();
--- CALL post_2_2a();
+CALL post_2_2a();
 CALL post_2_3a();
 
 
