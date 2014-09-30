@@ -61,7 +61,7 @@ require 'required_files.inc.php';
 switch ($_REQUEST['q']) {
 case 'phone' :
 	$oPhone = new Phone( (int) $_REQUEST['id']);
-	if (!empty($_SESSION['ADMIN']) || $_SESSION['utilisateur']->uid() == $oPhone->uid()) {
+	if (!empty($_SESSION['ADMIN']) || !empty($_SESSION['EDITEURS']) || !empty($_SESSION['TEAMEDIT']) || $_SESSION['utilisateur']->uid() == $oPhone->uid()) {
 		$oPhone->delete();
 		print("Mise à jour effectuée");
 	} else {
@@ -70,7 +70,7 @@ case 'phone' :
 	break;
 case 'adresse' :
 	$oAdresse = new Adresse( (int) $_REQUEST['id']);
-	if (!empty($_SESSION['ADMIN']) || $_SESSION['utilisateur']->uid() == $oAdresse->uid()) {
+	if (!empty($_SESSION['ADMIN']) || !empty($_SESSION['EDITEURS']) || !empty($_SESSION['TEAMEDIT']) || $_SESSION['utilisateur']->uid() == $oAdresse->uid()) {
 		$oAdresse->delete();
 		print("Mise à jour effectuée");
 	} else {
@@ -79,7 +79,7 @@ case 'adresse' :
 	break;
 case 'affectation' :
 	$oAffectation = new Affectation( (int) $_REQUEST['id']);
-	if (!empty($_SESSION['ADMIN']) || $_SESSION['utilisateur']->uid() == $oAffectation->uid()) {
+	if (!empty($_SESSION['ADMIN']) || !empty($_SESSION['EDITEURS']) || !empty($_SESSION['TEAMEDIT']) || $_SESSION['utilisateur']->uid() == $oAffectation->uid()) {
 		$oAffectation->delete();
 		print("Mise à jour effectuée");
 	} else {
