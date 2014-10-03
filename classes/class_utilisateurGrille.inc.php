@@ -467,7 +467,7 @@ class utilisateurGrille extends utilisateur {
 			, 'vismed'		=> $this->vismed
 			, 'poids'		=> $this->poids
 			, 'showtipoftheday'	=> $this->showtipoftheday
-			, 'pref'		=> json_encode($this->prefAsArray)
+			, 'pref'		=> json_encode($this->prefAsArray())
 		));
 	}
 	public function prefAsArray() {
