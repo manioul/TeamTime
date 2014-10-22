@@ -61,6 +61,12 @@ class utilisateurGrille extends utilisateur {
 	private $team = NULL; // team actuelle
 	private $grade = NULL; // grade actuel
 	private $poids; // La position d'affichage dans la grille (du plus faible au plus gros)
+	/**
+	 * Préférences utilisateur.
+	 *
+	 * Un tableau regroupant les préférences de l'utilsiateur
+	 */
+	private $pref = array();
 	private $showtipoftheday; // L'utilisateur veut-il voir les tips of the day
 	private $indexPage; // L'index de la page favorite (ouverte après la connexion) dans le tableaux $availablePages
 	private $dispos; /* un tableau contenant un tableau des dispos indexées par les dates:
@@ -467,15 +473,11 @@ class utilisateurGrille extends utilisateur {
 			, 'vismed'		=> $this->vismed
 			, 'poids'		=> $this->poids
 			, 'showtipoftheday'	=> $this->showtipoftheday
-			, 'pref'		=> json_encode($this->prefAsArray)
+			, 'pref'		=> json_encode($this->prefAsArray())
 		));
 	}
 	public function prefAsArray() {
-		$pref = array();
-		if (array_key_exists('cpt', $_COOKIE)) {
-			$pref['cpt'] = $_COOKIE['cpt'];
-		}
-		return $pref;
+		return $this->pref;
 	}
 	public function setFromRow($row) {
 		$valid = true;
@@ -532,15 +534,31 @@ class utilisateurGrille extends utilisateur {
 			return false;
 		}
 	}
-	// Chargement des préférences utilisateur
+	/**
+	 * Chargement des préférences utilisateur à partir d'une chaîne JSON.
+	 *
+	 * @param $param string chaîne JSON
+	 */
 	public function pref($param = NULL) {
 		if (!is_null($param)) {
-			$var = json_decode($param);
+			$this->pref = json_decode($param, true);
 			// Ajoute les compteurs en fin de grille sur tous les affichages
-			if (!empty($var->cpt)) {
-				setcookie('cpt', '1', $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
+			if (array_key_exists('cpt', $this->pref)) {
+				setcookie('cpt', (int) $this->pref['cpt'], 0, $conf['session_cookie']['path'], NULL, $conf['session_cookie']['secure']);
 			}
 		}
+		return $this->pref;
+	}
+	/**
+	 * Ajout d'une préférence utilisateur.
+	 *
+	 * @param $key string la clé de la préférence
+	 * 	$value string la valeur de la préférence
+	 *
+	 * @return void
+	 */
+	public function addPref($key, $value) {
+		$this->pref[$key] = $value;
 	}
 	/**
 	 * Retourne le centre actuel de l'utilisateur.
@@ -1450,7 +1468,7 @@ class utilisateursDeLaGrille {
 
 		// Lorsque l'on n'affiche qu'un cycle ou qu'on le souhaite, on ajoute des compteurs en fin de tableau
 		$evenSpec = array();
-		if ($nbCycle == 1 || array_key_exists('cpt', $_COOKIE)) {
+		if ($nbCycle == 1 || (array_key_exists('cpt', $_COOKIE) && $_COOKIE['cpt'] == 1)) {
 			// Récupération des compteurs
 			if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->startChrono('Relève compteur'); // Début chrono
 			$sql = "

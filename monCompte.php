@@ -165,11 +165,13 @@ if (sizeof($_POST) > 0) {
 		// Compteurs
 		//
 		// Il suffit d'ajouter un cookie, la préférence sera enregistrée en vérifiant
-		//l'existence du cookie lors de la mise à jour des infos de l'utilisateur
+		// l'existence du cookie lors de la mise à jour des infos de l'utilisateur
 		if (array_key_exists('cpt', $_POST)) {
-			setcookie('cpt', '1', $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
+			setcookie('cpt', 1, 0, $conf['session_cookie']['path'], NULL, $conf['session_cookie']['secure']);
+			$utilisateur->addPref('cpt', 1);
 		} else {
-			setcookie('cpt', '1', time() - 42000, $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
+			setcookie('cpt', 0, 0, $conf['session_cookie']['path'], NULL, $conf['session_cookie']['secure']);
+			$utilisateur->addPref('cpt', 0);
 		}
 
 		// S'il y a un nouveau téléphone à ajouter
@@ -208,6 +210,7 @@ $smarty->assign('centres', Affectation::listeAffectations('centre', $affectation
 $smarty->assign('teams', Affectation::listeAffectations('team', $affectation['team']));
 $smarty->assign('grades', Affectation::listeAffectations('grade', $affectation['grade']));
 $smarty->assign('utilisateur', $utilisateur);
+$smarty->assign('pref', $utilisateur->prefAsArray());
 $smarty->assign('locked', $utilisateur->locked());
 $smarty->assign('actif', $utilisateur->actif());
 $smarty->assign('totd', $utilisateur->showtipoftheday());
