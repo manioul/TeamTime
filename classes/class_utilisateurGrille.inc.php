@@ -1233,15 +1233,26 @@ class utilisateursDeLaGrille {
 		return $this->getUsersFromTo($from, $to, $centre, $team, 1);
 	}
 	/**
-	 * Retourne une table d'utilisateurGrille actif pour une affectation précise.
+	 * Retourne une table d'utilisateurGrille filtrée par plusieurs critères.
 	 *
 	 * La liste des utilisateurs peut être classée à l'aide de $_REQUEST['order']
 	 * - nom classe les utilisateurs selon leur nom
 	 * - aff classe les utilisateurs selon leur affectation puis par leur poids
-	 * - aff classe les utilisateurs selon leur affectation puis par leur nom
+	 * - affn classe les utilisateurs selon leur affectation puis par leur nom.
+	 *
+	 * $_REQUEST['inaff'] (quelque soit la valeur) permet de retrouver les utilisateurs sans affectation.
 	 *
 	 *
-	 * @return array tableau d'objets utilisateurGrille
+	 * @param $centre STRING permet de filtrer sur le centre d'affectation.
+	 * @param $team STRING permet de filtrer sur l'équipe des utilisateurs.
+	 * @param $active INT 0 permet d'afficher les utilisateurs non actifs,
+	 * 		      1 uniquement les actifs
+	 * 		      et tout le monde pour n'importe quelle autre valeur.
+	 * 		      Le critère actif est valable uniquement pour les utilisateurs affectés.
+	 * 		      Pour les utilisateurs non affectés, il faut obligatoirement ajouter le paramètre $_GET['inaff'].
+	 *
+	 *
+	 * @return array tableau d'objets utilisateurGrille.
 	 */
 	public function getUsersFromTo($from = NULL, $to = NULL, $centre = NULL, $team = NULL, $active = 1) {
 		if (is_null($from)) $from = date('Y-m-d');
@@ -1261,86 +1272,148 @@ class utilisateursDeLaGrille {
 				$team = $affectation['team'];
 			}
 		}
-		if ('all' == $centre && 'all' == $team) {
+		// Recherche les non affectés
+		if (array_key_exists('inaff', $_REQUEST)) {
 			$sql = "SELECT DISTINCT `TU`.`uid`,
 				`TU`.*,
-				`TA`.`centre`,
-				`TA`.`team`
+				'vide' AS `centre`,
+				'vide' AS `team`
 				FROM `TBL_USERS` AS `TU`
-				, `TBL_AFFECTATION` AS `TA`
-				WHERE `TU`.`uid` = `TA`.`uid`";
-			if (-1 != $from && -1 != $to) $sql .= "
-				AND `TA`.`beginning` <= \"$to\"
-				AND `TA`.`end`  >= \"$from\"";
+				WHERE `TU`.`uid` NOT IN (SELECT `uid`
+							FROM `TBL_AFFECTATION`
+							WHERE`beginning` <= '$to'
+							AND `end` >= '$from'
+							)";
 			if (1 == $active) $sql .= "
-			       	AND `TU`.`actif` = 1 ";
+				AND `TU`.`actif` = 1 ";
+			if (0 == $active) $sql .= "
+				AND `TU`.`actif` = 0 ";
 			if (array_key_exists('order', $_REQUEST)) {
 				if ($_REQUEST['order'] == 'nom') {
 					$sql .= "ORDER BY `TU`.`nom` ASC";
 				} elseif ($_REQUEST['order'] == 'uid') {
 					$sql .= "ORDER BY `TU`.`uid` ASC";
-				} elseif ($_REQUEST['order'] == 'aff') {
-					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
-				} elseif ($_REQUEST['order'] == 'affn') {
-					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
-				}
-			} else {
-				$sql .= "ORDER BY `TU`.`poids` ASC";
-			}
-		} elseif ('all' == $team) {
-			$sql = "SELECT DISTINCT `TU`.`uid`,
-				`TU`.*,
-				`TA`.`centre`,
-				`TA`.`team`
-				FROM `TBL_USERS` AS `TU`
-				, `TBL_AFFECTATION` AS `TA`
-				WHERE `TU`.`uid` = `TA`.`uid`
-				AND `TA`.`centre`= \"$centre\"";
-			if (-1 != $from && -1 != $to) $sql .= "
-				AND `TA`.`beginning` <= \"$to\"
-				AND `TA`.`end`  >= \"$from\"";
-			if (1 == $active) $sql .= "
-			       	AND `TU`.`actif` = 1 ";
-			if (array_key_exists('order', $_REQUEST)) {
-				if ($_REQUEST['order'] == 'nom') {
-					$sql .= "ORDER BY `TU`.`nom` ASC";
-				} elseif ($_REQUEST['order'] == 'uid') {
-					$sql .= "ORDER BY `TU`.`uid` ASC";
-				} elseif ($_REQUEST['order'] == 'aff') {
-					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
-				} elseif ($_REQUEST['order'] == 'affn') {
-					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
 				}
 			} else {
 				$sql .= "ORDER BY `TU`.`poids` ASC";
 			}
 		} else {
-			$sql = "SELECT DISTINCT `TU`.`uid`,
-				`TU`.*,
-				`TA`.`centre`,
-				`TA`.`team`
-				FROM `TBL_USERS` AS `TU`
-				, `TBL_AFFECTATION` AS `TA`
-				WHERE `TU`.`uid` = `TA`.`uid`
-				AND `TA`.`centre`= \"$centre\"
-				AND `TA`.`team` = \"$team\"";
-			if (-1 != $from && -1 != $to) $sql .= "
-				AND `TA`.`beginning` <= \"$to\"
-				AND `TA`.`end`  >= \"$from\"";
-			if (1 == $active) $sql .= "
-			       	AND `TU`.`actif` = 1 ";
-			if (array_key_exists('order', $_REQUEST)) {
-				if ($_REQUEST['order'] == 'nom') {
-					$sql .= "ORDER BY `TU`.`nom` ASC";
-				} elseif ($_REQUEST['order'] == 'uid') {
-					$sql .= "ORDER BY `TU`.`uid` ASC";
-				} elseif ($_REQUEST['order'] == 'aff') {
-					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
-				} elseif ($_REQUEST['order'] == 'affn') {
-					$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
+			if ('all' == $centre && 'all' == $team) {
+				$sql = "SELECT DISTINCT `TU`.`uid`,
+					`TU`.*,
+					`TA`.`centre`,
+					`TA`.`team`
+					FROM `TBL_USERS` AS `TU`
+					, `TBL_AFFECTATION` AS `TA`
+					WHERE `TU`.`uid` = `TA`.`uid`";
+				if (-1 != $from && -1 != $to) $sql .= "
+					AND `TA`.`beginning` <= \"$to\"
+					AND `TA`.`end`  >= \"$from\"";
+				if (1 == $active) $sql .= "
+					AND `TU`.`actif` = 1 ";
+				if (0 == $active) $sql .= "
+					AND `TU`.`actif` = 0 ";
+				if (array_key_exists('order', $_REQUEST)) {
+					if ($_REQUEST['order'] == 'nom') {
+						$sql .= "ORDER BY `TU`.`nom` ASC";
+					} elseif ($_REQUEST['order'] == 'uid') {
+						$sql .= "ORDER BY `TU`.`uid` ASC";
+					} elseif ($_REQUEST['order'] == 'aff') {
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+					} elseif ($_REQUEST['order'] == 'affn') {
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
+					}
+				} else {
+					$sql .= "ORDER BY `TU`.`poids` ASC";
+				}
+			} elseif ('all' == $centre) {
+				$sql = "SELECT DISTINCT `TU`.`uid`,
+					`TU`.*,
+					`TA`.`centre`,
+					`TA`.`team`
+					FROM `TBL_USERS` AS `TU`
+					, `TBL_AFFECTATION` AS `TA`
+					WHERE `TU`.`uid` = `TA`.`uid`
+					AND `TA`.`team`= \"$team\"";
+				if (-1 != $from && -1 != $to) $sql .= "
+					AND `TA`.`beginning` <= \"$to\"
+					AND `TA`.`end`  >= \"$from\"";
+				if (1 == $active) $sql .= "
+					AND `TU`.`actif` = 1 ";
+				if (0 == $active) $sql .= "
+					AND `TU`.`actif` = 0 ";
+				if (array_key_exists('order', $_REQUEST)) {
+					if ($_REQUEST['order'] == 'nom') {
+						$sql .= "ORDER BY `TU`.`nom` ASC";
+					} elseif ($_REQUEST['order'] == 'uid') {
+						$sql .= "ORDER BY `TU`.`uid` ASC";
+					} elseif ($_REQUEST['order'] == 'aff') {
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+					} elseif ($_REQUEST['order'] == 'affn') {
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
+					}
+				} else {
+					$sql .= "ORDER BY `TU`.`poids` ASC";
+				}
+			} elseif ('all' == $team) {
+				$sql = "SELECT DISTINCT `TU`.`uid`,
+					`TU`.*,
+					`TA`.`centre`,
+					`TA`.`team`
+					FROM `TBL_USERS` AS `TU`
+					, `TBL_AFFECTATION` AS `TA`
+					WHERE `TU`.`uid` = `TA`.`uid`
+					AND `TA`.`centre`= \"$centre\"";
+				if (-1 != $from && -1 != $to) $sql .= "
+					AND `TA`.`beginning` <= \"$to\"
+					AND `TA`.`end`  >= \"$from\"";
+				if (1 == $active) $sql .= "
+					AND `TU`.`actif` = 1 ";
+				if (0 == $active) $sql .= "
+					AND `TU`.`actif` = 0 ";
+				if (array_key_exists('order', $_REQUEST)) {
+					if ($_REQUEST['order'] == 'nom') {
+						$sql .= "ORDER BY `TU`.`nom` ASC";
+					} elseif ($_REQUEST['order'] == 'uid') {
+						$sql .= "ORDER BY `TU`.`uid` ASC";
+					} elseif ($_REQUEST['order'] == 'aff') {
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+					} elseif ($_REQUEST['order'] == 'affn') {
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
+					}
+				} else {
+					$sql .= "ORDER BY `TU`.`poids` ASC";
 				}
 			} else {
-				$sql .= "ORDER BY `TU`.`poids` ASC";
+				$sql = "SELECT DISTINCT `TU`.`uid`,
+					`TU`.*,
+					`TA`.`centre`,
+					`TA`.`team`
+					FROM `TBL_USERS` AS `TU`
+					, `TBL_AFFECTATION` AS `TA`
+					WHERE `TU`.`uid` = `TA`.`uid`
+					AND `TA`.`centre`= \"$centre\"
+					AND `TA`.`team` = \"$team\"";
+				if (-1 != $from && -1 != $to) $sql .= "
+					AND `TA`.`beginning` <= \"$to\"
+					AND `TA`.`end`  >= \"$from\"";
+				if (1 == $active) $sql .= "
+					AND `TU`.`actif` = 1 ";
+				if (0 == $active) $sql .= "
+					AND `TU`.`actif` = 0 ";
+				if (array_key_exists('order', $_REQUEST)) {
+					if ($_REQUEST['order'] == 'nom') {
+						$sql .= "ORDER BY `TU`.`nom` ASC";
+					} elseif ($_REQUEST['order'] == 'uid') {
+						$sql .= "ORDER BY `TU`.`uid` ASC";
+					} elseif ($_REQUEST['order'] == 'aff') {
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+					} elseif ($_REQUEST['order'] == 'affn') {
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
+					}
+				} else {
+					$sql .= "ORDER BY `TU`.`poids` ASC";
+				}
 			}
 		}
 		return $this->retourneUsers($sql);
