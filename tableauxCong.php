@@ -156,28 +156,31 @@ while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 		,'quantity'		=> $res['quantity']
 		,'param'		=> $res['did']
 	);
-	// Recherche des congés de l'année en cours
+	/* Recherche des congés de l'année en cours
+	 * des utilisateurs étant passés dans l'équipe
+	 * sur l'année
+	 */
 	$sql = sprintf("
 		SELECT `l`.`uid`
 		, `date`
 		, `etat`
 		FROM `TBL_L_SHIFT_DISPO` `l`
-		, `TBL_ANCIENNETE_EQUIPE` AS `a`
 		, `TBL_VACANCES` AS `v`
 		WHERE `l`.`sdid` = `v`.`sdid`
-		AND `a`.`uid` = `l`.`uid`
-		AND `a`.`global` IS TRUE
-		AND `beginning` <= '%s'
-		AND `end` >= '%d-01-01'
 		AND `year` = %d
 		AND `did` = %d
-		AND `centre` = '%s'
-		AND `team` = '%s'
+		AND `l`.`uid` IN (SELECT `uid`
+				FROM `TBL_AFFECTATION`
+				WHERE `beginning` <= '%d-12-31'
+				AND `end` >= '%d-01-01'
+				AND `centre` = '%s'
+				AND `team` = '%s'
+			)
 		ORDER BY `date` ASC
-		", $dlCong
-		, $year
-		, $year
+		", $year
 		, $res['did']
+		, $year
+		, $year
 		, $affectation['centre']
 		, $affectation['team']
 	);
