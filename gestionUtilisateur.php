@@ -129,23 +129,28 @@ if (isset($_GET['fin'])) {
 
 
 if (!array_key_exists('nom', $_POST)) { // On vérifie que des données de formulaire n'ont pas été envoyées
-	if (isset($_SESSION['ADMIN'])) {
-		if (isset($_GET['centre'])) {
+	if (array_key_exists('ADMIN', $_SESSION)) {
+		if (array_key_exists('centre', $_GET)) {
 			$centre = $_GET['centre'];
 		} else {
 			$centre = NULL;
 		}
-		if (isset($_GET['team'])) {
+		if (array_key_exists('team', $_GET)) {
 			$team = $_GET['team'];
 		} else {
 			$team = NULL;
+		}
+		if (array_key_exists('active', $_GET)) {
+			$active = (int) $_GET['active'];
+		} else {
+			$active = 1;
 		}
 	} else {
 		$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 		$centre = $affectation['centre'];
 		$team = $affectation['team'];
 	}
-	$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo($dateD, $dateF, $centre, $team);
+	$users = utilisateursDeLaGrille::getInstance()->getUsersFromTo($dateD, $dateF, $centre, $team, (int) $active);
 	$usersInfos = array();
 	$form = array();
 	$header = array();
@@ -195,6 +200,8 @@ while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 				$usersInfos[$i][$row['Field']] = "*****";
 			} elseif (is_a($user->$row['Field'](), 'Date')) {
 				$usersInfos[$i][$row['Field']] = $user->$row['Field']()->formatDate('fr');
+			} elseif ('pref' == $row['Field']) {
+				$usersInfos[$i][$row['Field']] = $user->prefAsJSON();
 			} elseif (method_exists('utilisateurGrille', $row['Field'])) {
 				$usersInfos[$i][$row['Field']] = $user->$row['Field']();
 			} else {
