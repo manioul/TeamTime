@@ -426,7 +426,7 @@ function comptePresents(sId)
 	$absences = "";
 	$dispo = "";
 	while ($abs = $_SESSION['db']->db_fetch_row($resDispo)) {
-		$absences .= sprintf("'%s':%0.1f, ", $abs[0], $abs[1]);
+		$absences .= sprintf("'%s':%u, ", $abs[0], $abs[1] + .5);
 		if ($abs[2] == "dispo") {
 			$dispo .= sprintf("'%s':0, ", $abs[0]);
 		} else {
