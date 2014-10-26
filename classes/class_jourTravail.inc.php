@@ -439,6 +439,20 @@ class jourTravail extends Date {
 			}
 		}
 	}
+	/**
+	 * Retourne une chaîne JSON contenant les valeurs devant être loguées de l'objet.
+	 *
+	 * @return string une chaîne au format JSON.
+	 */
+	private function logJSON() {
+		$array = array(
+			'date'		=> $this->formatDate('fr')
+			, 'vacation'	=> $this->vacation
+			, 'conf'	=> $this->conf
+			, 'readonly'	=> $this->readOnly
+		);
+		return json_encode($array);
+	}
 // Interactions avec la bdd
 	// Insertion dans la base
 	public function __dbQueryInsert() {
@@ -487,6 +501,12 @@ class jourTravail extends Date {
 		return $sql;
 	}
 	private function _dbQueryUpdateReadOnly() {
+		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Le jour est maintenant %s", "TRACE", "%s", "%s", "%s")'
+			, ($this->readOnly ? "non modifiable" : "modifiable")
+			, __METHOD__
+			, ($this->readOnly ? "readOnly" : "writable")
+			, $_SESSION['db']->db_real_escape_string($this->logJSON())
+		));
 		return sprintf("
 			UPDATE `TBL_GRILLE`
 			SET `readOnly` = '%s'
@@ -502,12 +522,6 @@ class jourTravail extends Date {
 	}
 	private function _dbUpdateReadOnly() {
 		$_SESSION['db']->db_interroge($this->_dbQueryUpdateReadOnly());
-		if (isset($TRACE) && true === $TRACE) {
-			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("msg", "TRACE", "%s", "%s", "%s")'
-				, __FUNCTION__
-				, $this->_dbQueryUpdateReadOnly())
-			);
-		}
 	}
 	public function _dbUpdate() {
 		$_SESSION['db']->db_interroge($this->__dbQueryUpdate());
