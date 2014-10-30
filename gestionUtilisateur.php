@@ -129,6 +129,7 @@ if (isset($_GET['fin'])) {
 
 
 if (!array_key_exists('nom', $_POST)) { // On vérifie que des données de formulaire n'ont pas été envoyées
+	$active = 1;
 	if (array_key_exists('ADMIN', $_SESSION)) {
 		if (array_key_exists('centre', $_GET)) {
 			$centre = $_GET['centre'];
@@ -142,8 +143,6 @@ if (!array_key_exists('nom', $_POST)) { // On vérifie que des données de formu
 		}
 		if (array_key_exists('active', $_GET)) {
 			$active = (int) $_GET['active'];
-		} else {
-			$active = 1;
 		}
 	} else {
 		$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
