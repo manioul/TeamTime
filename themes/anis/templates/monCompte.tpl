@@ -113,11 +113,12 @@
 {if $smarty.session.EDITEURS || $smarty.session.ADMIN}
 <fieldset><legend>Droits</legend>
 <ul>
-{if $smarty.session.ADMIN}
+{if $smarty.session.EDITEURS}
 <li>
 <label for="login">login</label><input type="text" name="login" id="login" value="{$utilisateur->login()}" />
 </li>
-<li>
+{/if}
+{if $smarty.session.ADMIN}
 <li>
 <label for="locked">locked : </label><input type="checkbox" id="locked" name="locked"{if $locked} checked="checked"{/if} />
 </li>
