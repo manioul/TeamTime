@@ -118,8 +118,6 @@
 <label for="login">login</label><input type="text" name="login" id="login" value="{$utilisateur->login()}" />
 </li>
 <li>
-<label for="gid">gid : </label><input type="text" name="gid" id="gid" value="{$utilisateur->gid()}" />
-</li>
 <li>
 <label for="locked">locked : </label><input type="checkbox" id="locked" name="locked"{if $locked} checked="checked"{/if} />
 </li>
