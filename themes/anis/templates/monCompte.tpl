@@ -109,10 +109,11 @@
 <input type="submit" class="bouton" name="submitContact" value="Mettre à jour" />
 
 
-{* Réservé à l'administrateur *}
-{if $smarty.session.ADMIN}
+{* Réservé à l'administrateur et aux editeurs *}
+{if $smarty.session.EDITEURS || $smarty.session.ADMIN}
 <fieldset><legend>Droits</legend>
 <ul>
+{if $smarty.session.ADMIN}
 <li>
 <label for="login">login</label><input type="text" name="login" id="login" value="{$utilisateur->login()}" />
 </li>
@@ -128,6 +129,8 @@
 <li>
 <label for="totd">tip of the day : </label><input type="checkbox" id="totd" name="totd"{if $totd} checked="checked"{/if} />
 </li>
+{/if}
+{if $smarty.session.EDITEURS}
 <li>
 <label for="poids">poids : </label><input type="text" name="poids" id="poids" value="{$utilisateur->poids()}" />
 </li>
@@ -135,6 +138,7 @@
 </fieldset>
 
 <input type="submit" class="bouton" id="submitContact" value="Mettre à jour" />
+{/if}
 {/if}
 
 </form>
