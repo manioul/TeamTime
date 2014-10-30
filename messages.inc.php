@@ -27,13 +27,16 @@ $index = 0;
 if (!array_key_exists('iAmVirtual', $_SESSION)) {
 	if (array_key_exists('ADMIN', $_SESSION)) {
 		$messages[$index]['message'] = "Connecté en tant que " . $_SESSION['utilisateur']->login();
+		$messages[$index]['lien'] = "";
+		$messages[$index]['classe'] = "warn";
+		$index++;
 	}
 } else {
 	$messages[$index]['message'] = "Connecté en tant que " . $_SESSION['utilisateur']->login() . " (" . $_SESSION['iAmVirtual'] . ")";
+	$messages[$index]['lien'] = "";
+	$messages[$index]['classe'] = "warn";
+	$index++;
 }
-$messages[$index]['lien'] = "";
-$messages[$index]['classe'] = "warn";
-$index++;
 if (array_key_exists('ADMIN', $_SESSION) && !get_sql_globals_constant('online')) {
 	$messages[$index]['message'] = "Le site est actuellement hors-ligne.";
 	$messages[$index]['lien'] = "administration.php";
