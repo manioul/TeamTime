@@ -285,7 +285,7 @@ BEGIN
 			-- Pour les attribution fixes à des grades particuliers sans dispo particulières
 			UPDATE tmpPresents
 			SET normales = valeurFixed
-			, statut = 'instru'
+			, statut = 'fixed'
 			, rid = ruleid
 			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
 			AND didFixed IS NULL
