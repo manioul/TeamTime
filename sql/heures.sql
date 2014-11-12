@@ -290,6 +290,21 @@ BEGIN
 			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
 			AND didFixed IS NULL
 			AND did IS NULL;
+		ELSEIF typeFixed = 'double' THEN
+			UPDATE tmpPresents
+			SET simulateur = valeurFixed
+			, statut = 'fixed'
+			, rid = ruleid
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
+			AND (FIND_IN_SET(did, didFixed) OR did = didFixed);
+			-- Pour les attribution fixes à des grades particuliers sans dispo particulières
+			UPDATE tmpPresents
+			SET normales = valeurFixed
+			, statut = 'fixed'
+			, rid = ruleid
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
+			AND didFixed IS NULL
+			AND did IS NULL;
 		END IF;
 	END IF;
 	UNTIL done END REPEAT;
