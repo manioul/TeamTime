@@ -383,11 +383,20 @@ BEGIN
 	);
 END
 |
+DROP PROCEDURE IF EXISTS post_2_3e|
+CREATE PROCEDURE post_2_3e()
+BEGIN
+	UPDATE `ttm`.`TBL_ELEMS_MENUS` SET `allowed` = 'editeurs' WHERE `TBL_ELEMS_MENUS`.`lien` = 'ajoutUtilisateur.php';
+	UPDATE `ttm`.`TBL_ELEMS_MENUS` SET `allowed` = 'teamEdit' WHERE `TBL_ELEMS_MENUS`.`titre` = 'Gestion utilisateur';
+	UPDATE `ttm`.`TBL_ELEMS_MENUS` SET `allowed` = 'teamEdit' WHERE `TBL_ELEMS_MENUS`.`lien` = 'gestionUtilisateur.php';
+END
+|
 
 DELIMITER ;
 
 -- CALL post_2_1c();
-CALL post_2_2a();
-CALL post_2_3a();
+-- CALL post_2_2a();
+-- CALL post_2_3a();
+CALL post_2_3e();
 
 

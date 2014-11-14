@@ -122,12 +122,12 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
-// Les utilisateurs non admin ne peuvent accéder qu'à leurs données
-if (array_key_exists('ADMIN', $_SESSION) && array_key_exists('uid', $_REQUEST)) {
+// Les utilisateurs non admin et non editeurs ne peuvent accéder qu'à leurs données
+if ((array_key_exists('ADMIN', $_SESSION) || array_key_exists('EDITEURS', $_SESSION)) && array_key_exists('uid', $_REQUEST)) {
 	$utilisateur = new UtilisateurGrille( (int) $_REQUEST['uid']);
 } else {
-	// Les utilisateurs editeurs peuvent accéder au compte des utilisateurs de leur équipe
-	if (array_key_exists('EDITEURS', $_SESSION) && array_key_exists('uid', $_REQUEST)) {
+	// Les utilisateurs teamEdit peuvent accéder au compte des utilisateurs de leur équipe
+	if (array_key_exists('TEAMEDIT', $_SESSION) && array_key_exists('uid', $_REQUEST)) {
 		$utilisateur = new UtilisateurGrille( (int) $_REQUEST['uid']);
 		if ($_SESSION['utilisateur']->centre() != $utilisateur->centre() || $_SESSION['utilisateur']->team() != $utilisateur->team()) {
 			$err = "Vous n'êtes pas autorisé à modifier ce compte...";
@@ -142,7 +142,7 @@ if (!is_a($utilisateur, 'utilisateurGrille')) {
 }
 
 if (sizeof($_POST) > 0) {
-	if (!array_key_exists('EDITEURS', $_SESSION) && array_key_exists('uid', $_POST) && $_POST['uid'] != $_SESSION['utilisateur']->uid()) {
+	if (!array_key_exists('TEAMEDIT', $_SESSION) && array_key_exists('uid', $_POST) && $_POST['uid'] != $_SESSION['utilisateur']->uid()) {
 		$err = "Vous n'êtes pas autorisé à modifier ce compte...";
 		die ($err);
 	}
