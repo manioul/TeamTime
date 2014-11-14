@@ -163,7 +163,10 @@ class utilisateurGrille extends utilisateur {
 		);
 		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Tentative de connexion", "TRACE", "%s", "connection attempt", "%s")'
 			, __METHOD__
-			, $_SESSION['db']->db_real_escape_string(json_encode($_SERVER['REMOTE_ADDR'])))
+			, $_SESSION['db']->db_real_escape_string(json_encode(array(
+				'client'	=> $_SERVER['REMOTE_ADDR']
+				, 'login'	=> $login
+			))))
 		);
 		$result = $db->db_interroge($sql);
 		if (mysqli_num_rows($result) > 0) {
@@ -174,11 +177,22 @@ class utilisateurGrille extends utilisateur {
 			$DSN['username'] = 'ttm.' . $row['uid'];
 			if (FALSE === ($_SESSION['db'] = new database($DSN))) {
 				// Interdit l'accès aux utilisateurs qui n'ont pas d'identifiant sur la base de données
+				$db->db_interroge(sprintf('CALL messageSystem("L\'utilisateur n\'a pas de compte sur la base de données", "TRACE", "%s", "connection failed", "%s")'
+					, __METHOD__
+					, $db->db_real_escape_string(json_encode($_SESSION)))
+				);
 				unset($_SESSION);
 				header('Location:index.php');
 			}
 			$_SESSION['utilisateur'] = new utilisateurGrille((int) $row['uid']);
 			$_SESSION['AUTHENTICATED'] = true;
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Connexion validée", "TRACE", "%s", "connection accepted", "%s")'
+				, __METHOD__
+				, $_SESSION['db']->db_real_escape_string(json_encode(array(
+					'client'	=> $_SERVER['REMOTE_ADDR']
+					, 'login'	=> $login
+				))))
+			);
 			// Mise à jour des informations de connexion
 			$upd = sprintf("
 				UPDATE `TBL_USERS`
@@ -453,6 +467,11 @@ class utilisateurGrille extends utilisateur {
 				return @ $this->setFromRow($param); // Retourne true si l'affectation s'est bien passée, false sinon
 			} elseif (is_int($param)) {
 				$this->setFromDb($param);
+			} else {
+				$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Le paramètre du constructeur n\'est pas d\'un type attendu", "ERROR", "%s", "wrong param", "%s")'
+					, __METHOD__
+					, $_SESSION['db']->db_real_escape_string(json_encode($param)))
+				);
 			}
 		}
 		return true;
