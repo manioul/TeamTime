@@ -2,6 +2,7 @@
 	margin:0;
 	padding:0;
 	border:0;
+	list-style:none;
 }
 html {
 	height:100%;
@@ -205,6 +206,7 @@ form, input, textarea, select {
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 	font-size: 11pt;
 	color: #060;
+	max-width:100%;
 }
 form ul li {
 	list-style:none;
@@ -434,6 +436,9 @@ input#poids {
 		margin:auto;
 		padding:10px;
 	}
+	div#monCompte fieldset {
+		border:0;
+	}
 	form#fContact fieldset {
 		margin-bottom:10px;
 		border:none;
@@ -481,7 +486,7 @@ input#poids {
 	}
 	form#fAffectation table {
 		border-left:1px solid #3f7f00;
-		width:875px;
+		width:850px;
 	}
 /*
  * Fin des formulaires mon compte
@@ -863,6 +868,7 @@ td {
 	-ms-border-radius: 3px;
 	-o-border-radius: 3px;
 	-webkit-border-radius: 3px;
+	max-width:12em;
 }
 
 /*
