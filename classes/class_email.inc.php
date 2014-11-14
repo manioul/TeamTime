@@ -123,7 +123,6 @@ class Email {
 				, __METHOD__
 				, $_SESSION['db']->db_real_escape_string(json_encode($array)))
 			);
-			print "Huh ?";
 			return FALSE;
 		}
 		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Tentative d\'envoi d\'un mail.", "DEBUG", "%s", "sending mail", "%s")'
