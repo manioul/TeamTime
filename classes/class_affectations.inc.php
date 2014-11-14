@@ -198,8 +198,8 @@ class Affectation {
 			, 'centre'	=> $this->centre
 			, 'team'	=> $this->team
 			, 'grade'	=> $this->grade
-			, 'beginning'	=> $this->beginning->date()
-			, 'end'		=> $this->end->date()
+			, 'beginning'	=> $this->beginning->formatDate()
+			, 'end'		=> $this->end->formatDate()
 		);
 	}
 // Méthode de la bdd

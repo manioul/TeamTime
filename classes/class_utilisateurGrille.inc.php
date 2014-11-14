@@ -463,6 +463,10 @@ class utilisateurGrille extends utilisateur {
 	}
 // Accesseurs
 	public function userAsArray() {
+		$aff = array();
+		foreach($this->orderedAffectations() as $i => $affectation) {
+			$aff[$i++] = $affectation->asArray();
+		}
 		return array_merge(
 			parent::asArray()
 		       	, array(
@@ -473,11 +477,25 @@ class utilisateurGrille extends utilisateur {
 			, 'vismed'		=> $this->vismed
 			, 'poids'		=> $this->poids
 			, 'showtipoftheday'	=> $this->showtipoftheday
-			, 'pref'		=> json_encode($this->prefAsArray())
+			, 'pref'		=> $this->prefAsArray()
+			, 'sha1'		=> "****"	// Masquage du mot de passe
+			, 'centre'		=> $this->centre()
+			, 'team'		=> $this->team()
+			, 'grade'		=> $this->grade()
+			, 'affectations'	=> $aff
 		));
+	}
+	/** FIXME TODO
+	 * json_encode ne veut pas encoder l'objet utilisateurGrille...
+	 */
+	public function asJSON() {
+		return json_encode($this->userAsArray());
 	}
 	public function prefAsArray() {
 		return $this->pref;
+	}
+	public function prefAsJSON() {
+		return json_encode($this->pref);
 	}
 	public function setFromRow($row) {
 		$valid = true;

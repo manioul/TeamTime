@@ -23,7 +23,7 @@
 
 // Require authenticated user
 // L'utilisateur doit être logué pour accéder à cette page
-$requireAdmin = true;
+$requireEditeur = true;
 
 ob_start(); // Obligatoire pour firePHP
 
@@ -101,7 +101,9 @@ ob_start(); // Obligatoire pour firePHP
 	// Utilisation de grille2.js.php
 	$conf['page']['javascript']['grille2'] = false;
 	// Utilisation de utilisateur.js
-	$conf['page']['javascript']['utilisateur'] = false;
+	$conf['page']['javascript']['utilisateur'] = true;
+	// Utilisation de administration.js
+	$conf['page']['javascript']['administration'] = true;
 
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
@@ -143,11 +145,8 @@ if (sizeof($_POST) > 1) {
 
 $affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 $centres = Affectation::listeAffectations('centre', $affectation['centre']);
-$centres['label'] = 'Centre';
 $teams = Affectation::listeAffectations('team', $affectation['team']);
-$teams['label'] = 'Équipe';
 $grades = Affectation::listeAffectations('grade');
-$grades['label'] = 'Grade';
 $smarty->assign('centres', $centres);
 $smarty->assign('teams', $teams);
 $smarty->assign('grades', $grades);
