@@ -1296,21 +1296,21 @@ class utilisateursDeLaGrille {
 		if (is_null($to)) $to = date('Y-m-d');
 		$affectation = $_SESSION['utilisateur']->affectationOnDate($from);
 		if (is_null($centre)) {
-			if (!empty($_SESSION['ADMIN'])) {
+			if (array_key_exists('ADMIN', $_SESSION)) {
 				$centre = 'all';
 			} else {
 				$centre = $affectation['centre'];
 			}
 		}
 		if (is_null($team)) {
-			if (!empty($_SESSION['ADMIN'])) {
+			if (array_key_exists('ADMIN', $_SESSION)) {
 				$team = 'all';
 			} else {
 				$team = $affectation['team'];
 			}
 		}
 		// Recherche les non affectés
-		if (array_key_exists('inaff', $_REQUEST)) {
+		if (array_key_exists('ADMIN', $_SESSION) && array_key_exists('inaff', $_REQUEST)) {
 			$sql = "SELECT DISTINCT `TU`.`uid`,
 				`TU`.*,
 				'vide' AS `centre`,
