@@ -628,7 +628,7 @@ class Cycle {
 		} elseif (!is_string($date)) {
 			return false;
 		}
-		// Recherche des vacances scolaires
+		// Recherche des périodes de briefing
 		$sql = sprintf("SELECT *
 			FROM `TBL_BRIEFING`
 			WHERE `dateF` > '%s'
@@ -643,10 +643,10 @@ class Cycle {
 		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 			$sql = sprintf("
 				UPDATE `TBL_GRILLE`
-				SET `briefing` = %d
+				SET `briefing` = %s
 				WHERE `date` BETWEEN '%s' AND '%s'
 				"
-				, $row['id']
+				, $row['description']
 				, $row['dateD']
 				, $row['dateF']
 			);
