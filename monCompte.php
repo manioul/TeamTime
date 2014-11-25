@@ -177,6 +177,11 @@ if (sizeof($_POST) > 0) {
 			setcookie('cpt', 0, 0, $conf['session_cookie']['path'], NULL, $conf['session_cookie']['secure']);
 			$utilisateur->addPref('cpt', 0);
 		}
+		if (array_key_exists('dtch', $_POST)) {
+			$utilisateur->addPref('dtch', 1);
+		} else {
+			$utilisateur->addPref('dtch', 0);
+		}
 
 		// S'il y a un nouveau téléphone à ajouter
 		if (array_key_exists('newnb', $_POST)) {

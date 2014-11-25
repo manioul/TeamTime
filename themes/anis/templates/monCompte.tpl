@@ -33,7 +33,11 @@
 </li>
 <li>
 <label for="cpt" title="Les compteurs sont-ils visibles en affichage grilles multiples ?">Compteurs</label>
-<input type="checkbox" name="cpt" id="cpt"{if isset($pref['cpt']) && $pref['cpt'] == 1} checked="checked"{/if} />
+<input type="checkbox" name="cpt" id="cpt"{if isset($pref->cpt) && $pref->cpt == 1} checked="checked"{/if} />
+</li>
+<li>
+<label for="dtch" title="Les cases 'dtch' sont-elles vidées du texte ?">Visibilité des cases détachés</label>
+<input type="checkbox" name="dtch" id="dtch"{if isset($pref->dtch) && $pref->dtch == 1} checked="checked"{/if} />
 </li>
 </ul>
 </fieldset>
