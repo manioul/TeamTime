@@ -191,12 +191,25 @@ END
 DROP PROCEDURE IF EXISTS searchAffectation|
 CREATE PROCEDURE searchAffectation( IN uid_ SMALLINT(6) , IN dat DATE , OUT centr VARCHAR(50) , OUT tea VARCHAR(10) , OUT grad VARCHAR(64) )
 BEGIN
+	DECLARE multiple INT(10);
+
+	SELECT COUNT(uid)
+	INTO multiple
+	FROM TBL_AFFECTATION
+	WHERE dat BETWEEN beginning AND end
+	AND uid = uid_;
+
+	IF multiple > 1 THEN
+		INSERT INTO TBL_MESSAGES_SYSTEME VALUES (NULL, , 'ERREUR', 'searchAffectation', 'Multiples affectations', CONCAT("L'utilisateur a des affectation multiples pour le ", dat), CONCAT('uid:', uid_, ';date:', dat, ';'), NOW(), FALSE);
+	END IF
+	
 	SELECT centre, team, grade
 	INTO centr, tea, grad
 	FROM TBL_AFFECTATION
 	WHERE dat BETWEEN beginning AND end
 	AND uid = uid_
-	AND validated IS TRUE;
+	AND validated IS TRUE
+	LIMIT 1; -- En cas d'entrées multiples, la requête plante
 END
 |
 DROP PROCEDURE IF EXISTS addAffectation|
