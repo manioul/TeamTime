@@ -402,6 +402,43 @@ DROP PROCEDURE IF EXISTS post_2_4a|
 CREATE PROCEDURE post_2_4a()
 BEGIN
 	DROP VIEW IF EXISTS `classes`; -- Plus utilisé
+	DROP VIEW IF EXISTS VIEW_LIST_DISPO; -- Mise à jour de la définition de la vue
+	CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER
+	VIEW `VIEW_LIST_DISPO` AS
+		SELECT `l`.`sdid` AS `sdid`
+		,`l`.`uid` AS `uid`
+		,`u`.`nom` AS `nom`
+		,`d`.`dispo` AS `dispo`
+		,`l`.`date` AS `date`
+		,`c`.`vacation` AS `vacation`
+		,year(`l`.`date`) AS `year`
+		,`l`.`pereq` AS `pereq`
+		FROM `TBL_L_SHIFT_DISPO` `l`
+		, `TBL_USERS` `u`
+		,`TBL_DISPO` `d`
+		, `TBL_GRILLE` `g`
+		, `TBL_CYCLE` `c`
+		WHERE `l`.`date` = `g`.`date`
+		AND `g`.`cid` = `c`.`cid`
+		AND `u`.`uid` = `l`.`uid`
+		AND `d`.`did` = `l`.`did`
+		UNION SELECT `l`.`sdid` AS `sdid`
+		,`l`.`uid` AS `uid`
+		,`u`.`nom` AS `nom`
+		,`d`.`dispo` AS `dispo`
+		,`l`.`date` AS `date`
+		,`l`.`date` AS `vacation`
+		,`v`.`year` AS `year`
+		,`l`.`pereq` AS `pereq`
+		FROM `TBL_L_SHIFT_DISPO` `l`
+		, `TBL_USERS` `u`
+		, `TBL_DISPO` `d`
+		, `TBL_VACANCES` `v`
+		WHERE `l`.`date` = 0
+		AND `l`.`sdid` = `v`.`sdid`
+		AND `u`.`uid` = `l`.`uid`
+		AND `d`.`did` = `l`.`did`
+		ORDER BY `date`,`nom`;
 END
 |
 
