@@ -1468,16 +1468,14 @@ class utilisateursDeLaGrille {
 			SELECT `a`.`uid`
 			, `nom`
 			, `prenom`
-			, `classe`
-			FROM `classes` AS `c`
-			, `TBL_AFFECTATION` AS `a`
-			WHERE `a`.`uid` = `c`.`uid`
+			, `grade`
+			FROM `TBL_AFFECTATION` AS `a`
+			, `TBL_USERS` AS `u`
+			WHERE `a`.`uid` = `u`.`uid`
 			AND `a`.`centre` = '%s'
 			AND `a`.`team` = '%s'
 			AND `a`.`beginning` <= '%s'
 			AND `a`.`end` >= '%s'
-			AND `c`.`beginning` <= '%s'
-			AND `c`.`end` >= '%s'
 			AND `actif`  IS TRUE
 			ORDER BY `poids` ASC
 			, `nom` ASC"
@@ -1490,6 +1488,7 @@ class utilisateursDeLaGrille {
 		);
 		$oldUid = -1; // Pour gérer des classes multiples
 		$i = 0;
+		$array = array();
 		$result = $_SESSION['db']->db_interroge($sql);
 		while($row = $_SESSION['db']->db_fetch_assoc($result)) {
 			if ($row['uid'] == $oldUid) { // On ajoute une classe
@@ -1500,7 +1499,7 @@ class utilisateursDeLaGrille {
 				$array[$i] = array(
 					'nom'		=> htmlentities($row['nom'], ENT_NOQUOTES, 'utf-8')
 					, 'prenom'	=> htmlentities($row['prenom'], ENT_NOQUOTES, 'utf-8')
-					, 'classe'	=> 'nom ' . htmlentities($row['classe'], ENT_NOQUOTES, 'utf-8')
+					, 'classe'	=> 'nom ' . htmlentities($row['grade'], ENT_NOQUOTES, 'utf-8')
 					, 'id'		=> 'u' . $row['uid']
 					, 'uid'		=> $row['uid']
 				);

@@ -391,6 +391,19 @@ BEGIN
 	UPDATE `ttm`.`TBL_ELEMS_MENUS` SET `allowed` = 'teamEdit' WHERE `TBL_ELEMS_MENUS`.`lien` = 'gestionUtilisateur.php';
 END
 |
+DROP PROCEDURE IF EXISTS pre_2_4|
+CREATE PROCEDURE pre_2_4()
+BEGIN
+	-- Ajoute un champ CSS à la table TBL_DISPO pour paramètrer l'affichage
+	ALTER TABLE `TBL_DISPO` ADD `css` TEXT NULL DEFAULT NULL COMMENT 'Code css à ajouter à l''élément';
+END
+|
+DROP PROCEDURE IF EXISTS post_2_4a|
+CREATE PROCEDURE post_2_4a()
+BEGIN
+	DROP VIEW IF EXISTS `classes`; -- Plus utilisé
+END
+|
 
 DELIMITER ;
 
@@ -398,5 +411,7 @@ DELIMITER ;
 -- CALL post_2_2a();
 -- CALL post_2_3a();
 CALL post_2_3e();
+CALL pre_2_4();
+CALL post_2_4a();
 
 
