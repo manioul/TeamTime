@@ -59,7 +59,7 @@ function getAvailableOccupations(oThis) {
 	       	alert("Impossible d'obtenir les infos");
 		return false;
        	}
-<?
+<?php
 	$find_in_set = "";
 	if (!array_key_exists('ADMIN', $_SESSION)) { // Les non admins ont des restrictions sur les dispo qu'ils peuvent poser
 		foreach (array_flip(array_flip(array_merge(array('all', $_SESSION['utilisateur']->login(), $affectation['grade']), $_SESSION['utilisateur']->roles()))) as $set) {
@@ -102,12 +102,12 @@ function getAvailableOccupations(oThis) {
 	}
 	mysqli_free_result($resDispo);
 	?>
-	switch (aArray["Vacation"]) {<?
+	switch (aArray["Vacation"]) {<?php
 	foreach($vacations as $vacation) {?>
 		case "<?=$vacation?>":
 			var aDispo = new Array(<?=substr($dispo[$vacation], 0, -1)?>);
 			break;
-	<?
+	<?php
 	}?>
 			default:
 				var aDispoExt = new Array();
@@ -437,24 +437,27 @@ function comptePresents(sId)
 	?>
 	var aAbsent = {<?=substr($absences, 0, -2)?>};
 	var aD = {<?=substr($dispo, 0, -2)?>};
-	var aPresents = {'cds': 0, 'ce': 0, 'pc': 0, 'c': 0, 'aD':0};
+	var aPresents = {'cds': 0, 'ce': 0, 'fmp' : 0, 'dtch': 0, 'pc': 0, 'c': 0, 'aD':0};
 	var aListeUid = listeUid();
 	for (var iUid in aListeUid)
 	{
 		var sTemp = '#u'+iUid+sDate;
-		if ($(sTemp).text() == " " && !$(sTemp).hasClass('absent')) {
-			aPresents[aListeUid[iUid]]++;
-			if (aListeUid[iUid] != 'c') {
-				aPresents['aD']++;
-			}
-		} else {
-			aPresents[aListeUid[iUid]] += aAbsent[$(sTemp).text()] || 0;
-			if (aListeUid[iUid] != 'c') {
-				aPresents['aD'] += aD[$(sTemp).text()] || 0;
+		if (!$(sTemp).hasClass('absent'))
+		{
+			if ($(sTemp).text() == " ") {
+				aPresents[aListeUid[iUid]]++;
+				if (aListeUid[iUid] != 'c') {
+					aPresents['aD']++;
+				}
+			} else {
+				aPresents[aListeUid[iUid]] += aAbsent[$(sTemp).text()] || 0;
+				if (aListeUid[iUid] != 'c') {
+					aPresents['aD'] += aD[$(sTemp).text()] || 0;
+				}
 			}
 		}
 	}
-	aPresents['pc'] += aPresents['ce'] + aPresents['cds'];
+	aPresents['pc'] += aPresents['ce'] + aPresents['cds'] + aPresents['dtch'] + aPresents['fmp'];
 	$('#dec'+sDate).text(aPresents['aD']+"/"+aPresents['pc']+"/"+aPresents['c']);
 	if (aPresents['pc'] < <?=get_sql_globals_constant('effectif_mini')?> && !$('#dec'+sDate).hasClass('protected'))
 	{
@@ -623,7 +626,7 @@ function infosFromId(sId) {
 // Retourne un tableau avec les uid présents sur le tableau
 ?>
 function listeUid() {
-	var aClasses = new Array('cds', 'ce', 'pc', 'c');
+	var aClasses = new Array('cds', 'ce', 'pc', 'c', 'dtch', 'fmp');
 	var aEffectif = new Array();
 	var aClass = new Array();
 	for (var iClass in aClasses)
