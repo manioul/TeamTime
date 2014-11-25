@@ -122,6 +122,7 @@ ob_start(); // Obligatoire pour firePHP
 
 require 'required_files.inc.php';
 
+$reloadUser = false; // Positionner si l'utilisateur doit être rechargé (c'est le cas lorsque le compte édité est le compte de l'utilisateur connecté).
 // Les utilisateurs non admin et non editeurs ne peuvent accéder qu'à leurs données
 if ((array_key_exists('ADMIN', $_SESSION) || array_key_exists('EDITEURS', $_SESSION)) && array_key_exists('uid', $_REQUEST)) {
 	$utilisateur = new UtilisateurGrille( (int) $_REQUEST['uid']);
@@ -136,6 +137,9 @@ if ((array_key_exists('ADMIN', $_SESSION) || array_key_exists('EDITEURS', $_SESS
 	} else {
 		$utilisateur = new UtilisateurGrille( $_SESSION['utilisateur']->uid());
 	}
+}
+if ($_SESSION['utilisateur']->uid() === $utilisateur->uid()) {
+	$reloadUser = true;
 }
 if (!is_a($utilisateur, 'utilisateurGrille')) {
 	die("On n'a pas obtenu l'objet attendu");
@@ -200,6 +204,10 @@ if (sizeof($_POST) > 0) {
 			);
 		}
 		$utilisateur->fullUpdateDB();
+	}
+	if ($reloadUser) {
+		// On recharge l'utilisateur pour prendre en compte les modifications de son compte
+		$_SESSION['utilisateur'] = new utilisateurGrille($_SESSION['utilisateur']->uid());
 	}
 }
 
