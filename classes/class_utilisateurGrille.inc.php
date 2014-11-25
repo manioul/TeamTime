@@ -491,22 +491,17 @@ class utilisateurGrille extends utilisateur {
 		       	, array(
 			'uid'			=> $this->uid
 			, 'nom'			=> $this->nom
-			, 'gid'			=> $this->gid
 			, 'prenom'		=> $this->prenom
 			, 'vismed'		=> $this->vismed
 			, 'poids'		=> $this->poids
 			, 'showtipoftheday'	=> $this->showtipoftheday
-			, 'pref'		=> $this->prefAsArray()
-			, 'sha1'		=> "****"	// Masquage du mot de passe
+			, 'pref'		=> $this->prefAsJSON()
 			, 'centre'		=> $this->centre()
 			, 'team'		=> $this->team()
 			, 'grade'		=> $this->grade()
 			, 'affectations'	=> $aff
 		));
 	}
-	/** FIXME TODO
-	 * json_encode ne veut pas encoder l'objet utilisateurGrille...
-	 */
 	public function asJSON() {
 		return json_encode($this->userAsArray());
 	}
@@ -577,12 +572,22 @@ class utilisateurGrille extends utilisateur {
 	 * @param $param string chaîne JSON
 	 */
 	public function pref($param = NULL) {
-		if (!is_null($param)) {
-			$this->pref = json_decode($param, true);
+		if (is_string($param)) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("msg", "TRACE", "%s", "short", "%s")'
+				, __METHOD__
+				, $_SESSION['db']->db_real_escape_string(json_encode($param)))
+			);
+			$this->pref = json_decode($param, false);
 			// Ajoute les compteurs en fin de grille sur tous les affichages
 			if (array_key_exists('cpt', $this->pref)) {
-				setcookie('cpt', (int) $this->pref['cpt'], 0, $conf['session_cookie']['path'], NULL, $conf['session_cookie']['secure']);
+				setcookie('cpt', (int) $this->pref->cpt, 0, $conf['session_cookie']['path'], NULL, $conf['session_cookie']['secure']);
 			}
+		} elseif (!is_array($this->pref)) {
+			$sql = "SELECT `pref`
+				FROM `TBL_USERS`
+				WHERE `uid` = $this->uid";
+			$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+			$this->pref = json_decode($row['pref'], false);
 		}
 		return $this->pref;
 	}
@@ -595,7 +600,21 @@ class utilisateurGrille extends utilisateur {
 	 * @return void
 	 */
 	public function addPref($key, $value) {
-		$this->pref[$key] = $value;
+		$this->pref->$key = $value;
+	}
+	/**
+	 * Retrouve la valeur d'une préférence.
+	 *
+	 * @param $param string clé indexant la préférence à rechercher
+	 *
+	 * @return string la valeur correspondant à la clé
+	 */
+	public function getPref($param) {
+		if (isset($this->pref->$param)) {
+			return $this->pref->$param;
+		} else {
+			return null;
+		}
 	}
 	/**
 	 * Retourne le centre actuel de l'utilisateur.
