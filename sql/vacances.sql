@@ -195,7 +195,7 @@ BEGIN
 END
 |
 -- Passer NULL comme oldDisponibilite pour supprimer automatiquement l'ancienne dispo sur la date/l'utilisateur
--- oldDisponibilite est systématiquement dixé à NULL dans la mesure où l'on n'utilise pas de dispo multiples
+-- oldDisponibilite est systématiquement fixé à NULL dans la mesure où l'on n'utilise pas de dispo multiples
 DROP PROCEDURE IF EXISTS addDispo|
 CREATE PROCEDURE addDispo( IN uid_ SMALLINT(6) , IN date_ DATE , IN disponibilite VARCHAR(16) , IN oldDisponibilite VARCHAR(16) , IN perequation BOOLEAN )
 BEGIN
