@@ -1805,10 +1805,10 @@ class utilisateursDeLaGrille {
 					foreach ($cycle[$i]->dispos() as $dateVacation => $vacation) {
 						$classe = "presence";
 						if ($vacation['jourTravail']->readOnly()) $classe .= " protected";
-						if (!empty($vacation[$user['uid']]) && !empty($proprietesDispos[$vacation[$user['uid']]]) && 1 == $proprietesDispos[$vacation[$user['uid']]]['absence']) {
+						if (!empty($vacation[$user['uid']]['activite']) && !empty($proprietesDispos[$vacation[$user['uid']]['activite']]) && 1 == $proprietesDispos[$vacation[$user['uid']]['activite']]['absence']) {
 							$classe .= " absent";
 							// Ajout d'une classe particulière pour les congés validés
-							if ('conges' == $proprietesDispos[$vacation[$user['uid']]]['type decompte']) {
+							if ('conges' == $proprietesDispos[$vacation[$user['uid']]['activite']]['type decompte']) {
 								$result = $_SESSION['db']->db_interroge(sprintf("
 									SELECT `etat`
 									FROM `TBL_VACANCES`
@@ -1854,20 +1854,52 @@ class utilisateursDeLaGrille {
 								$classe .= " absent";
 							}
 						}
+						$title = "";
 						/*
 						 * Affichage remplacements
 						 */
-						if (!empty($vacation[$user['uid']]) && "Rempla" == $vacation[$user['uid']]) {
-							$proprietesDispos[$vacation[$user['uid']]]['nom_long'] = "Mon remplaçant";
-							$sql = sprintf("SELECT * FROM `TBL_REMPLA` WHERE `uid` = %s AND `date` = '%s'", $user['uid'], $vacation['jourTravail']->date());
+						if (!empty($vacation[$user['uid']]['activite']) && "Rempla" == $vacation[$user['uid']]['activite']) {
+							$title = "Mon remplaçant";
+							$sql = sprintf("
+								SELECT *
+								FROM `TBL_REMPLA`
+								WHERE `uid` = %d
+								AND `date` = '%s'"
+								, $user['uid']
+								, $vacation['jourTravail']->date());
 							$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
-							$proprietesDispos[$vacation[$user['uid']]]['nom_long'] = $row['nom'] . " | " . $row['phone'];
+							$title = $row['nom'] . " | " . $row['phone'];
 						} //
-						$grille[$compteurLigne][] = array(
-							'nom'		=> isset($vacation[$user['uid']]) ? htmlentities($vacation[$user['uid']], ENT_NOQUOTES, 'utf-8') : " "
-							,'id'		=> sprintf("u%s%ss%sc%s", $user['uid'], $vacation['jourTravail']->dateAsId(), $vacation['jourTravail']->vacation(), $cycle[$i]->cycleId())
-							,'classe'	=> $classe
-							,'title'	=> !empty($vacation[$user['uid']]) && isset($proprietesDispos[$vacation[$user['uid']]]['nom_long']) ? $proprietesDispos[$vacation[$user['uid']]]['nom_long'] : ''
+						/*
+						 * L'activité possède-t-elle un title à afficher ?
+						 */
+						if (!empty($vacation[$user['uid']]['activite'])) {
+							if (isset($vacation[$user['uid']]['title'])) {
+								$title = $vacation[$user['uid']]['title'];
+							} elseif (isset($proprietesDispos[$vacation[$user['uid']]['activite']]['nom_long'])) {
+								$title = $proprietesDispos[$vacation[$user['uid']]['activite']]['nom_long'];
+							}
+						}
+						// Un tableau pour les title et css
+						$extra_array = array();
+						if ($title !== '') {
+							$extra_array = array(
+								'title'		=> $title
+							);
+						}
+						if (!is_null($proprietesDispos[$vacation[$user['uid']]['activite']]['css'])) {
+							$extra_array = array_merge(
+								$extra_array,
+								array(
+								'style'		=> $proprietesDispos[$vacation[$user['uid']]['activite']]['css']
+								)
+							);
+						}
+						$grille[$compteurLigne][] = array_merge(array(
+							'nom'		=> isset($vacation[$user['uid']]['activite']) ? htmlentities($vacation[$user['uid']]['activite'], ENT_NOQUOTES, 'utf-8') : " "
+							, 'id'		=> sprintf("u%s%ss%sc%s", $user['uid'], $vacation['jourTravail']->dateAsId(), $vacation['jourTravail']->vacation(), $cycle[$i]->cycleId())
+							, 'classe'	=> $classe
+							), $extra_array
 						);
 					}
 					// La dernière colonne contient les décomptes horizontaux calculés

@@ -402,6 +402,8 @@ DROP PROCEDURE IF EXISTS post_2_4a|
 CREATE PROCEDURE post_2_4a()
 BEGIN
 	DROP VIEW IF EXISTS `classes`; -- Plus utilisé
+	ALTER TABLE `TBL_L_SHIFT_DISPO` ADD `title` TEXT NULL COMMENT 'Le contenu du champ title (affiché au survol)';
+	ALTER TABLE `TBL_DISPO` ADD `title` BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Vrai si l''activité doit permettre un commentaire';
 	DROP VIEW IF EXISTS VIEW_LIST_DISPO; -- Mise à jour de la définition de la vue
 	CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER
 	VIEW `VIEW_LIST_DISPO` AS

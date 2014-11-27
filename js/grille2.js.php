@@ -389,6 +389,10 @@ function definitVerrouillage()
 $(function() {
 		definitVerrouillage();
 });
+$(function() {
+	$('td[style]').removeClass();
+}
+);
 <?
 }
 // Compte le nombre de présent pour la colonne à laquelle sId appartient

@@ -367,8 +367,10 @@ class Cycle {
 		$sql =  sprintf("
 			SELECT `TL`.`uid`,
 			`TL`.`date`,
-			`dispo`
-		       	FROM `TBL_L_SHIFT_DISPO` AS `TL`,
+			`dispo`,
+			`TL`.`title`,
+			`css`
+			FROM `TBL_L_SHIFT_DISPO` AS `TL`,
 			`TBL_DISPO` AS `TD`,
 			`TBL_USERS` AS `TU`,
 			`TBL_GRILLE` AS `TG`,
@@ -430,8 +432,11 @@ class Cycle {
 		);
 		//debug::getInstance()->postMessage($sql);
 		$result = $_SESSION['db']->db_interroge($sql);
-		while ($row = $_SESSION['db']->db_fetch_row($result)) {
-			$this->dispos[$row[1]][$row[0]] = $row[2]; // $dispos[date][uid] = dispo
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$this->dispos[$row['date']][$row['uid']]['activite'] = $row['dispo']; // $dispos[date][uid][activite] = dispo
+			if (!is_null($row['title'])) {
+				$this->dispos[$row['date']][$row['uid']]['title'] = $row['title']; // $dispos[date][uid][title] = title
+			}
 		}
 		mysqli_free_result($result);
 		return true;
