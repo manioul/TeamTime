@@ -1873,7 +1873,7 @@ class utilisateursDeLaGrille {
 						/*
 						 * L'activité possède-t-elle un title à afficher ?
 						 */
-						if (!empty($vacation[$user['uid']]['activite'])) {
+						if (!empty($vacation[$user['uid']]['activite']) && $title === "") {
 							if (isset($vacation[$user['uid']]['title'])) {
 								$title = $vacation[$user['uid']]['title'];
 							} elseif (isset($proprietesDispos[$vacation[$user['uid']]['activite']]['nom_long'])) {
