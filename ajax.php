@@ -163,6 +163,34 @@ if (sizeof($_REQUEST) > 0) {
 				$err = "Date inconnue";
 			}
 		}
+		if (array_key_exists('form', $_REQUEST)) {
+			/*
+			 * Formulaire d'ajout d'information supplémentaires d'activité
+			 */
+			if ($_REQUEST['form'] === 'IS'
+				&& array_key_exists('Year', $_REQUEST)
+				&& array_key_exists('Month', $_REQUEST)
+				&& array_key_exists('Day', $_REQUEST)
+				&& array_key_exists('uid', $_REQUEST)
+				&& $_REQUEST['uid'] == (int) $_REQUEST['uid']
+				&& array_key_exists('info', $_REQUEST)) {
+					$date = new Date();
+					$date->annee($_REQUEST['Year']);
+					$date->mois($_REQUEST['Month']);
+					$date->jour($_REQUEST['Day']);
+					$sql = sprintf("
+						UPDATE `TBL_L_SHIFT_DISPO`
+						SET `title` = '%s'
+						WHERE `date` = '%s'
+						AND `uid` = %d
+						", $_SESSION['db']->db_real_escape_string($_REQUEST['info'])
+						, $date->date()
+						, (int) $_REQUEST['uid']
+					);
+					$_SESSION['db']->db_interroge($sql);
+					$err = '';
+			}
+		}
 	}
 	if (array_key_exists('TEAMEDIT', $_SESSION)) {
 		// Gestion de la configuration sur la grille

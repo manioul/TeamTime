@@ -1887,7 +1887,10 @@ class utilisateursDeLaGrille {
 								'title'		=> $title
 							);
 						}
-						if (!is_null($proprietesDispos[$vacation[$user['uid']]['activite']]['css'])) {
+						if (array_key_exists($user['uid'], $vacation)
+							&& array_key_exists($vacation[$user['uid']]['activite'], $proprietesDispos)
+							&& !is_null($proprietesDispos[$vacation[$user['uid']]['activite']]['css'])
+						) {
 							$extra_array = array_merge(
 								$extra_array,
 								array(

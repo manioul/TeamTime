@@ -25,7 +25,7 @@
 		Le contenu est construit dynamiquement, en fonction de la case à modifier
 		*} 
 		<div id="sandbox"></div>
-{*	div qui contient un formulaire pour les remplacement *}
+{*	div qui contient un formulaire pour les remplacements *}
 		<form id="fFormRemplacement" method="post" action="set_rempla.php">
 		<div id="dFormRemplacement">
 				<input type="hidden" name="uid" id="remplaUid" />
@@ -56,6 +56,21 @@
 				<input type="submit" />
 			</td></tr>
 			</table>
+		</div>
+		</form>
+{*	div qui contient un formulaire pour les infos supplémentaires *}
+		<form id="fFormInfoSup" method="post" action="ajax.php">
+		<div id="dFormInfoSup" style="display:none;">
+				<input type="hidden" name="form" value="IS" />
+				<input type="hidden" name="ajax" value="true" />
+				<input type="hidden" name="cachemoi" value="1" />
+				<input type="hidden" name="uid" id="infoSupUid" />
+				<input type="hidden" name="Year" id="infoSupYear" />
+				<input type="hidden" name="Month" id="infoSupMonth" />
+				<input type="hidden" name="Day" id="infoSupDay" />
+				<input name="info" id="infoSupNom" type="text" placeholder="Description" />
+				<input type="reset" value="Effacer" class="bouton" />
+				<input type="submit" />
 		</div>
 		</form>
 {* Des messages de debug peuvent être passés dans ce div

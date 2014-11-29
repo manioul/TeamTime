@@ -269,6 +269,22 @@ div#dFormRemplacement table {
 div#dFormRemplacement table td {
 	background-color:transparent;
 }
+#dFormInfoSup {
+	background-color:rgba(255,255,255,.9);
+	padding:10px;
+	border-spacing:0;
+	border:0px solid #fff;
+	-moz-border-radius:15px;
+	-webkit-border-radius: 15px;
+	-ms-border-radius: 15px;
+	-o-border-radius: 15px;
+	border-radius: 15px;
+	box-shadow: 0 1px 3px rgba(0,0,0,.3),
+	0 3px 5px rgba(0,0,0,.2),
+	0 5px 10px rgba(0,0,0,.2),
+	0 20px 20px rgba(0,0,0,.15);
+	max-width:195px;
+}
 .emphasize {
 	background-color: #fdd;
 	color: #f00;

@@ -103,6 +103,8 @@ $nbCycle = empty($_GET['nbCycle']) ? 1 : (int) $_GET['nbCycle'];
 	$conf['page']['javascript']['grille2js'] = false;
 	// Utilisation de administration
 	$conf['page']['javascript']['administration'] = true;
+	// Utilisation de utilisateur
+	$conf['page']['javascript']['utilisateur'] = true;
 
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css

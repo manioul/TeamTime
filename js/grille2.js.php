@@ -29,19 +29,28 @@ require_once('../session.inc.php');
 firePHPLog($_SESSION, 'SESSION');
 // tableau des dispos
 $sql = sprintf("
-	SELECT `dispo`
+	SELECT *
 	FROM `TBL_DISPO`
-	WHERE `type decompte` = 'dispo'
-	AND `actif` IS TRUE
+	WHERE `actif` IS TRUE
 	AND (`centre` = '%s' OR `centre` = 'all')
 	AND (`team` = '%s' OR `team` = 'all')"
 	, $_SESSION['utilisateur']->centre()
 	, $_SESSION['utilisateur']->team()
 	);
 $dispos = "";
+// L'ensemble des activités
+$activites = array();
+// Les activités autorisant une info supplémentaire (un title)
+$sActTitle = "";
 $result = $_SESSION['db']->db_interroge($sql);
-while ($x = $_SESSION['db']->db_fetch_assoc($result)) {
-	$dispos .= sprintf("'%s',", $x['dispo']);
+while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+	$activites[] = $row;
+	if ($row['type decompte'] == 'dispo') {
+		$dispos .= sprintf("'%s',", $row['dispo']);
+	}
+	if ($row['title']) {
+		$sActTitle .= sprintf("case '%s':\n", $row['dispo']);
+	}
 }
 mysqli_free_result($result);
 $sDispos = substr($dispos, 0, -1);
@@ -240,6 +249,21 @@ function addDispo(oThis, sDispo)
 			$("#remplaMonth").val(aArray['Month']);
 			$("#remplaDay").val(aArray['Day']);
 			break;
+<?php
+	if ($sActTitle != "") {
+	print ($sActTitle);
+?>
+			var p = $('#'+oThis.id).position();
+			$("#dFormInfoSup").css({"left" : p.left + 10 , "top" : p.top + 20, "position": "absolute"});
+			$("#dFormInfoSup").show('slow');
+			$("#infoSupUid").val(aArray['uid']);
+			$("#infoSupYear").val(aArray['Year']);
+			$("#infoSupMonth").val(aArray['Month']);
+			$("#infoSupDay").val(aArray['Day']);
+			break;
+<?php
+	}
+?>
 		default:
 			debug(sDispo);
 		break;
