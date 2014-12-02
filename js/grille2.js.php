@@ -780,6 +780,13 @@ $(function() {
 				uncollapseRow(sId);
 				});
 		decomptePresents();
+<?php
+if ($_SESSION['utilisateur']->getPref('dtch') === 1) {
+	?>
+	$("td:contains('dtch')").text('');
+<?php
+}
+?>
 });
 <?
 	// Gestion de la configuration des cycles (E/W)

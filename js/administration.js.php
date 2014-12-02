@@ -91,13 +91,6 @@ $(function() {
 	$('#iCcemail').parent().parent().after(objSecondRow);
 	$('#iCcemail').parent().parent().after(objFirstRow);
 
-<?php
-if ($_SESSION['utilisateur']->getPref('dtch') === 1) {
-	?>
-	$("td:contains('dtch')").text('');
-<?php
-}
-?>
 });
 <?	
 } else {
