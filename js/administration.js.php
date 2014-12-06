@@ -119,29 +119,7 @@ $(function() {
 	);
 }
 $result = $_SESSION['db']->db_interroge($sql);
-// Fonction qui met à jour l'affichage dans le formulaire
-// en fonction du nom choisi
 ?>
-function updDispFormCc()
-{
-	var aUsers = new Array();
-	var aColonnes = new Array();
-	<?
-while ($row = $_SESSION['db']->db_fetch_assoc($result)) { ?>
-	aUsers['<?=$row['nom']?>'] = new Object();
-	<?
-	foreach ($colonnes as $col) {
-		if (!empty($row[$col])) {
-?>
-	aUsers['<?=$row['nom']?>'].<?=str_replace(' ', '_', $col)?> = '<?=$row[$col]?>';
-<? 		}
-	}
-} ?>
-	$("#iCclogin").val(aUsers[$('#sCcnom').val()].login);
-	$("#iCcemail").val(aUsers[$('#sCcnom').val()].email);
-	$("#iCccentre").val(aUsers[$('#sCcnom').val()].centre);
-	$("#iCcteam").val(aUsers[$('#sCcnom').val()].team);
-}
 function subCc()
 {
 	var sRequest = "";
@@ -158,9 +136,6 @@ function subCc()
 	submitRequest(sRequest, 'ajax.php');
 }
 
-$(function() {
-	updDispFormCc();
-});
 // Une fonction pour interragir avec la base de données
 // Mise à jour et suppression d'enregistrements
 // Utilisée par pereq.php
@@ -169,11 +144,8 @@ function opDb(op, table, id, field, val)
 	var sRequest = "op="+op+"&t="+table+"&id="+id+"&field="+field+"&val="+val;
 	submitRequest(sRequest, "ajax.php");
 }
-<?
-//ob_end_flush();
-?>
 //
-// Recherche les utilisateurs dont le nom commence par les lettres passées (au moins trois lettres)
+// Recherche les utilisateurs dont le nom commence par les lettres passées (au moins deux lettres)
 //
 function showUsers(field)
 {
@@ -301,3 +273,6 @@ function ANU()
 ?>
 	return false;
 }
+<?
+//ob_end_flush();
+?>

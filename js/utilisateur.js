@@ -198,5 +198,5 @@ $(function() {
 	// Formulaire de création de compte TeamTime ou récupération de mot de passe fcrtAcct
 	$("#fcrtAcct").attr('onsubmit', 'return validateCrtAcct()');
 	// Crée un champ hidden nommé w et de valeur le nom du formulaire
-	$("form").add("input").addClass("nomFormulaire");
+	$("form").prepend("<input type='hidden' name='w' value='" + this.name + "' />");
 });
