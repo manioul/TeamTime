@@ -130,7 +130,7 @@ if (isset($_GET['fin'])) {
 
 if (!array_key_exists('nom', $_POST)) { // On vérifie que des données de formulaire n'ont pas été envoyées
 	$active = 1;
-	if (array_key_exists('ADMIN', $_SESSION)) {
+	if (array_key_exists('EDITEURS', $_SESSION)) {
 		if (array_key_exists('centre', $_GET)) {
 			$centre = $_GET['centre'];
 		} else {
@@ -213,8 +213,8 @@ while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 mysqli_free_result($result);
 
 
-// Ajout des colonnes centre et team pour les admin
-if (isset($_SESSION['ADMIN'])) {
+// Ajout des colonnes centre et team pour les editeurs
+if (array_key_exists('EDITEURS', $_SESSION)) {
 	$usersInfos[0]['centre'] = "Centre";
 	$usersInfos[0]['team'] = htmlspecialchars("Équipe", ENT_COMPAT, 'utf-8');;
 	$header[$j] = $usersInfos[0]['centre'];

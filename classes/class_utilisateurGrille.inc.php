@@ -1322,14 +1322,14 @@ class utilisateursDeLaGrille {
 			}
 		}
 		if (is_null($team)) {
-			if (array_key_exists('ADMIN', $_SESSION)) {
+			if (array_key_exists('EDITEURS', $_SESSION)) {
 				$team = 'all';
 			} else {
 				$team = $affectation['team'];
 			}
 		}
 		// Recherche les non affectés
-		if (array_key_exists('ADMIN', $_SESSION) && array_key_exists('inaff', $_REQUEST)) {
+		if (array_key_exists('EDITEURS', $_SESSION) && array_key_exists('inaff', $_REQUEST)) {
 			$sql = "SELECT DISTINCT `TU`.`uid`,
 				`TU`.*,
 				'vide' AS `centre`,
