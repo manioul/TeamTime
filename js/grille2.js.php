@@ -255,7 +255,7 @@ function addDispo(oThis, sDispo)
 ?>
 			var p = $('#'+oThis.id).position();
 			$("#dFormInfoSup").css({"left" : p.left + 10 , "top" : p.top + 20, "position": "absolute"});
-			$("#dFormInfoSup").show('slow');
+			$("#fFormInfoSup").show('slow');
 			$("#infoSupUid").val(aArray['uid']);
 			$("#infoSupYear").val(aArray['Year']);
 			$("#infoSupMonth").val(aArray['Month']);

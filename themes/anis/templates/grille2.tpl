@@ -59,8 +59,8 @@
 		</div>
 		</form>
 {*	div qui contient un formulaire pour les infos supplémentaires *}
-		<form id="fFormInfoSup" method="post" action="ajax.php">
-		<div id="dFormInfoSup" style="display:none;">
+		<form id="fFormInfoSup" method="post" action="ajax.php" style="display:none;">
+		<div id="dFormInfoSup">
 				<input type="hidden" name="form" value="IS" />
 				<input type="hidden" name="ajax" value="true" />
 				<input type="hidden" name="cachemoi" value="1" />
