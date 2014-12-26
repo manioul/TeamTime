@@ -313,6 +313,10 @@ BEGIN
 	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
 	DECLARE vac VARCHAR(8);
 
+	DECLARE athis_recouvrement INT(11); -- La quantité de congés en transformable de V en F pour Athis
+	SET athis_recouvrement = 3; -- fractionnables par demi-vac
+	-- SET athis_recouvrement = 6; -- fractionnables par vac
+
 	CALL searchAffectation(uid_, date_, centre_, team_, grad);
 
 	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
@@ -370,6 +374,11 @@ BEGIN
 		-- AND did = dispoid
 		-- AND date > date_
 		-- ORDER BY date DESC;
+		
+		-- Les W ne sont posables que sur l'année => dateLimite = 31/12
+		IF (dispoid = 3) THEN
+			SET dateLimite = CONCAT(YEAR(date_), '12-31');
+		END IF;
 
 		-- Si le congé est situé avant la date limite de l'année passée
 		IF date_ <= dateLimite THEN
@@ -387,7 +396,32 @@ BEGIN
 			AND year = YEAR(date_) - 1;
 			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_) - 1, ':', reliquat, ';uid:', uid_, ';did:', dispoid));
 			IF reliquat > 0 THEN
-				SET anneeConge = YEAR(date_) - 1;
+				-- Cas particuliers des V fractionnables à Athis
+				IF (dispoid = 1 OR dispoid = 2) AND reliquat <= athis_recouvrement THEN 
+					SELECT quantity - athis_recouvrement - COUNT(v.sdid)
+					-- Il y a 6 jours en plus dans la quantité de congés autorisés sur V et F pour simuler la vac fractionnable
+					-- Les 6 (3 ?) jours (athis_recouvrement) doivent être intacts dans l'autre activité (F si on recherche pour V et réciproquement)
+					-- pour qu'il reste des congés de la catégorie cherchée.
+					INTO reliquat
+					FROM TBL_VACANCES AS v,
+					TBL_L_SHIFT_DISPO AS l,
+					TBL_DISPO AS d
+					-- L'inverse du dispoid est 3 - dispoid (1 => 2 ; 2 => 1)
+					WHERE l.did = 3 - dispoid
+					AND d.did = l.did
+					AND v.sdid = l.sdid
+					AND uid = uid_
+					AND year = YEAR(date_) - 1;
+
+					IF reliquat >= 0 THEN
+						SET anneeConge = YEAR(date_) - 1;
+					ELSE
+						SET anneeConge = YEAR(date_);
+					END IF;
+					CALL messageSystem('Reliquat de congés V ou F', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_) - 1, ':', reliquat, ';uid:', uid_, ';did:', dispoid, ';quantite:', quantite, ';anneeConge:', anneeConge));
+				ELSE
+					SET anneeConge = YEAR(date_) - 1;
+				END IF;
 			ELSE
 				-- On recherche si il reste des congés de ce type
 				-- sur l'année en cours
