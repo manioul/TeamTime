@@ -163,6 +163,19 @@ if (sizeof($_REQUEST) > 0) {
 				$err = "Date inconnue";
 			}
 		}
+		if (array_key_exists('q', $_GET)) {
+			if ($_GET['q'] == 'YT') { // Year Toggle : change l'année d'un congé à partir de son sdid
+				if ($_SESSION['utilisateur']->hasRole('teamEdit') || $_SESSION['utilisateur']->uid() == $_GET['uid']) {
+					$date = new Date($_GET['d']);
+					$_SESSION['db']->db_interroge(sprintf("
+						CALL toggleAnneeConge(%d, '%s')
+						", $_GET['uid']
+						, $date->date()));
+					var_dump($_GET);
+					var_dump($date->date());
+				}
+			}
+		}
 		if (array_key_exists('form', $_REQUEST)) {
 			/*
 			 * Formulaire d'ajout d'information supplémentaires d'activité
