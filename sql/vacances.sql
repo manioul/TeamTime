@@ -7,6 +7,20 @@ CREATE TABLE IF NOT EXISTS TBL_VACANCES_A_ANNULER (
 	did INT(11) NOT NULL,
 	date DATE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE IF NOT EXISTS TBL_VACANCES_RECAP (
+	centre VARCHAR(50) NOT NULL,
+	team VARCHAR(10) NOT NULL,
+	uid INT(11) NOT NULL,
+	nom VARCHAR(64) NOT NULL,
+	did SMALLINT(6) NOT NULL,
+	dispo VARCHAR(16) NOT NULL,
+	nom_long VARCHAR(45) NOT NULL,
+	year YEAR(4) NOT NULL,
+	déposé SMALLINT(6) NOT NULL,
+	reliquat SMALLINT(6) NOT NULL,
+	quantity SMALLINT(6) NOT NULL,
+	poids SMALLINT(6) NOT NULL
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DELIMITER |
 DROP PROCEDURE IF EXISTS attribAnneeConge|
@@ -777,6 +791,113 @@ BEGIN
 	-- Supprime le congé de la table des congés
 	DELETE FROM TBL_VACANCES
 	WHERE sdid = shiftDid;
+END
+|
+DROP PROCEDURE IF EXISTS recapConges|
+CREATE PROCEDURE recapConges( IN year_ YEAR(4) )
+BEGIN
+	DROP TABLE IF EXISTS tmpConges1;
+	TRUNCATE TBL_VACANCES_RECAP;
+	CREATE TEMPORARY TABLE tmpConges1 (
+		centre VARCHAR(50),
+		team VARCHAR(10),
+		uid INT(11),
+		nom VARCHAR(64),
+		did SMALLINT(6),
+		dispo VARCHAR(16),
+		nom_long VARCHAR(45),
+		year YEAR(4),
+		déposé SMALLINT(6),
+		reliquat SMALLINT(6),
+		quantity SMALLINT(6),
+		poids SMALLINT(6)
+	);
+	INSERT INTO tmpConges1
+		(SELECT a.centre,
+		a.team,
+		u.uid,
+		nom,
+		d.did,
+		dispo,
+		nom_long,
+		year,
+		COUNT(v.sdid) AS déposé,
+		quantity - COUNT(l.did) AS reliquat,
+		quantity,
+		u.poids FROM TBL_USERS AS u,
+		TBL_L_SHIFT_DISPO AS l,
+		TBL_DISPO AS d,
+		TBL_VACANCES AS v,
+		TBL_AFFECTATION AS a
+		WHERE u.uid = l.uid
+		AND u.uid = a.uid
+		AND NOW() BETWEEN beginning
+		AND end
+		AND l.sdid = v.sdid
+		AND l.did = d.did
+		AND (l.did = 1 OR l.did = 2)
+		AND year BETWEEN year_ AND year_ + 1
+		GROUP BY l.uid,
+		year,
+		l.did
+		ORDER BY centre,
+		team,
+		poids,
+		year);
+	INSERT INTO TBL_VACANCES_RECAP
+		(SELECT centre,
+			team,
+			uid,
+			nom,
+			0,
+			'V / F',
+			'Jour et vac fractionnable',
+			year,
+			SUM(déposé) AS déposé,
+			SUM(quantity) - SUM(déposé) - 6 AS reliquat,
+			SUM(quantity) - 6,
+			poids
+		FROM tmpConges1
+		GROUP BY uid,
+		year
+		ORDER BY centre,
+		team,
+		poids,
+		year);
+	INSERT INTO TBL_VACANCES_RECAP
+		(SELECT *
+		FROM tmpConges1);
+	INSERT INTO TBL_VACANCES_RECAP
+		(SELECT a.centre,
+			a.team,
+			u.uid,
+			nom,
+			d.did,
+			dispo,
+			nom_long,
+			year,
+			COUNT(v.sdid) AS déposé,
+			quantity - COUNT(v.sdid) AS reliquat,
+			quantity,
+			u.poids
+			FROM TBL_USERS AS u,
+			TBL_L_SHIFT_DISPO AS l,
+			TBL_DISPO AS d,
+			TBL_VACANCES AS v,
+			TBL_AFFECTATION AS a
+			WHERE u.uid = l.uid
+			AND u.uid = a.uid
+			AND NOW() BETWEEN beginning AND end
+			AND l.sdid = v.sdid
+			AND l.did = d.did
+			AND d.did != 1
+			AND d.did != 2
+			AND year BETWEEN year_ AND year_ + 1
+			GROUP BY l.uid,
+			l.did,
+			year
+	);
+	DROP TABLE tmpConges1;
 END
 |
 DELIMITER ;
