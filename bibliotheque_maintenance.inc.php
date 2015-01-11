@@ -387,20 +387,15 @@ function liste_pereq($year = 0) {
 	$results = array();
 	$sql = sprintf("
 		SELECT *
-		FROM `VIEW_LIST_DISPO` AS `v`
-		, `TBL_AFFECTATION` AS `a`
-		WHERE `pereq` = TRUE
-		AND (YEAR(`date`) >= %d
-		  OR `year` >= %d)		
-		  AND `v`.`uid` = `a`.`uid`
-		  AND `a`.`centre` = '%s'
-		  AND `a`.`team` = '%s'
-		  AND '%s' BETWEEN `beginning` AND `end`
-		  ", $year
-		  , $year
-		  , $affectation['centre']
-		  , $affectation['team']
-		  , date('Y-m-d')
+		FROM `VIEW_LIST_ACTIVITES`
+		WHERE `pereq` IS TRUE
+		AND year >= %d
+		AND `centre` = '%s'
+		AND `team` = '%s'
+		ORDER BY `poids`
+		", $year
+		, $affectation['centre']
+		, $affectation['team']
 	);
 	$result = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {

@@ -86,8 +86,13 @@ BEGIN
 	AND l.sdid = v.sdid
 	AND uid = uid_;
 
+	-- Cas des W qui sont restreints à l'année du congé
+	IF did_ = 3 THEN
+		UPDATE TBL_VACANCES
+		SET year = YEAR(date_)
+		WHERE sdid = sdid_;
 	-- Traitement des V
-	IF did_ = 1 THEN
+	ELSEIF did_ = 1 THEN
 		IF year_ < YEAR(date_) THEN
 			CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
 			UPDATE TBL_VACANCES
@@ -377,7 +382,7 @@ BEGIN
 		
 		-- Les W ne sont posables que sur l'année => dateLimite = 31/12
 		IF (dispoid = 3) THEN
-			SET dateLimite = CONCAT(YEAR(date_), '12-31');
+			SET dateLimite = CONCAT(YEAR(date_), '-12-31');
 		END IF;
 
 		-- Si le congé est situé avant la date limite de l'année passée
@@ -418,7 +423,7 @@ BEGIN
 					ELSE
 						SET anneeConge = YEAR(date_);
 					END IF;
-					CALL messageSystem('Reliquat de congés V ou F', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_) - 1, ':', reliquat, ';uid:', uid_, ';did:', dispoid, ';quantite:', quantite, ';anneeConge:', anneeConge));
+					CALL messageSystem('Reliquat de congés V ou F', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_) - 1, ':', reliquat, ';uid:', uid_, ';did:', dispoid, ';anneeConge:', anneeConge));
 				ELSE
 					SET anneeConge = YEAR(date_) - 1;
 				END IF;

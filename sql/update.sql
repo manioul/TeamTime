@@ -443,14 +443,68 @@ BEGIN
 		ORDER BY `date`,`nom`;
 END
 |
+DROP PROCEDURE IF EXISTS post_2_5c|
+CREATE PROCEDURE post_2_5c()
+BEGIN
+	DROP VIEW IF EXISTS VIEW_LIST_ACTIVITES;
+	CREATE VIEW VIEW_LIST_ACTIVITES AS
+	SELECT l.sdid,
+		u.uid,
+		d.did,
+		nom,
+		prenom,
+		date,
+		dispo,
+		pereq,
+		l.title,
+		a.centre,
+		a.team,
+		`type decompte`,
+		year,
+		u.poids
+		FROM TBL_L_SHIFT_DISPO AS l,
+		TBL_DISPO AS d,
+		TBL_USERS AS u,
+		TBL_AFFECTATION AS a,
+		TBL_VACANCES AS v
+		WHERE l.uid = u.uid
+		AND d.did = l.did
+		AND a.uid = l.uid
+		AND date BETWEEN beginning AND end
+		AND v.sdid = l.sdid
+	UNION
+	SELECT l.sdid,
+		u.uid,
+		d.did,
+		nom,
+		prenom,
+		date,
+		dispo,
+		pereq,
+		l.title,
+		a.centre,
+		a.team,
+		`type decompte`,
+		'-',
+		u.poids
+		FROM TBL_L_SHIFT_DISPO AS l,
+		TBL_DISPO AS d,
+		TBL_USERS AS u,
+		TBL_AFFECTATION AS a
+		WHERE l.uid = u.uid
+		AND d.did = l.did
+		AND a.uid = l.uid
+		AND date BETWEEN beginning AND end
+		AND sdid NOT IN (SELECT sdid FROM TBL_VACANCES);
+END
+|
 
 DELIMITER ;
 
 -- CALL post_2_1c();
 -- CALL post_2_2a();
 -- CALL post_2_3a();
-CALL post_2_3e();
-CALL pre_2_4();
-CALL post_2_4a();
-
-
+-- CALL post_2_3e();
+-- CALL pre_2_4();
+-- CALL post_2_4a();
+CALL post_2_5c();
