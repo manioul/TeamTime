@@ -4,7 +4,7 @@
 <div class="dispoMultiples">
 <h1>{$titre}</h1>
 {foreach $results as $result}
-<table>
+<table class="altern-row">
 <thead>
 <tr>
 <th>sdid</th>
@@ -26,8 +26,8 @@
 <td>{$row.date}</td>
 <td>{$row.vacation}</td>
 <td>{if isset($row.year)}{$row.year}{else}-{/if}</td>
-<td class="bouton" onclick='opDb("upd", "l", {$row.sdid}, "pereq", "{!$row.pereq}");'>{$row.pereq}</td>
-<td class="bouton" onclick='opDb("del", "l", {$row.sdid}, 0, 0);'>delete</a></td>
+<td class="bouton bouton-small" onclick='ajr("DB", "upd", "l", {$row.sdid}, "pereq", "{!$row.pereq}");'>{$row.pereq}</td>
+<td class="bouton bouton-small" onclick='ajr("DB", "del", "l", {$row.sdid}, 0, 0);$(this).parent().hide("slow");'>Supprimer</a></td>
 </tr>
 {/foreach}
 </tbody>
