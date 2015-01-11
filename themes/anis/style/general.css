@@ -273,6 +273,9 @@ input, textarea, select {
 
 	cursor:pointer;)
 }
+.bouton-small {
+	height:15px;
+}
 input[type=submit]:last-of-type {
 	margin:15px auto 5px auto;
 }
