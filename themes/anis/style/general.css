@@ -412,7 +412,7 @@ input#poids {
 	}
 	form#fPereq label {
 		float:left;
-		width:100px;
+		width:150px;
 		font-weight:bold;
 	}
 	form#fPereq input:not([type=radio]),

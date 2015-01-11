@@ -148,7 +148,7 @@ $smarty->assign('users', $users);
 $smarty->assign('dispos', $dispos);
 $years = array(
 	'name'	=> 'year'
-	, 'label'	=> 'Année'
+	, 'label'	=> 'Année (Congés)'
 	, 'options'	=> array(
 		0	=> array(
 			'value'		=> date("Y")-1
