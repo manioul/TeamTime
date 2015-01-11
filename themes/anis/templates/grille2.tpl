@@ -6,7 +6,7 @@
 	<tbody>{/if}
 	<tr id="line{$lines@iteration}">
 {foreach $lines as $value}
-	{if $lines@iteration < 3}<th{else}<td{/if}{if isset($value.id)} id="{$value.id}"{/if}{if isset($value.classe)} class="{$value.classe}"{/if}{if isset($value.title)} title="{$value.title|escape:html}"{/if}{if isset($value.style)} style="{$value.style}"{/if}{if isset($value.colspan)} colspan="{$value.colspan}"{/if}>{if isset($value.navigateur)}{* Construction d'un navigateur entre les cycles pour la case contenant l'année *}
+	{if $lines@iteration < 3}<th{else}<td{/if}{if isset($value.id)} id="{$value.id}"{/if}{if isset($value.classe)} class="{$value.classe}"{/if}{if isset($value.title)} title="{$value.title}"{/if}{if isset($value.style)} style="{$value.style}"{/if}{if isset($value.colspan)} colspan="{$value.colspan}"{/if}>{if isset($value.navigateur)}{* Construction d'un navigateur entre les cycles pour la case contenant l'année *}
 	<div class="nav-prev"><a href="?dateDebut={$previousCycle}&amp;nbCycle={$nbCycle}" title="Reculer d'un cycle"><img src="{$image}" class="nav-prev" alt="&lt;" /></a></div>
 	<div class="nav-present"><a href="?dateDebut={$presentCycle}&amp;nbCycle={$nbCycle}">{if isset($value.nom)}{$value.nom}{/if}</a></div>
 	<div class="nav-next"><a href="?dateDebut={$nextCycle}&amp;nbCycle={$nbCycle}" title="Avancer d'un cycle"><img src="{$image}" class="nav-next" alt="&lt;" /></a></div>{elseif isset($value.vacation)}
