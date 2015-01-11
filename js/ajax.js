@@ -56,3 +56,14 @@ function attention(sMessage)
 	$('#info').text(sMessage);
 	$('#info').fadeIn('slow', function() {$(this).fadeOut(sMessage.length*100);});
 }
+/*
+ * Une fonction pour interagir via ajax
+ * Mise à jour et suppression d'enregistrements,
+ * modification de l'année d'un congé
+ * Utilisée par pereq.php, tableauxCong2.php
+ */
+function ajr(q, op, table, id, field, val)
+{
+	var sRequest = "q="+q+"&op="+op+"&t="+table+"&id="+id+"&field="+field+"&val="+val;
+	submitRequest(sRequest, "ajax.php");
+}

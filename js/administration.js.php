@@ -136,14 +136,6 @@ function subCc()
 	submitRequest(sRequest, 'ajax.php');
 }
 
-// Une fonction pour interragir avec la base de données
-// Mise à jour et suppression d'enregistrements
-// Utilisée par pereq.php
-function opDb(op, table, id, field, val)
-{
-	var sRequest = "op="+op+"&t="+table+"&id="+id+"&field="+field+"&val="+val;
-	submitRequest(sRequest, "ajax.php");
-}
 //
 // Recherche les utilisateurs dont le nom commence par les lettres passées (au moins deux lettres)
 //
