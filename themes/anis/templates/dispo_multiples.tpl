@@ -26,8 +26,8 @@
 <td>{$row.date}</td>
 <td>{$row.vacation}</td>
 <td>{if isset($row.year)}{$row.year}{else}-{/if}</td>
-<td class="bouton bouton-small" onclick='ajr("DB", "upd", "l", {$row.sdid}, "pereq", "{!$row.pereq}");'>{$row.pereq}</td>
-<td class="bouton bouton-small" onclick='ajr("DB", "del", "l", {$row.sdid}, 0, 0);$(this).parent().hide("slow");'>Supprimer</a></td>
+<td class="bouton bouton_small" onclick='ajr("DB", "upd", "l", {$row.sdid}, "pereq", "{!$row.pereq}");'>{$row.pereq}</td>
+<td class="bouton bouton_small" onclick='ajr("DB", "del", "l", {$row.sdid}, 0, 0);$(this).parent().hide("slow");'>Supprimer</a></td>
 </tr>
 {/foreach}
 </tbody>
