@@ -1,6 +1,10 @@
 
 /* Main menu */
 
+nav {
+	margin:0 40px;
+}
+
 ul.menuHor
 {
 	display:table; /* Ceci permet de ne pas avoir un menu sur toute la largeur du parent. Sinon supprimer ou remplacer par width:100% */
