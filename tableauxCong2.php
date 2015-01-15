@@ -139,6 +139,7 @@ if (array_key_exists('uid', $_GET)) {
 		AND l.uid = %d
 		AND l.sdid = v.sdid
 		AND l.did = d.did
+		AND `type decompte` = 'conges'
 		AND year BETWEEN %d AND %d + 1
 		ORDER BY year, date ASC
 		", (int) $_GET['uid']

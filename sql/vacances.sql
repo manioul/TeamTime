@@ -893,6 +893,7 @@ BEGIN
 			AND d.did != 1
 			AND d.did != 2
 			AND year BETWEEN year_ AND year_ + 1
+			AND `type decompte` = 'conges'
 			GROUP BY l.uid,
 			l.did,
 			year
