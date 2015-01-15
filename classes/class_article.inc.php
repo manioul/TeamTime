@@ -29,6 +29,17 @@ class article {
 	}
 	public function __destruct() {
 	}
+// Méthodes statiques
+	/**
+	 * Obtenir le contenu d'un article à partir du champ description.
+	 *
+	 * @param string $description : le contenu du champ description
+	 *  concernant l'article recherché
+	 */
+	public static function article($description) {
+		$article = new article($description);
+		return $article->texte();
+	}
 // Accesseurs
 	public function idx($param = NULL) {
 		if (! is_null($param)) { $this->idx = $param; }
