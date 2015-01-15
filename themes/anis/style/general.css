@@ -276,6 +276,31 @@ input, textarea, select {
 .bouton-small {
 	height:15px;
 }
+.round-button {
+	border-radius:50%;
+	border:1px solid #b3bead;
+	width:1em;
+	height:1em;
+	text-align:center;
+	color:#fff;
+	background-color:#ccc;
+	background: -moz-radial-gradient(center, ellipse cover, #b3bead 0%, #dfe5d7 84%, #fcfff4 100%); /* FF3.6+ */
+	background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,#b3bead), color-stop(84%,#dfe5d7), color-stop(100%,#fcfff4)); /* Chrome,Safari4+ */
+	background: -webkit-radial-gradient(center, ellipse cover, #b3bead 0%,#dfe5d7 84%,#fcfff4 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-radial-gradient(center, ellipse cover, #b3bead 0%,#dfe5d7 84%,#fcfff4 100%); /* Opera 12+ */
+	background: -ms-radial-gradient(center, ellipse cover, #b3bead 0%,#dfe5d7 84%,#fcfff4 100%); /* IE10+ */
+	background: radial-gradient(ellipse at center, #b3bead 0%,#dfe5d7 84%,#fcfff4 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b3bead', endColorstr='#fcfff4',GradientType=1  ); /* IE6-9 fallback on horizontal gradient */
+	cursor:pointer;
+	box-shadow: 2px 2px 0 #b3bead;
+	text-shadow:1px 1px 0 #575;
+}
+.round-button_medium {
+	font-size:25pt;
+}
+.round-button:hover {
+	box-shadow: 1px 1px 0 #b3bead;
+}
 input[type=submit]:last-of-type {
 	margin:15px auto 5px auto;
 }
@@ -361,6 +386,36 @@ div#dConnexion input {
 	width: 70px;
 	height: 1.5em;
 	font-size: 7pt;
+}
+
+#helpButton {
+	position:absolute;
+	left:20px;
+	top:5px;
+}
+#helpButton:hover {
+	left:21px;
+}
+#help {
+	display:none;
+	background:rgba(255,255,255,.95);
+	position:absolute;
+	left:20px;
+	top:50px;
+	margin:10px 20px;
+	max-width:435px;
+	max-height:640px;
+	overflow:auto;
+	font-size:120%;
+	color:#242;
+	padding:10px;
+	border-radius:5px;
+	border:1px solid #9c9;
+	cursor:pointer;
+}
+#help p {
+	margin:1em 0;
+	text-align:justify;
 }
 
 input,
