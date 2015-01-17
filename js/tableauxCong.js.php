@@ -60,8 +60,9 @@ $(function() {
 		if (!empty($_SESSION['TEAMEDIT'])) { ?>
 		$('td.filed').addClass('pointer');
 		$('td.filed').click(function() {
-			$(this).addClass('confirmed');
+			$(this).addClass('valide');
 			$(this).removeClass('pointer');
+			$(this).removeClass('filed');
 			var sRequest = 'f=2&id='+this.id;
 			submitRequest(sRequest,'updateCong.php');
 			});
