@@ -96,7 +96,8 @@ $sql = sprintf("
 		AND `centre` = '%s'
 		AND `team` = '%s'
 		)
-	AND '%s' BETWEEN `beginning` AND `end`
+	AND `beginning` <= '%s'
+	AND `end` >= '%s'
 	AND `centre` = '%s'
 	AND `team` = '%s'
 	ORDER BY `l`.`did`
@@ -108,6 +109,7 @@ $sql = sprintf("
 	, $affectation['centre']
 	, $affectation['team']
 	, $date1->date()
+	, $date2->date()
 	, $affectation['centre']
 	, $affectation['team']
 	);
