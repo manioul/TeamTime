@@ -29,7 +29,7 @@ function hideTableaux()
 }
 function showTableau(sId)
 {
-	$('#'+sId).show();
+	$('#'+sId).show('slow');
 }
 function desemphasize()
 {
