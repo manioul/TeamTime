@@ -122,7 +122,7 @@ $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') .
 // Recherche des dispos candidates à péréq
 $dispos = array();
 $dispos['name'] = 'did';
-$dispos['label'] = 'Dispos';
+$dispos['label'] = 'Activité';
 $sql = sprintf("
 	SELECT `did`
 	, `dispo`
@@ -194,7 +194,7 @@ $smarty->display('pereq.tpl');
 
 $results = liste_pereq();
 if (sizeof($results) > 0) {
-	$smarty->assign("titre", "Péréquations");
+	$smarty->assign("titre", "Gestion des péréquations");
 	$smarty->assign('results', $results);
 	$smarty->display('dispo_multiples.tpl');
 }
