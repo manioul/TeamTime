@@ -1,7 +1,7 @@
 {* Smarty *}
 <form id="fPereq" class="ng" method="POST" action="">
 <fieldset>
-<legend>Péréquations</legend>
+<legend>Ajout de péréquations</legend>
 
 <ul>
 <li><label for="uid">Nom</label>
@@ -20,9 +20,6 @@
 <li><label for="nb">Nombre</label>
 <input name="nb" />
 </li>
-<li><label for="suppr">Supprimer</label>
-<input type="checkbox" name="suppr" />
-</li>
 </ul>
 <fieldset>
 <button type="submit" class="bouton">Mettre à jour</button>
@@ -30,5 +27,3 @@
 </fieldset>
 
 </form>
-<div id="helpPereq" class="help">
-</div>
