@@ -763,7 +763,11 @@ class utilisateurGrille extends utilisateur {
 		}
 		return $this->adresse;
 	}
-	// retourne les rôles (sous forme de tableau)
+	/**
+	 * Retourne les rôles (sous forme de tableau).
+	 *
+	 * @return array Tableau contenant les différents rôles de l'utilisateur.
+	 */
 	public function roles() {
 		if (!empty($TRACE) && true === $TRACE) {
 			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("", "DEBUG", "roles", NULL, "uid:%d;sizeof(roles):%d")'

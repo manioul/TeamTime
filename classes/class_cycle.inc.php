@@ -96,7 +96,16 @@ class Cycle {
 	 * Des fonctions statiques en rapport avec le planning annuel
 	 */
 
-	// Recherche la longueur du cycle
+	/**
+	 * Recherche la longueur du cycle.
+	 *
+	 * Recherche la longueur du cycle pour le centre et l'équipe concernée et le sauvegarde dans self::$_cycleLength.
+	 *
+	 * @param string $centre le centre concerné
+	 * @param string $team l'équipe concernée
+	 *
+	 * @return int self::$_cycleLength la longueur du cycle en jours
+	 */
 	public static function getCycleLength($centre = 'athis', $team = '9e') {
 		if (is_null(self::$_cycleLength)) {
 			$requete = sprintf("
@@ -113,7 +122,14 @@ class Cycle {
 		}
 		return self::$_cycleLength;
 	}
-	// Recherche la longueur du cycle sans compter les jours de repos
+	/**
+	 * Recherche la longueur du cycle sans compter les jours de repos.
+	 *
+	 * @param string $centre le centre concerné
+	 * @param string $team l'équipe concernée
+	 *
+	 * @return int self::$_cycleLengthNoRepos
+	 */
 	public static function getCycleLengthNoRepos($centre = 'athis', $team = '9e') {
 		if (is_null(self::$_cycleLengthNoRepos)) {
 			$requete = sprintf("
@@ -132,7 +148,13 @@ class Cycle {
 		}
 		return self::$_cycleLengthNoRepos;
 	}
-	// La liste des jours de travail d'un cycle
+	/**
+	 * La liste des jours de travail d'un cycle.
+	 *
+	 * @param string $centre le centre concerné.
+	 *
+	 * @return array $array('rang' => "", 'vacation' => "", 'horaires' => "")
+	 */
 	public static function jtCycle($centre = NULL) {
 		if (is_null($centre)) {
 			$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
@@ -196,10 +218,13 @@ class Cycle {
 		}
 	}
 
-	//----------------------------------
-	// Génère les cycles dans TBL_GRILLE
-	// jusqu'au cycle contenant $dateDebut
-	//----------------------------------
+	/**
+	 * Génère les cycles dans TBL_GRILLE jusqu'au cycle contenant $dateDebut.
+	 *
+	 * @param Date $dateDebut la date contenu dans le dernier cycle que l'on veut construire.
+	 *
+	 * @return void
+	 */
 	private function genCycleIntoDb($dateDebut) {
 		if (!is_a($dateDebut, 'Date')) { // On teste si le paramètre est un objet de la classe Date
 			$dateDebut = new Date($dateDebut);
@@ -266,12 +291,13 @@ class Cycle {
 			$this->dbDiscrepancy();
 		}
 	}
-	//-------------------------------------------------
-	// Charge le cycle
-	//
-	// Renvoie true si la création s'est bien passée
-	// false sinon. lastError contient le code d'erreur
-	//-------------------------------------------------
+	/**
+	 * Charge le cycle.
+	 *
+	 * @param Date $dateDebut la date contenu dans le cycle que l'on veut charger.
+	 *
+	 * @return boolean true si la création s'est bien passée, false sinon. lastError contient le code d'erreur
+	 */
 	private function loadCycle($dateDebut) {
 		if (!is_a($dateDebut, 'Date')) { // On teste si le paramètre est un objet de la classe Date
 			$dateDebut = new Date($dateDebut);
