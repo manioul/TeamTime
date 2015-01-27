@@ -42,6 +42,7 @@ ob_start(); // Obligatoire pour firePHP
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
+	$conf['page']['include']['class_article'] = 1; // Le script utilise class_article.inc.php'affichage de certaines pages (licence)
 	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
 	$conf['page']['include']['bibliothequeMaintenance'] = 1; // La bibliothèque des fonctions de maintenance est nécessaire
 	$conf['page']['compact'] = false; // Compactage des scripts javascript et css
@@ -115,6 +116,10 @@ ob_start(); // Obligatoire pour firePHP
 require 'required_files.inc.php';
 
 $affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y') . '-01-01');
+
+// Préparation de l'aide
+$smarty->assign('help', article::article('help pereq'));
+$smarty->display('help.tpl');
 
 // Recherche des utilisateurs
 $users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $affectation['centre'], $affectation['team']);
