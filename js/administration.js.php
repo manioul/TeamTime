@@ -40,13 +40,13 @@ if (array_key_exists('ADMIN', $_SESSION)) {
 		`vismed`,
 		`login`,
 		`email`,
-		`poids`,
+		`a`.`poids`,
 		`centre`,
 		`team`
-		FROM `TBL_USERS`,
-		`TBL_AFFECTATION`
+		FROM `TBL_USERS` AS `u`,
+		`TBL_AFFECTATION` AS `a`
 		WHERE `actif` = TRUE
-		AND `TBL_USERS`.`uid` = `TBL_AFFECTATION`.`uid`
+		AND `u`.`uid` = `a`.`uid`
 		AND `beginning` <= '%s'
 		AND `end` >= '%s'
 		ORDER BY `nom`
@@ -102,11 +102,11 @@ $(function() {
 		`vismed`,
 		`login`,
 		`email`,
-		`poids`
-		FROM `TBL_USERS`,
-		`TBL_AFFECTATION`
+		`a`.`poids`
+		FROM `TBL_USERS` AS `u`,
+		`TBL_AFFECTATION` AS `a`
 		WHERE `actif` = TRUE
-		AND `TBL_USERS`.`uid` = `TBL_AFFECTATION`.`uid`
+		AND `u`.`uid` = `a`.`uid`
 		AND `beginning` <= '%s'
 		AND `end` >= '%s'
 		AND (`centre` = '%s' OR `centre` = 'all')

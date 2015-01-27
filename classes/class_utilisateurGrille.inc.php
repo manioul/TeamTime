@@ -802,7 +802,7 @@ class utilisateurGrille extends utilisateur {
 	 * @return boolean true si l'utilisateur est admin, false sinon.
 	 */
 	public function isAdmin() {
-		return in_array('ADMIN', $this->roles());
+		return $this->hasRole('admin');
 	}
 	// Attribue les rôles en fonction de la base de données
 	public function dbRetrRoles() {
@@ -1362,7 +1362,8 @@ class utilisateursDeLaGrille {
 				$sql = "SELECT DISTINCT `TU`.`uid`,
 					`TU`.*,
 					`TA`.`centre`,
-					`TA`.`team`
+					`TA`.`team`,
+					`TA`.`poids`
 					FROM `TBL_USERS` AS `TU`
 					, `TBL_AFFECTATION` AS `TA`
 					WHERE `TU`.`uid` = `TA`.`uid`";
@@ -1379,18 +1380,19 @@ class utilisateursDeLaGrille {
 					} elseif ($_REQUEST['order'] == 'uid') {
 						$sql .= "ORDER BY `TU`.`uid` ASC";
 					} elseif ($_REQUEST['order'] == 'aff') {
-						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TA`.`poids` ASC";
 					} elseif ($_REQUEST['order'] == 'affn') {
 						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
 					}
 				} else {
-					$sql .= "ORDER BY `TU`.`poids` ASC";
+					$sql .= "ORDER BY `TA`.`poids` ASC";
 				}
 			} elseif ('all' == $centre) {
 				$sql = "SELECT DISTINCT `TU`.`uid`,
 					`TU`.*,
 					`TA`.`centre`,
-					`TA`.`team`
+					`TA`.`team`,
+					`TA`.`poids`
 					FROM `TBL_USERS` AS `TU`
 					, `TBL_AFFECTATION` AS `TA`
 					WHERE `TU`.`uid` = `TA`.`uid`
@@ -1408,18 +1410,19 @@ class utilisateursDeLaGrille {
 					} elseif ($_REQUEST['order'] == 'uid') {
 						$sql .= "ORDER BY `TU`.`uid` ASC";
 					} elseif ($_REQUEST['order'] == 'aff') {
-						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TA`.`poids` ASC";
 					} elseif ($_REQUEST['order'] == 'affn') {
 						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
 					}
 				} else {
-					$sql .= "ORDER BY `TU`.`poids` ASC";
+					$sql .= "ORDER BY `TA`.`poids` ASC";
 				}
 			} elseif ('all' == $team) {
 				$sql = "SELECT DISTINCT `TU`.`uid`,
 					`TU`.*,
 					`TA`.`centre`,
-					`TA`.`team`
+					`TA`.`team`,
+					`TA`.`poids`
 					FROM `TBL_USERS` AS `TU`
 					, `TBL_AFFECTATION` AS `TA`
 					WHERE `TU`.`uid` = `TA`.`uid`
@@ -1437,18 +1440,19 @@ class utilisateursDeLaGrille {
 					} elseif ($_REQUEST['order'] == 'uid') {
 						$sql .= "ORDER BY `TU`.`uid` ASC";
 					} elseif ($_REQUEST['order'] == 'aff') {
-						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TA`.`poids` ASC";
 					} elseif ($_REQUEST['order'] == 'affn') {
 						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
 					}
 				} else {
-					$sql .= "ORDER BY `TU`.`poids` ASC";
+					$sql .= "ORDER BY `TA`.`poids` ASC";
 				}
 			} else {
 				$sql = "SELECT DISTINCT `TU`.`uid`,
 					`TU`.*,
 					`TA`.`centre`,
-					`TA`.`team`
+					`TA`.`team`,
+					`TA`.`poids`
 					FROM `TBL_USERS` AS `TU`
 					, `TBL_AFFECTATION` AS `TA`
 					WHERE `TU`.`uid` = `TA`.`uid`
@@ -1467,12 +1471,12 @@ class utilisateursDeLaGrille {
 					} elseif ($_REQUEST['order'] == 'uid') {
 						$sql .= "ORDER BY `TU`.`uid` ASC";
 					} elseif ($_REQUEST['order'] == 'aff') {
-						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`poids` ASC";
+						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TA`.`poids` ASC";
 					} elseif ($_REQUEST['order'] == 'affn') {
 						$sql .= "ORDER BY `TA`.`centre`, `TA`.`team`, `TU`.`nom` ASC";
 					}
 				} else {
-					$sql .= "ORDER BY `TU`.`poids` ASC";
+					$sql .= "ORDER BY `TA`.`poids` ASC";
 				}
 			}
 		}
@@ -1500,7 +1504,7 @@ class utilisateursDeLaGrille {
 			AND `a`.`beginning` <= '%s'
 			AND `a`.`end` >= '%s'
 			AND `actif`  IS TRUE
-			ORDER BY `poids` ASC
+			ORDER BY `a`.`poids` ASC
 			, `nom` ASC"
 			, $_SESSION['db']->db_real_escape_string($centre)
 			, $_SESSION['db']->db_real_escape_string($team)
