@@ -23,7 +23,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-$requireTeamEdit = true; // L'utilisateur doit être authentifié pour accéder à cette page
+$requireAuthenticatedUser = true; // L'utilisateur doit être authentifié pour accéder à cette page
 ob_start();
 
 /*
@@ -41,6 +41,7 @@ ob_start();
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
+	$conf['page']['include']['class_article'] = 1; // Le script utilise class_article.inc.php'affichage de certaines pages (licence)
 	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
 
 
@@ -111,16 +112,76 @@ ob_start();
 require 'required_files.inc.php';
 
 // Année du tableau de congés (année courante par défaut)
-$year = (!empty($_GET['year']) ? sprintf("%04d", $_GET['year']) : date('Y'));
+$year = (!empty($_GET['year']) ? sprintf("%04d", $_GET['year']) : date('Y') - 1);
+
+$uid = NULL;
 
 $affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 
-if (array_key_exists('uid', $_GET)) {
-		if (preg_match('/^\d+-\d+$/', $row['dlCong'])) {
-			$row['dlCong'] = $year . '-' . $row['dlCong'];
-		}
-		$dlCong = new Date($row['dlCong']);
-		$row['dlCong'] = $dlCong->formatDate();
+// Mise à jour du récapitulatif des congés pour tout le monde
+$_SESSION['db']->db_interroge(sprintf("CALL recapConges(%d)", $year));
+
+if ($_SESSION['utilisateur']->hasRole('admin')) {
+	$sql = "SELECT *
+		FROM TBL_VACANCES_RECAP
+		ORDER BY
+		centre,
+		team,
+		poids,
+		nom,
+		year,
+		did
+		"
+	;
+	if (array_key_exists('uid', $_GET)) {
+		$uid = (int) $_GET['uid'];
+	}
+	$smarty->assign('help', article::article('help conges'));
+} elseif ($_SESSION['utilisateur']->hasRole('editeurs') || $_SESSION['utilisateur']->hasRole('teamEdit')) {
+	$sql = sprintf("
+		SELECT *
+		FROM TBL_VACANCES_RECAP
+		WHERE centre = '%s'
+		AND team = '%s'
+		ORDER BY
+		poids,
+		nom,
+		year,
+		did
+		"
+		, $affectation['centre']
+		, $affectation['team']
+	);
+	if (array_key_exists('uid', $_GET)) {
+		$uid = (int) $_GET['uid'];
+	}
+	$smarty->assign('help', article::article('help conges'));
+} else {
+	$uid = $_SESSION['utilisateur']->uid();
+	$sql = "SELECT *
+		FROM TBL_VACANCES_RECAP
+		WHERE uid = $uid
+		ORDER BY year, did";
+	$smarty->assign('help', article::article('help conges'));
+}
+$results = $_SESSION['db']->db_interroge($sql);
+while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
+	if ($_SESSION['utilisateur']->hasRole('admin') || $_SESSION['utilisateur']->hasRole('editeurs') || $_SESSION['utilisateur']->hasRole('teamEdit')) {
+		$onglets[$res['centre']][$res['team']][$res['year']][] = $res;
+	}
+	if (!is_null($uid) && $res['uid'] == $uid) {
+		$conges[$res['year']]['decompte'][] = $res;
+	}
+}
+mysqli_free_result($results);
+
+$smarty->assign('onglets', $onglets);
+$smarty->display('tableauxCong2.tpl');
+
+$smarty->display('help.tpl');
+
+// Le détail des congés d'un utilisateur est demandé
+if (!is_null($uid)) {
 	$sql = sprintf("
 		SELECT u.nom AS nom,
 		d.did,
@@ -141,8 +202,8 @@ if (array_key_exists('uid', $_GET)) {
 		AND l.did = d.did
 		AND `type decompte` = 'conges'
 		AND year BETWEEN %d AND %d + 1
-		ORDER BY year, date ASC
-		", (int) $_GET['uid']
+		ORDER BY year, d.did, date ASC
+		", $uid
 		, $year
 		, $year
 	);
@@ -150,93 +211,13 @@ if (array_key_exists('uid', $_GET)) {
 	while($row = $_SESSION['db']->db_fetch_assoc($result)) {
 		$date = new Date($row['date']);
 		$row['date'] = $date->formatDate();
-		$detail[$row['dispo']][] = $row;
+		$conges[$row['year']]['detail'][$row['dispo']][] = $row;
 	}
 	mysqli_free_result($result);
-	$smarty->assign('detail', $detail);
-}
-if (array_key_exists('ADMIN', $_SESSION)) {
-	$sql = sprintf("
-		SELECT a.centre,
-		a.team,
-		u.uid,
-		nom,
-		d.did,
-		dispo,
-		nom_long,
-		year,
-		COUNT(v.sdid) AS déposé,
-		quantity - COUNT(v.sdid) AS reliquat,
-		quantity
-		FROM TBL_USERS AS u,
-		TBL_L_SHIFT_DISPO AS l,
-		TBL_DISPO AS d,
-		TBL_VACANCES AS v,
-		TBL_AFFECTATION AS a
-		WHERE u.uid = l.uid
-		AND u.uid = a.uid
-		AND NOW() BETWEEN beginning AND end
-		AND l.sdid = v.sdid
-		AND l.did = d.did
-		AND year >= %d
-		GROUP BY l.uid,
-		l.did,
-		year
-		ORDER BY
-		a.centre,
-		a.team,
-		u.poids,
-		year
-		", $year
-	);
-} elseif (array_key_exists('EDITEURS', $_SESSION)) {
-	$sql = sprintf("
-		SELECT a.centre,
-		a.team,
-		u.uid,
-		nom,
-		d.did,
-		dispo,
-		nom_long,
-		year,
-		COUNT(v.sdid) AS déposé,
-		quantity - COUNT(v.sdid) AS reliquat,
-		quantity
-		FROM TBL_USERS AS u,
-		TBL_L_SHIFT_DISPO AS l,
-		TBL_DISPO AS d,
-		TBL_VACANCES AS v,
-		TBL_AFFECTATION AS a
-		WHERE u.uid = l.uid
-		AND u.uid = a.uid
-		AND NOW() BETWEEN beginning AND end
-		AND l.sdid = v.sdid
-		AND l.did = d.did
-		AND year >= %d
-		AND a.centre = '%s'
-		AND a.team = '%s'
-		GROUP BY l.uid,
-		l.did,
-		year
-		ORDER BY
-		a.centre,
-		a.team,
-		u.poids,
-		year
-		", $year
-		, $affectation['centre']
-		, $affectation['team']
-	);
-}
-$results = $_SESSION['db']->db_interroge($sql);
-while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$onglets[$res['centre']][$res['team']][] = $res;
-}
-mysqli_free_result($results);
 
-$smarty->assign('onglets', $onglets);
-
-$smarty->display('tableauxCong2.tpl');
+	$smarty->assign('conges', $conges);
+	$smarty->display('mesConges.tpl');
+}
 
 /*
  * Informations de debug
