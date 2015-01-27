@@ -446,6 +446,14 @@ END
 DROP PROCEDURE IF EXISTS post_2_5c|
 CREATE PROCEDURE post_2_5c()
 BEGIN
+	DECLARE uid_, poids_ SMALLINT(6);
+	DECLARE idxm_, idxem_ INT(11);
+	DECLARE done BOOLEAN DEFAULT 0;
+	DECLARE curPoids CURSOR FOR
+		SELECT uid, poids
+		FROM TBL_USERS;
+	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
+
 	DROP VIEW IF EXISTS VIEW_LIST_ACTIVITES;
 	CREATE VIEW VIEW_LIST_ACTIVITES AS
 	SELECT l.sdid,
@@ -496,6 +504,54 @@ BEGIN
 		AND a.uid = l.uid
 		AND date BETWEEN beginning AND end
 		AND sdid NOT IN (SELECT sdid FROM TBL_VACANCES);
+
+	-- Copie le poids de TBL_USERS vers TBL_AFFECTATION
+	ALTER TABLE `TBL_AFFECTATION` ADD `poids` SMALLINT NOT NULL COMMENT 'Définit la position de l''utilisateur par rapport aux autres';
+	OPEN curPoids;
+	REPEAT
+	FETCH curPoids INTO uid_, poids_;
+	UPDATE TBL_AFFECTATION SET poids = poids_ WHERE uid = uid_;
+	UNTIL done END REPEAT;
+	CLOSE curPoids;
+
+	-- Création du menu « Mes Congés » pointant vers mesConges.php
+	INSERT  INTO `ttm`.`TBL_ELEMS_MENUS` (
+		`idx` ,
+		`titre` ,
+		`description` ,
+		`lien` ,
+		`sousmenu` ,
+		`creation` ,
+		`modification` ,
+		`allowed` ,
+		`actif`
+	)
+	VALUES (
+		NULL , 'Mes Congés', 'Gestion de mes congés', 'mesConges.php', NULL , NOW(  ) ,
+		CURRENT_TIMESTAMP , 'all', '1'
+	);
+
+	SET idxem_ = LAST_INSERT_ID();
+
+	SELECT idx
+	INTO idxm_
+	FROM TBL_MENUS
+	WHERE titre = 'utilisateur';
+
+	INSERT INTO TBL_MENUS_ELEMS_MENUS
+	(idxm, idxem, position)
+	VALUES
+	(idxm_, idxem_, 40);
+
+	-- Suppression du menu gestion utilisateurs
+	DELETE FROM TBL_MENUS_ELEMS_MENUS
+	WHERE idxem = (SELECT idx
+		FROM TBL_ELEMS_MENUS
+		WHERE titre = 'Gestion utilisateurs');
+
+	DELETE FROM TBL_ELEMS_MENUS
+	WHERE titre = 'Gestion utilisateurs';
+
 END
 |
 

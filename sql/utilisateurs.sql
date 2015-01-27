@@ -93,13 +93,13 @@ BEGIN
 		SET uid_ = LAST_INSERT_ID();
 
 		CALL __createUtilisateurDb(uid_, dbpasswd_);
-		
+
 		CALL addRole(uid_, 'my_edit', centre_, team_, beginning_, end_, '', TRUE);
-		
+
 		INSERT INTO TBL_AFFECTATION
-		(aid, uid, centre, team, grade, beginning, end, validated)
+		(aid, uid, centre, team, grade, beginning, end, validated, poids)
 		VALUES
-		(NULL, uid_, centre_, team_, grade_, beginning_, end_, TRUE);
+		(NULL, uid_, centre_, team_, grade_, beginning_, end_, TRUE, poids_);
 
 		-- Ajoute les anciennetés de l'utilisateur
 		CALL setAncienneteUser(uid_, centre_, team_);
