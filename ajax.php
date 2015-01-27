@@ -117,151 +117,115 @@ ob_start(); // Obligatoire pour firePHP
 require 'required_files.inc.php';
 
 
-$err = "Formulaire non traité";
+$err = "Requête non traitée";
 
 	$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("msg", "TRACE", "", "", "%s")'
 		, $_SESSION['db']->db_real_escape_string(json_encode($_REQUEST)))
 	);
 
 if (sizeof($_REQUEST) > 0) {
-	if (array_key_exists('w', $_POST)) {
-		if ($_POST['w'] == "resetPwd") {
+	if (array_key_exists('q', $_REQUEST)) {
+		switch($_REQUEST['q']) {
+		/*
+		 * Demande de réinitialisation du mot de passe
+		 */
+		case 'RP':
 			// La chaîne 'email' est filtrée par la méthode resetPwd
-			die(utilisateurGrille::resetPwd($_POST['email']));
-		}
-	}
-	if (array_key_exists('MY_EDIT', $_SESSION)) {
-		if (array_key_exists('id', $_POST)) {
-			if (preg_match('/u(.+)d(\d{2,4}-\d{2}-\d{2,4})/', $_POST['id'], $array)) { // La date doit respecter les formats fr et us
-				$date = new Date($array[2]);
-				// Changer l'année d'un congé
-				if (array_key_exists('y', $_POST) && $_POST['y'] == 1) {
-					if ($_SESSION['utilisateur']->hasRole('teamEdit') || $_SESSION['utilisateur']->uid() == $array[1]) {
-						$_SESSION['db']->db_interroge(sprintf("
-							CALL toggleAnneeConge(%d, '%s')
-							", $array[1]
-							, $date->date()));
+			die(utilisateurGrille::resetPwd($_REQUEST['email']));
+			break;
+		/*
+		 * Year Toggle : change l'année d'un congé à partir de son sdid
+		 */
+		case 'YT':
+			if ($_SESSION['utilisateur']->hasRole('teamEdit') || $_SESSION['utilisateur']->uid() == $_REQUEST['uid']) {
+				$date = new Date($_REQUEST['d']);
+				$_SESSION['db']->db_interroge(sprintf("
+					CALL toggleAnneeConge(%d, '%s')
+					", $_REQUEST['uid']
+					, $date->date()));
+				$err = '';
+			}
+			break;
+		/*
+		 * Opérations sur la base de données :
+		 * Suppression (brute) d'activités et mise à jour de l'état de péréq
+		 */
+		case 'DB':
+			if ($_SESSION['utilisateur']->hasRole('teamEdit')) {
+				if (array_key_exists('op', $_REQUEST)) {
+					// Type de l'opération à effectuer
+					switch ($_REQUEST['op']) { 
+						// Suppresion d'une activité de TBL_L_SHIFT_DISPO à partir du sdid
+						// La suppression gère également la suppression de l'activité dans TBL_VACANCES
+					case 'del':
+						$err = $_SESSION['db']->db_interroge("
+							DELETE FROM `TBL_L_SHIFT_DISPO`
+							WHERE `sdid` = " . (int) $_REQUEST['id']);
+						$err .= $_SESSION['db']->db_interroge("
+							DELETE FROM `TBL_VACANCES`
+							WHERE `sdid` = " . (int) $_REQUEST['id']);
+						break;
+					case 'upd':
+						if ($_REQUEST['t'] == 'l') {
+							switch ($_REQUEST['field']) {
+							case 'pereq':
+								$val = empty($_REQUEST['val']) ? 'FALSE' : 'TRUE';
+								// On met à jour le statut de péréquation à condition que la date ne soit pas nul
+								// (lequel cas ne pourrait correspondre qu'à une péréq)
+								$sql = sprintf("
+									UPDATE `TBL_L_SHIFT_DISPO`
+									SET `pereq` = %s
+									WHERE `sdid` = %d
+									AND `date` != '0000-00-00'
+									", $val
+									, $_REQUEST['id']
+								);
+								$err = $_SESSION['db']->db_interroge($sql);
+								break;
+							}
+						}
+						break;
 					}
-				// Changer le statut d'un congé
-				} elseif (array_key_exists('f', $_POST) && $_SESSION['utilisateur']->hasRole('teamEdit')) {
-					$etat = ($_POST['f'] >= 2 ? 2 : 1);
-					$sql = sprintf("
-						UPDATE `TBL_VACANCES`
-						SET `etat` = %d
-						WHERE `sdid` = (SELECT `sdid`
-							FROM `TBL_L_SHIFT_DISPO`
-							WHERE `date` = '%s'
-							AND `uid` = %d
-							LIMIT 1)
-						"
-						, $etat
-						, $date->date()
-						, $array[1]);
-					$_SESSION['db']->db_interroge($sql);
-				}
-			} else {
-				$err = "Date inconnue";
-			}
-		}
-		if (array_key_exists('q', $_GET)) {
-			if ($_GET['q'] == 'YT') { // Year Toggle : change l'année d'un congé à partir de son sdid
-				if ($_SESSION['utilisateur']->hasRole('teamEdit') || $_SESSION['utilisateur']->uid() == $_GET['uid']) {
-					$date = new Date($_GET['d']);
-					$_SESSION['db']->db_interroge(sprintf("
-						CALL toggleAnneeConge(%d, '%s')
-						", $_GET['uid']
-						, $date->date()));
-					var_dump($_GET);
-					var_dump($date->date());
+					// Si les deux requêtes se sont bien passées, elles renvoient chacune 1
+					// d'où $err === "11" si tout s'est bien passé
+					if ($err === "11") die(nl2br(htmlspecialchars("Mise à jour effectuée")));
 				}
 			}
-		}
-		if (array_key_exists('form', $_REQUEST)) {
+			break;
 			/*
-			 * Formulaire d'ajout d'information supplémentaires d'activité
-			 */
-			if ($_REQUEST['form'] === 'IS'
-				&& array_key_exists('Year', $_REQUEST)
-				&& array_key_exists('Month', $_REQUEST)
-				&& array_key_exists('Day', $_REQUEST)
-				&& array_key_exists('uid', $_REQUEST)
-				&& $_REQUEST['uid'] == (int) $_REQUEST['uid']
-				&& array_key_exists('info', $_REQUEST)) {
-					$date = new Date();
-					$date->annee($_REQUEST['Year']);
-					$date->mois($_REQUEST['Month']);
-					$date->jour($_REQUEST['Day']);
-					$sql = sprintf("
-						UPDATE `TBL_L_SHIFT_DISPO`
-						SET `title` = '%s'
-						WHERE `date` = '%s'
-						AND `uid` = %d
-						", $_SESSION['db']->db_real_escape_string($_REQUEST['info'])
-						, $date->date()
-						, (int) $_REQUEST['uid']
-					);
-					$_SESSION['db']->db_interroge($sql);
-					$err = '';
-			}
-		}
-	}
-	if (array_key_exists('TEAMEDIT', $_SESSION)) {
-		// Gestion de la configuration sur la grille
-		if (array_key_exists('conf', $_POST) && array_key_exists('id', $_POST)) {
-			if ($_POST['conf'] != 'W' && $_POST['conf'] != 'E') {
-				$err = 'Conf inconnue...';
-			} else {
-				if (preg_match('/confa(\d{4})m(\d*)j(\d*)/', $_POST['id'], $array)) {
-					firePhpLog($array, 'arr');
-					$date = new Date(sprintf("%04d-%02d-%02d", $array[1], $array[2], $array[3]));
-					$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
-					$sql = sprintf("
-						UPDATE `TBL_GRILLE`
-						SET `conf` = '%s'
-						WHERE `readonly` = FALSE
-						AND `date` BETWEEN '%s' AND '%s'
-						AND `centre` = '%s'
-						AND `team` = '%s'
-						", $_POST['conf']
-						, $date->date()
-						, $date->addJours(Cycle::getCycleLength($affectation['centre'], $affectation['team'])-1)->date()
-						, $affectation['centre']
-						, $affectation['team']
-					);
-
-					$_SESSION['db']->db_interroge($sql);
-					if ($_SESSION['db']->db_affected_rows() < Cycle::getCycleLength($affectation['centre'], $affectation['team'])) { // Le verrouillage ne verrouille pas les jours de REPOS, d'où un nombre de données affectées même lorsque la grille n'est pas modifiable
-						$err = "Modification impossible...";
-						$_SESSION['db']->db_interroge(sprintf('
-							CALL messageSystem("Modification de la configuration impossible.", "DEBUG", "updateConf.php", "mod failed", "affected_rows:%d;shouldBe:%d;POST:%s;SESSION:%s")'
-							, $_SESSION['db']->db_affected_rows()
-							, Cycle::getCycleLength($affectation['centre'], $affectation['team'])
-							, $_SESSION['db']->db_real_escape_string(json_encode($_POST))
-							, $_SESSION['db']->db_real_escape_string(json_encode($_SESSION))
-							)
-						);
-					} else {
-						$err = mysql_error();
-					}
-					firePhpLog($sql, 'SQL');
+		 * Recherche une liste des utilisateurs de TeamTime à partir des premières lettres du nom
+		 */
+		case 'LU':
+			if ($_SESSION['utilisateur']->hasRole('editeurs')) {
+				$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Listage des utilisateurs dont le nom commence par...", "TRACE", "ajax.php", "listeUser", "%s")'
+					, $_SESSION['db']->db_real_escape_string(json_encode($_REQUEST)))
+				);
+				$users = array();
+				$sql = sprintf("
+					SELECT `nom`, `prenom`, `uid`
+					FROM `TBL_USERS`
+					WHERE `nom` LIKE '%%%s%%'
+					", $_SESSION['db']->db_real_escape_string($_REQUEST['nom'])
+				);
+				$result = $_SESSION['db']->db_interroge($sql);
+				while($row = $_SESSION['db']->db_fetch_assoc($result)) {
+					 $users[] = $row;
+				}
+				mysqli_free_result($result);
+				if (sizeof($users) > 0) {
+					die (json_encode($users));
 				} else {
-					$err = "Date inconnue";
+					die ('0');
 				}
-
 			}
-		}
-	}
-	/*
-	 * Actions des éditeurs
-	 */
-	if (array_key_exists('EDITEURS', $_SESSION)) {
-		if (array_key_exists('form', $_REQUEST)) {
-			/*
-			 * Validation des utilisateurs ayant créés un compte.
-			 * Les editeurs peuvent valider ou invalider l'inscription
-			 * d'un nouvel utilisateur.
-			 */
-			if ($_REQUEST['form'] === 'CU') {
+			break;
+		/*
+		 * Validation des utilisateurs ayant créés un compte.
+		 * Les editeurs peuvent valider ou invalider l'inscription
+		 * d'un nouvel utilisateur.
+		 */
+		case 'CU':
+			if ($_SESSION['utilisateur']->hasRole('editeurs')) {
 				// Suppression des comptes créés par des inconnus (confirmUser.php)
 				//
 				// id contient l'identifiant de l'entrée dans la table TBL_SIGNUP_ON_HOLD
@@ -291,35 +255,12 @@ if (sizeof($_REQUEST) > 0) {
 					exit;
 				}
 			}
-			/*
-			 * Recherche une liste des utilisateurs de TeamTime à partir des premières lettres du nom
-			 */
-			if ( $_REQUEST['form'] === 'LU' ) {
-				$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Listage des utilisateurs dont le nom commence par...", "TRACE", "ajax.php", "listeUser", "%s")'
-					, $_SESSION['db']->db_real_escape_string(json_encode($_REQUEST)))
-				);
-				$users = array();
-				$sql = sprintf("
-					SELECT `nom`, `prenom`, `uid`
-					FROM `TBL_USERS`
-					WHERE `nom` LIKE '%%%s%%'
-					", $_SESSION['db']->db_real_escape_string($_REQUEST['nom'])
-				);
-				$result = $_SESSION['db']->db_interroge($sql);
-				while($row = $_SESSION['db']->db_fetch_assoc($result)) {
-					 $users[] = $row;
-				}
-				mysqli_free_result($result);
-				if (sizeof($users) > 0) {
-					die (json_encode($users));
-				} else {
-					die ('0');
-				}
-			}
-			/*
-			 * Remplit les données utilisateur
-			 */
-			if ( $_REQUEST['form'] === 'FU' ) {
+			break;
+		/*
+		 * Remplit les données utilisateur
+		 */
+		case 'FU':
+			if ($_SESSION['utilisateur']->hasRole('editeurs')) {
 				$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Remplissage des champs de l\'utilisateur", "TRACE", "ajax.php", "fillUser", "%s")'
 					, $_SESSION['db']->db_real_escape_string(json_encode($_REQUEST)))
 				);
@@ -338,125 +279,130 @@ if (sizeof($_REQUEST) > 0) {
 				// FIXME impossible de retourner un utilisateurGrille avec json_encode... :@
 				die($user->asJSON());
 			}
-		}
-	}
-	/*
-	 * Actions des admins
-	 */
-	if (array_key_exists('ADMIN', $_SESSION)) {
-		if (array_key_exists('id', $_POST)) {
-			if (array_key_exists('op', $_POST)) {
-				switch ($_POST['op']) { 
-				case 'del':
-					$err = $_SESSION['db']->db_interroge("
-						DELETE FROM `TBL_L_SHIFT_DISPO`
-						WHERE `sdid` = " . (int) $_POST['id']);
-					$err .= $_SESSION['db']->db_interroge("
-						DELETE FROM `TBL_VACANCES`
-						WHERE `sdid` = " . (int) $_POST['id']);
-					break;
-				case 'upd':
-					if ($_POST['t'] == 'l') {
-						switch ($_POST['field']) {
-						case 'pereq':
-							$val = empty($_POST['val']) ? 'FALSE' : 'TRUE';
-							// On met à jour le statut de péréquation à condition que la date ne soit pas nul
-							// (lequel cas ne pourrait correspondre qu'à une péréq)
+			break;
+		/*
+		 * Formulaire d'ajout d'information supplémentaires d'activité
+		 */
+		case 'IS':
+			if ($_SESSION['utilisateur']->hasRole('my_edit')) {
+			if (	array_key_exists('Year', $_REQUEST)
+				&& array_key_exists('Month', $_REQUEST)
+				&& array_key_exists('Day', $_REQUEST)
+				&& array_key_exists('uid', $_REQUEST)
+				&& $_REQUEST['uid'] == (int) $_REQUEST['uid']
+				&& array_key_exists('info', $_REQUEST)) {
+					$date = new Date();
+					$date->annee($_REQUEST['Year']);
+					$date->mois($_REQUEST['Month']);
+					$date->jour($_REQUEST['Day']);
+					$sql = sprintf("
+						UPDATE `TBL_L_SHIFT_DISPO`
+						SET `title` = '%s'
+						WHERE `date` = '%s'
+						AND `uid` = %d
+						", $_SESSION['db']->db_real_escape_string($_REQUEST['info'])
+						, $date->date()
+						, (int) $_REQUEST['uid']
+					);
+					$_SESSION['db']->db_interroge($sql);
+					$err = '';
+			}
+			}
+			break;
+		/*
+		 * Gestion des congés
+		 * changer l'année d'un congé ou modifier le statut d'un congé
+		 */
+		case 'CO':
+			if (array_key_exists('op', $_REQUEST) && $_REQUEST['op'] == 'yt') {
+				if ($_SESSION['utilisateur']->hasRole('teamEdit') || $_SESSION['utilisateur']->uid() == $_REQUEST['id']) {
+					$date = new Date($_REQUEST['val']);
+					$_SESSION['db']->db_interroge(sprintf("
+						CALL toggleAnneeConge(%d, '%s')
+						", (int) $_REQUEST['id']
+						, $date->date()));
+					$err = '';
+				}
+			} elseif (preg_match('/u(.+)d(\d{2,4}-\d{2}-\d{2,4})/', $_REQUEST['id'], $array)) { // La date doit respecter les formats fr ou us
+				$date = new Date($array[2]);
+				// Changer l'année d'un congé
+				if (array_key_exists('y', $_REQUEST) && $_REQUEST['y'] == 1) {
+					if ($_SESSION['utilisateur']->hasRole('teamEdit') || $_SESSION['utilisateur']->uid() == $array[1]) {
+						$_SESSION['db']->db_interroge(sprintf("
+							CALL toggleAnneeConge(%d, '%s')
+							", $array[1]
+							, $date->date()));
+					}
+				// Changer le statut d'un congé
+				} elseif (array_key_exists('f', $_REQUEST) && $_SESSION['utilisateur']->hasRole('teamEdit')) {
+					$etat = ($_REQUEST['f'] >= 2 ? 2 : 1);
+					$sql = sprintf("
+						UPDATE `TBL_VACANCES`
+						SET `etat` = %d
+						WHERE `sdid` = (SELECT `sdid`
+							FROM `TBL_L_SHIFT_DISPO`
+							WHERE `date` = '%s'
+							AND `uid` = %d
+							LIMIT 1)
+						"
+						, $etat
+						, $date->date()
+						, $array[1]);
+					$_SESSION['db']->db_interroge($sql);
+				}
+			} else {
+				$err = "Date inconnue";
+			}
+			break;
+		/*
+		 * Gestion de la configuration de la grille
+		 */
+		case 'CF':
+			if (	$_SESSION['utilisateur']->hasRole('teamEdit')
+				&& array_key_exists('conf', $_REQUEST)
+				&& array_key_exists('id', $_REQUEST)) {
+					if ($_REQUEST['conf'] != 'W' && $_REQUEST['conf'] != 'E') {
+						$err = 'Conf inconnue...';
+					} else {
+						if (preg_match('/confa(\d{4})m(\d*)j(\d*)/', $_REQUEST['id'], $array)) {
+							firePhpLog($array, 'arr');
+							$date = new Date(sprintf("%04d-%02d-%02d", $array[1], $array[2], $array[3]));
+							$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
 							$sql = sprintf("
-								UPDATE `TBL_L_SHIFT_DISPO`
-								SET `pereq` = %s
-								WHERE `sdid` = %d
-								AND `date` != '0000-00-00'
-								", $val
-								, $_POST['id']
+								UPDATE `TBL_GRILLE`
+								SET `conf` = '%s'
+								WHERE `readonly` = FALSE
+								AND `date` BETWEEN '%s' AND '%s'
+								AND `centre` = '%s'
+								AND `team` = '%s'
+								", $_REQUEST['conf']
+								, $date->date()
+								, $date->addJours(Cycle::getCycleLength($affectation['centre'], $affectation['team'])-1)->date()
+								, $affectation['centre']
+								, $affectation['team']
 							);
-							$err = $_SESSION['db']->db_interroge($sql);
-							break;
+
+							$_SESSION['db']->db_interroge($sql);
+							if ($_SESSION['db']->db_affected_rows() < Cycle::getCycleLength($affectation['centre'], $affectation['team'])) { // Le verrouillage ne verrouille pas les jours de REPOS, d'où un nombre de données affectées même lorsque la grille n'est pas modifiable
+								$err = "Modification impossible...";
+								$_SESSION['db']->db_interroge(sprintf('
+									CALL messageSystem("Modification de la configuration impossible.", "DEBUG", "updateConf.php", "mod failed", "affected_rows:%d;shouldBe:%d;POST:%s;SESSION:%s")'
+									, $_SESSION['db']->db_affected_rows()
+									, Cycle::getCycleLength($affectation['centre'], $affectation['team'])
+									, $_SESSION['db']->db_real_escape_string(json_encode($_REQUEST))
+									, $_SESSION['db']->db_real_escape_string(json_encode($_SESSION))
+								)
+							);
+							} else {
+								$err = mysql_error();
+							}
+							firePhpLog($sql, 'SQL');
+						} else {
+							$err = "Date inconnue";
 						}
 					}
-					break;
-				}
-				// Si les deux requêtes se sont bien passées, elles renvoient chacune 1
-				// d'où $err === "11" si tout s'est bien passé
-				if ($err === "11") die(nl2br(htmlspecialchars("Mise à jour effectuée")));
 			}
-		} elseif (array_key_exists('login', $_POST) && array_key_exists('nom', $_POST) && array_key_exists('email', $_POST)) {
-		// Gestion du formulaire creationCompte.php
-			// FIXME Les mails doivent être gérés par la classe Email
-			$to = $_POST['email'];
-			$login = $_POST['login'];
-			$passwd = $_POST['password'];
-			$nom = $_POST['nom'];
-			if (isset($_POST['sendmail']) && $_POST['sendmail'] == "svp") {
-				$sql = "SELECT `titre` AS `subject`
-					, `texte`
-					FROM `TBL_ARTICLES`
-					WHERE `description` = 'account update'
-					LIMIT 1";
-				$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
-				$crlf = "\n";
-				$message = sprintf($row['texte']
-				, ucfirst($login)
-				, dirname($_SERVER['HTTP_REFERER'])
-				, $login
-				, $passwd
-				);
-				$hdrs = array(
-					'From'		=> "noreply@teamtime.me"
-					,'Subject'	=> $row['subject']
-				);
-				$mime = new Mail_mime(array(
-					'eol'		=> $crlf
-					,'head_charset'	=> 'utf-8'
-					,'text_charset'	=> 'utf-8'
-				));
-				$mime->setTXTBody($message);
-				$body = $mime->get();
-				$hdrs = $mime->headers($hdrs);
-
-				$mail =& Mail::factory('mail');
-				if (TRUE === $mail->send($to, $hdrs, $body)) {
-					$sql = sprintf("
-						UPDATE `TBL_USERS`
-						SET `login` = '%s',
-						`email` = '%s',
-						`sha1` = SHA1('%s')
-						WHERE `nom` = '%s'
-						", $_SESSION['db']->db_real_escape_string($login)
-						, $_SESSION['db']->db_real_escape_string($to)
-						, $_SESSION['db']->db_real_escape_string($login . $passwd)
-						, $_SESSION['db']->db_real_escape_string($nom)
-				);
-					$_SESSION['db']->db_interroge($sql);
-					$err = mysql_error();
-					firePhpLog($sql, '$sql');
-				} else {
-					$err = "Échec : le mail n'a pas été envoyé...";
-				}
-			} else {
-				$sql = sprintf("
-					UPDATE `TBL_USERS`
-					SET `login` = '%s',
-					`email` = '%s',
-					`sha1` = SHA1('%s')
-					WHERE `nom` = '%s'
-					"
-					, $_SESSION['db']->db_real_escape_string($login)
-					, $_SESSION['db']->db_real_escape_string($to)
-					, $_SESSION['db']->db_real_escape_string($login . $passwd)
-					, $_SESSION['db']->db_real_escape_string($nom)
-				);
-				$_SESSION['db']->db_interroge($sql);
-				$err = mysql_error();
-				firePhpLog($sql, '$sql');
-			}
-			if ($err != "") {
-				die((nl2br(htmlspecialchars($err))));
-			} else {
-				die(htmlspecialchars("Mise à jour effectuée."));
-			}
-		} else {
-			exit;
+			break;
 		}
 	}
 }

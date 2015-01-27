@@ -61,7 +61,7 @@
 {*	div qui contient un formulaire pour les infos supplémentaires *}
 		<form id="fFormInfoSup" method="post" action="ajax.php" style="display:none;">
 		<div id="dFormInfoSup">
-				<input type="hidden" name="form" value="IS" />
+				<input type="hidden" name="q" value="IS" />
 				<input type="hidden" name="ajax" value="true" />
 				<input type="hidden" name="cachemoi" value="1" />
 				<input type="hidden" name="uid" id="infoSupUid" />
@@ -73,6 +73,3 @@
 				<input type="submit" />
 		</div>
 		</form>
-{* Des messages de debug peuvent être passés dans ce div
-	*}
-	{* <div id="debugMessages"><a href="#">Hide</a></div> *}

@@ -215,18 +215,13 @@ $fRecover = array(
 				)
 				, array(
 					'type'		=> 'hidden'
-					, 'name'	=> 'form'
+					, 'name'	=> 'q'
 					, 'value'	=> 'RP'
 				)
 				, array(
 					'type'		=> 'hidden'
 					, 'name'	=> 'cachemoi'
 					, 'value'	=> '1'
-				)
-				, array(
-					'type'		=> "hidden"
-					, 'name'	=> "w"
-					, 'value'	=> "resetPwd"
 				)
 				, array(
 					'type'		=> "text"
