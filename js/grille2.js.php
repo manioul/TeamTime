@@ -162,7 +162,6 @@ function addDispo(oThis, sDispo)
 	}
 
 	// Si l'ancienne valeur était un 'V', on doit propager
-	debug("oldDispo: "+sOldDispo);
 	switch (sOldDispo) {
 	       case "V":
 		var aNewArray = new Array();
@@ -173,11 +172,9 @@ function addDispo(oThis, sDispo)
 			var oSibling = $(oTempThis).prev();
 			aNewArray = infosFromId(oSibling[0].id);
 			if (!aNewArray) {
-				debug("aNewArray n'existe pas.");
 				break;
 			}
 			// Si on est sur le jour d'avant
-			debug(parseInt(aArray["Day"]) - aNewArray["Day"]);
 			if ((parseInt(aArray["Day"]) - aNewArray["Day"]) <= iX && (parseInt(aArray["Day"]) - aNewArray["Day"]) > 0) {
 				changeValue(oSibling[0], "");
 			}
@@ -265,7 +262,6 @@ function addDispo(oThis, sDispo)
 	}
 ?>
 		default:
-			debug(sDispo);
 		break;
 	}
 	return true;
@@ -283,9 +279,9 @@ function changeValue(oThis, sDispo)
 if (array_key_exists('TEAMEDIT', $_SESSION)) {
 	// Ces fonctions ne doivent pas être accessible à tous
 	// Seuls les éditeurs peuvent (dé)protéger la grille
-// Effectue les actions nécessaires à la (dé)protection de la grille
-// Envoi d'une requête ajax
-// mise à jour des données de la grille (affichage...)
+	// Effectue les actions nécessaires à la (dé)protection de la grille
+	// Envoi d'une requête ajax
+	// mise à jour des données de la grille (affichage...)
 ?>
 function lock(sS)
 {
@@ -353,43 +349,7 @@ function attribProtect(oThis)
 function attribUnprotect(oThis)
 {
 	$('#'+oThis.id).removeClass('protected');
-	$('#'+oThis.id).toggle(function() {
-		// l'élément cliqué est mis en valeur
-		$(this).addClass("emphasize");
-		// La première case (contenant le nom) est mise en évidence
-		var oParent = $(this).parent();
-		var oChildren = $(oParent[0]).children();
-		$(oChildren[0]).addClass("emphasize");
-		// Recherche des informations de l'élément afin de déterminer la tête de colonne correspondante
-		var aArray = infosFromId(this.id);
-		var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
-		// la tête de colonne est mise en évidence
-		$(sVacationId).addClass("emphasize");
-		// Recherche des possibles occupations pour remplir la boîte de choix
-		var sString = getAvailableOccupations(this);
-		$("#sandbox").replaceWith(sString);
-		// Placement de la boîte de choix
-		var p = $(this).position();
-		$("#sandbox").css({"left" : p.left + 10 , "top" : p.top + 20});
-		$("#sandbox").show('slow');
-		// Action du clic dans la boîte de choix
-		var oThis = this;
-		$("#sandbox li").click(function() {
-			$("#sandbox").hide('slow');
-			addDispo(oThis, $(this).text());
-			$("td.nom").removeClass("emphasize");
-			$(sVacationId).removeClass("emphasize");
-		});
-		},function() {
-			$(this).removeClass("emphasize");
-			$("#sandbox").hide();
-			$("td.nom").removeClass("emphasize");
-			// Recherche la tête de colonne correspondante
-			var aArray = infosFromId(this.id);
-			var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
-			// mise en évidence de la tête de colonne supprimée
-			$(sVacationId).removeClass("emphasize");
-		});
+	$('#'+oThis.id).one("click", dropDownAct(this));
 }
 // Ajoute un texte pour le verrouillage de la grille
 function definitVerrouillage()
@@ -413,14 +373,17 @@ function definitVerrouillage()
 $(function() {
 		definitVerrouillage();
 });
+<?php
+}
+?>
+
+// Retire les classes des cases ayant un style définit.
+// FIXME Ceci peut poser problème pour les actions définis selon la classe
 $(function() {
 	$('td[style]').removeClass();
 }
 );
-<?
-}
 // Compte le nombre de présent pour la colonne à laquelle sId appartient
-?>
 function comptePresents(sId)
 {
 	if (sId == undefined) { return false; }
@@ -559,7 +522,6 @@ function prepareAjaxRequest(oThis, sDispo)
 		sRequest += '&';
 	}
 	sRequest = sRequest.substr(0, sRequest.length-1);
-	debug(sRequest);
 	return sRequest;
 }
 <?
@@ -670,55 +632,10 @@ function listeUid() {
 			}
 			else
 			{
-				debug('Une erreur s\'est produite dans le décompte à '+sId);
 			}
 		}
 	}
 	return aEffectif;
-}
-<?
-//***********************
-// Fonctions de debugage
-//***********************
-?>
-function debug(sMsg) {
-	var oDate = new Date();
-	var sTime = (oDate.getHours()>9) ? "" : "0";
-	sTime += oDate.getHours()+":";
-	sTime += (oDate.getMinutes()>9) ? "" : "0";
-	sTime += oDate.getMinutes()+":";
-	sTime += (oDate.getSeconds()>9) ? "" : "0";
-	sTime += oDate.getSeconds();
-	var sMtime = oDate.getTime();
-	var sString = "<dt class=\""+sMtime+"\">"+sTime+":</dt><dd class=\""+sMtime+"\">&quot;"+sMsg+"&quot;<br /></dd>"
-	$("#debugListe").prepend(sString);
-	if (!$("#debugMessages").hasClass("redBorder")) {
-		$("#debugMessages").addClass("redBorder");
-	}
-	$("#debugMessages").show();
-	$("#debugListe").show("slow");
-	$("."+sMtime).dblclick(function() {
-			$("."+sMtime).remove();
-			});
-	$("#debugMessages a").toggle(function(event) {
-			$("#debugListe").hide("slow");
-			$(this).text('Show');
-			$("#debugMessages").removeClass("redBorder");
-			event.preventDefault();
-			},function() {
-			$("#debugMessages").addClass("redBorder");
-			$("#debugListe").show("slow");
-			$(this).text('Hide');
-			event.preventDefault();
-			});
-}
-function initDebug() {
-	var sString = '<dl id="debugListe"></dl>';
-	$("#debugMessages").append(sString);
-	$("#debugListe").hide();
-	$("#debugMessages").hide();
-	$("#debugMessages").addClass("redBorder");
-	$("#debugMessages").append("<button onclick='comptePresents();'>listeUid()</button>");
 }
 <?
 //****************
@@ -726,61 +643,21 @@ function initDebug() {
 //****************
 ?>
 $(function() {
-		initDebug();
 		$('#dFormRemplacement').hide();
-			$(<?if (!empty($_SESSION['TEAMEDIT'])) {
-				print "'.presence'";
-			} else {
-				printf ("'.presence[id*=u%sa]'", $_SESSION['utilisateur']->uid()); // Les utilisateurs sans droits étendus ne peuvent modifier que leur ligne
-			}?>).toggle(function() {
-<?			// l'élément cliqué est mis en valeur ?>
-			$(this).addClass("emphasize");
-<?			// La première case (contenant le nom) est mise en évidence ?>
-			var oParent = $(this).parent();
-			var oChildren = $(oParent[0]).children();
-			$(oChildren[0]).addClass("emphasize");
-<?			// Recherche des informations de l'élément afin de déterminer la tête de colonne correspondante ?>
-			var aArray = infosFromId(this.id);
-			var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
-<?			// la tête de colonne est mise en évidence ?>
-			$(sVacationId).addClass("emphasize");
-<?			// Recherche des possibles occupations pour remplir la boîte de choix ?>
-			var sString = getAvailableOccupations(this);
-			$("#sandbox").replaceWith(sString);
-<?			// Placement de la boîte de choix ?>
-			var p = $(this).position();
-			$("#sandbox").css({"left" : p.left + 10 , "top" : p.top + 20});
-			$("#sandbox").show('slow');
-<?			// Action du clic dans la boîte de choix ?>
-			var oThis = this;
-			$("#sandbox li").click(function() {
-				$("#sandbox").hide('slow');
-				addDispo(oThis, $(this).text());
-				$("td.nom").removeClass("emphasize");
-				$(sVacationId).removeClass("emphasize");
-			});
-			},function() {
-				$(this).removeClass("emphasize");
-				$("#sandbox").hide();
-				$("td.nom").removeClass("emphasize");
-<?				// Recherche la tête de colonne correspondante ?>
-				var aArray = infosFromId(this.id);
-				var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
-<?				// mise en évidence de la tête de colonne supprimée ?>
-				$(sVacationId).removeClass("emphasize");
-			});
-<?		/* Supprime le menu pour modifier les dispo sur les cases protected */
-?>		$('.protected').unbind();
-<?		/* Permet de n'afficher qu'une seule ligne en cliquant sur le nom */
-?>		$(".nom").toggle(function() {
-				var sId = "#" + this.id;
-				collapseRow(sId);
-				},function() {
-				var sId = "#" + this.id;
-				uncollapseRow(sId);
-				});
-		decomptePresents();
 <?php
+	// teamEdit peut modifier toutes les lignes
+	if ($_SESSION['utilisateur']->hasRole('teamEdit')) { ?>
+	$('.presence').one('click', function() { dropDownAct(this); });
+<?php	// Les utilisateurs standards ne peuvent modifier que leur ligne
+	} else {
+		printf("\$('.presence[id*=u%sa]').one('click', function() { dropDownAct(this); });", $_SESSION['utilisateur']->uid());
+	}
+		/* Supprime le menu pour modifier les dispo sur les cases protected */
+?>		$('.protected').unbind();
+		decomptePresents();
+		$('.nom').one('click', function() { collapseRow(this); });
+<?php
+// Masque le texte des cases dtch
 if ($_SESSION['utilisateur']->getPref('dtch') === 1) {
 	?>
 	$("td:contains('dtch')").text('');
@@ -821,6 +698,7 @@ function collapseRow(sId) {
 			$(sTempId).hide();
 		}
 	}
+	$(sId).one('click', function() { uncollapseRow(this); });
 }
 <?
 // Montre le rang qui contient l'id sId
@@ -835,6 +713,49 @@ function uncollapseRow(sId) {
 			$(sTempId).show();
 		}
 	}
+	$(sId).one('click', function() { collapseRow(this); });
+}
+// Les actions à effectuer lorsqu'une case est cliquée
+function dropDownAct(oThis)
+{
+	// l'élément cliqué est mis en valeur
+	$(oThis).addClass("emphasize");
+	// La première case (contenant le nom) est mise en évidence
+	var oParent = $(oThis).parent();
+	var oChildren = $(oParent[0]).children();
+	$(oChildren[0]).addClass("emphasize");
+	// Recherche des informations de l'élément afin de déterminer la tête de colonne correspondante
+	var aArray = infosFromId(oThis.id);
+	var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
+	// la tête de colonne est mise en évidence
+	$(sVacationId).addClass("emphasize");
+	// Recherche des possibles occupations pour remplir la boite de choix
+	var sString = getAvailableOccupations(oThis);
+	$("#sandbox").replaceWith(sString);
+	// Placement de la boite de choix
+	var p = $(oThis).position();
+	$("#sandbox").css({"left" : p.left + 10 , "top" : p.top + 20});
+	$("#sandbox").show('slow');
+	// Action du clic dans la boite de choix
+	$("#sandbox li").click(function() {
+		$("#sandbox").hide('slow');
+		addDispo(oThis, $(this).text());
+		$("td.nom").removeClass("emphasize");
+		$(sVacationId).removeClass("emphasize");
+		$(oThis).one('click', function() { dropDownAct(this); });
+	});
+	$(oThis).one('click', function() { liftUpAct(this); });
+}
+// actions à effectuer lorsqu'une case est à nouveau cliquée
+function liftUpAct(oThis)
+{
+	$("td.nom").removeClass("emphasize");
+	// Recherche des informations de l'élément afin de déterminer la tête de colonne correspondante
+	var aArray = infosFromId(oThis.id);
+	var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
+	$(sVacationId).removeClass("emphasize");
+	$('#sandbox').hide('slow');
+	$(oThis).one('click', function() { dropDownAct(this); });
 }
 
 <?
