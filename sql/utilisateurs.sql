@@ -200,9 +200,9 @@ BEGIN
 	AND uid = uid_;
 
 	IF multiple > 1 THEN
-		INSERT INTO TBL_MESSAGES_SYSTEME VALUES (NULL, , 'ERREUR', 'searchAffectation', 'Multiples affectations', CONCAT("L'utilisateur a des affectation multiples pour le ", dat), CONCAT('uid:', uid_, ';date:', dat, ';'), NOW(), FALSE);
-	END IF
-	
+		INSERT INTO TBL_MESSAGES_SYSTEME VALUES (NULL, 'ERREUR', 'searchAffectation', 'Multiples affectations', CONCAT("L'utilisateur a des affectations multiples pour le ", dat), CONCAT('uid:', uid_, ';date:', dat, ';'), NOW(), FALSE);
+	END IF;
+
 	SELECT centre, team, grade
 	INTO centr, tea, grad
 	FROM TBL_AFFECTATION
