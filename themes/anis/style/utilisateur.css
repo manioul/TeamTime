@@ -1,0 +1,33 @@
+#utilisateur {
+	width:80em;
+	margin:auto;
+}
+#contact, #droits, #carriere {
+	margin:0 auto 1em auto;
+	padding-bottom:1em;
+}
+#contact, #droits {
+	width:24em;
+	margin:0 65px;;
+}
+#contact fieldset {
+}
+#carriere {
+	width:80em;
+}
+#carriere table {
+	margin:0;
+}
+.etatcivil td {
+	text-align:left;
+}
+#submitcontact {
+	margin:5px 0 5px 29em;
+	font-size:15px;
+}
+.table-contact {
+	width:20em;
+}
+#addPhone {
+	width:1em;
+}

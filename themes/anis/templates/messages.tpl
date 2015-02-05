@@ -1,8 +1,8 @@
 {* Smarty *}
 <div id="dMessages">
-{section name=i loop=$messages}
-{if $smarty.section.i.index == 0}<ul id="uMessages">{/if}
-<li{if $messages[i].classe != ""} class="{$messages[i].classe}"{/if}>{if $messages[i].lien != ""}<a href="{$messages[i].lien}">{/if}{$messages[i].message}{if $messages[i].lien != ""}</a>{/if}</li>
-{if $index == $smarty.section.i.last}</ul>{/if}
-{/section}
+{foreach $messages as $message}
+{if $message@first}<ul id="uMessages">{/if}
+<li{if !empty($message.classe)} class="{$message.classe}"{/if}>{if !empty($message.lien)}<a href="{$message.lien}">{/if}{$message.message}{if !empty($message.lien)}</a>{/if}</li>
+{if $message@last}</ul>{/if}
+{/foreach}
 </div>

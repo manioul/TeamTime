@@ -47,7 +47,7 @@ ob_start();
 /*
  * Configuration de la page
  */
-        $titrePage = "TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "Gestion des compteurs - TeamTime"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -96,8 +96,7 @@ ob_start();
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
 	$conf['page']['stylesheet']['general'] = true;
-	// La feuille de style pour la page de gestion des congés
-	$conf['page']['stylesheet']['conG'] = true;
+	$conf['page']['stylesheet']['grille'] = true;
 
 	// Compactage des pages
 	$conf['page']['compact'] = false;
@@ -108,72 +107,137 @@ ob_start();
 require 'required_files.inc.php';
 
 // Année du tableau de congés (année courante par défaut)
-$year = (!empty($_GET['year']) ? sprintf("%04d", $_GET['year']) : date('Y'));
+$year = date('Y');
 $titre = "Évènements";
 
-$sql = "SELECT `nom`, `classe`, `uid` FROM `TBL_USERS` WHERE `actif` = TRUE ORDER BY `poids` ASC";
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y') . '-01-01');
 
-$results = $_SESSION['db']->db_interroge($sql);
-while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$users[] = array('nom'	=> htmlentities($res['nom'])
-		,'classe'	=> sprintf('nom %s', $res['classe'])
-		,'uid'		=> $res['uid']
-	);
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $affectation['centre'], $affectation['team']);
+$uids = array(); // Un tableau des uid des utilisateurs
+foreach ($users as $user) {
+	$uids[] = $user->uid();
 }
-mysqli_free_result($results);
-
 
 $tab = array();
-$sql = "SELECT `did`, `nom_long` FROM `TBL_DISPO` WHERE `need_compteur` = TRUE AND `actif` = TRUE AND `type decompte` != 'conges'";
+$sql = sprintf("
+	SELECT `did`
+	, `type decompte`
+	FROM `TBL_DISPO`
+	WHERE `need_compteur` IS TRUE
+	AND `actif` IS TRUE
+	AND `type decompte` != 'conges'
+	AND (`centre` = 'all' OR `centre` = '%s')
+	AND (`team` = 'all' OR `team` = '%s')
+	GROUP BY `type decompte`
+	", $affectation['centre']
+	, $affectation['team']
+);
 $results = $_SESSION['db']->db_interroge($sql);
 while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$onglets[] = array('nom'	=> htmlspecialchars($res['nom_long'], ENT_COMPAT, 'UTF-8')
+	if (!array_key_exists('type decompte', $res)) continue;
+	$onglets[$res['type decompte']] = array('nom'	=> htmlspecialchars(ucfirst($res['type decompte']), ENT_COMPAT, 'UTF-8')
 		,'quantity'		=> 10
 		,'param'		=> $res['did']
 	);
-	// Recherche des congés de l'année en cours
-	$sql = sprintf("SELECT `uid`, `did`, `date`
-		FROM `TBL_L_SHIFT_DISPO`
-		WHERE (YEAR(`date`) = %d
-		OR YEAR(`date`) = %d)
-		AND `did` = %d
-		ORDER BY `date` ASC",
-		$year, $year-1, $res['did']);
+	// Recherche des évènements
+	// Les évènements ne sont pas groupés par année
+	// On recherche le nombre minimal de chaque évènement
+	// ainsi que le maximum (pour définir le nombre de colonnes nécessaires)
+	$sql = sprintf("
+		SELECT `l`.`uid`, COUNT(`l`.`uid`) AS `compte`
+		FROM `TBL_L_SHIFT_DISPO` AS `l`
+		, `TBL_ANCIENNETE_EQUIPE` AS `a`
+		, `TBL_USERS` AS `u`
+		WHERE `did` IN (SELECT `did`
+			FROM `TBL_DISPO`
+			WHERE `type decompte` = '%s'
+			AND `centre` = '%s'
+			AND `team` = '%s'
+		)
+		AND `l`.`uid` = `u`.`uid`
+		AND `a`.`uid` = `l`.`uid`
+		AND `l`.`date` >= `a`.`beginning`
+		AND `a`.`beginning` <= '%d-12-31'
+		AND `a`.`end` >= '%d-01-01'
+		AND `actif` IS TRUE
+		AND `global` IS TRUE
+		AND `centre` = '%s'
+		AND `team` = '%s'
+		GROUP BY `l`.`uid`
+		ORDER BY `compte` ASC
+		", $res['type decompte']
+		, $affectation['centre']
+		, $affectation['team']
+		, $year
+		, $year
+		, $affectation['centre']
+		, $affectation['team']
+	);
+	$i = 0;
+	$result = $_SESSION['db']->db_interroge($sql);
+	while ($row = $_SESSION['db']->db_fetch_row($result)) {
+		if (in_array($row[0], $uids)) {
+			// On souhaite connaître le minimum,
+			// soit donc le premier résultat retourné
+			if (!$i++) {
+				$min = $row[1] - 1; // On veut au moins une date pour l'utilisateur ayant le moins d'entrées
+			} else {
+				$onglets[$res['type decompte']]['quantity'] = $row[1] - $min;
+			}
+		}
+	}
+	// Le nombre de colonnes à afficher est défini
+	// par le max - min + 1
+	// TODO prévoir une alerte pour vérifier la nécessité de péréquations
+	// lorsque la différence (min, max) est importante
+	mysqli_free_result($result);
 
-	$r = $_SESSION['db']->db_interroge($sql);
-	while ($s = $_SESSION['db']->db_fetch_assoc($r)) {
-		$class = '';
-		$date = new Date($s['date']);
-		$tab[$res['did']][$s['uid']][] = array(	'date' => $date->formatDate()
-							,'classe' => $class
+	// et on limite l'affichage des évènements à partir de ce nombre minimal
+	// pour chaque utilisateur
+	foreach ($uids as $uid) {
+		$sql = sprintf("
+			SELECT `uid`, `did`, `date`
+			FROM `TBL_L_SHIFT_DISPO`
+			WHERE `did` IN (SELECT `did`
+				FROM `TBL_DISPO`
+				WHERE `type decompte` = '%s'
+				AND `centre` = '%s'
+				AND `team` = '%s'
+			)
+			AND `uid` = %d
+			ORDER BY `date` ASC
+			LIMIT %d, %d
+			", $res['type decompte']
+			, $affectation['centre']
+			, $affectation['team']
+			, $uid
+			, $min
+			, $onglets[$res['type decompte']]['quantity']
 		);
+
+		$r = $_SESSION['db']->db_interroge($sql);
+		while ($s = $_SESSION['db']->db_fetch_assoc($r)) {
+			$class = '';
+			$date = new Date($s['date']);
+			$tab[$res['did']][$s['uid']][] = array(	'date' => $date->formatDate()
+				,'classe' => $class
+			);
+		}
 	}
 	mysqli_free_result($r);
+	$index++;
 }
 mysqli_free_result($results);
+$ong = array();
+foreach ($onglets as $onglet) {
+	$ong[] = $onglet;
+}
 
 $smarty->assign('year', $year);
 $smarty->assign('titre', $titre);
-$smarty->assign('onglets', $onglets);
+$smarty->assign('onglets', $ong);
 $smarty->assign('users', $users);
 $smarty->assign('tab', $tab);
-
-
-// Affichage des en-têtes de page
-$smarty->display('header.tpl');
-
-// Ajout du menu horizontal
-if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
-
-// Ajout des messages
-if ($conf['page']['elements']['messages']) include('messages.inc.php');
-
-// Ajout du choix du thème
-if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
-
-// Affichage du menu d'administration
-if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
-
 
 $smarty->display('tableauxCong.tpl');
 

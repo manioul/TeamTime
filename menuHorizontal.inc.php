@@ -48,14 +48,6 @@ for ($idx = 13; $idx <=14; $idx++, $firstYear++) {
 }
 
 
-// Évènements
-// Les entrées de menu sont insérées dans la base de données
-// Les index 15 et 16 sont réservés à ces entrées
-$firstYear -= 2;
-for ($idx = 15; $idx <=16; $idx++, $firstYear++) {
-	$sql = "REPLACE `TBL_ELEMS_MENUS` (`idx`, `titre`, `lien`, `actif`) VALUES ($idx, '$firstYear', 'tableauxEvenSpec.php?year=$firstYear', TRUE)";
-	$_SESSION['db']->db_interroge($sql);
-}
 /*
  * Fin de la préparation du sous-menu congés
  */

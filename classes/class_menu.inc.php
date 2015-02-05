@@ -21,17 +21,19 @@ class elemMenu {
 // Constructeur
 	function __construct($param = NULL) { // $idx en param
 		if (! is_null($param)) {
-			$this->idx = $param;
+			$this->idx($param);
 			if (is_null($this->db_setElem())) {
 				$this->__destruct();
 				return NULL;
 			}
 	       	}
 	}
-	function __destruct() {}
+	function __destruct() {
+		unset($this);
+	}
 // Accesseurs et attribution des valeurs
 	public function idx($param = NULL) {
-		if (! is_null($param)) { $this->idx = $param; }
+		if (! is_null($param)) { $this->idx = (int) $param; }
 		return $this->idx;
 	}
 	public function titre($param = NULL) {
@@ -113,17 +115,61 @@ class elemMenu {
 		$this->modification($param['modification']);
 		$this->allowed($param['allowed']);
 		$this->actif($param['actif']);
+		return true;
 	}
 // méthodes de bdd
 	public function db_setElem() {
-		$requete = sprintf("SELECT * FROM `TBL_ELEMS_MENUS` WHERE `idx` = %d AND `actif` = TRUE AND (%s)", $this->idx, $_SESSION['utilisateur']->db_condition_like_classe('allowed'));
+		$find_in_set = "";
+		foreach (array_flip(array_flip(array_merge(array('all'), $_SESSION['utilisateur']->roles()))) as $set) {
+			$find_in_set .= sprintf("FIND_IN_SET('%s', `allowed`) OR ", $_SESSION['db']->db_real_escape_string($set));
+		}
+		$requete = sprintf("
+			SELECT * FROM `TBL_ELEMS_MENUS`
+			WHERE `idx` = %d
+			AND `actif` = TRUE
+			AND (%s)"
+			, $this->idx
+			, substr($find_in_set, 0, -4)
+		);
+		if (!empty($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "db_setElem", NULL, NULL)'
+				, $requete)
+			);
+		}
 		$this->_setFromElemMenu($_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($requete)));
 	}
 	private function _db_insertDB() {
-		$requete = sprintf("INSERT INTO `TBL_ELEMS_MENUS` (`idx`, `titre`, `description`, `lien`, `sousmenu`, `creation`, `allowed`, `actif`) VALUES (NULL, '%s', '%s', '%s', %d, NOW(), '%s', %d)", $this->titre, $this->description, $this->lien, $this->sousmenu, $this->allowed, $this->actif);
+		$requete = sprintf("
+			INSERT INTO `TBL_ELEMS_MENUS`
+			(`idx`, `titre`, `description`, `lien`, `sousmenu`, `creation`, `allowed`, `actif`)
+			VALUES (NULL, '%s', '%s', '%s', %d, NOW(), '%s', %d)"
+			, $this->titre
+			, $this->description
+			, $this->lien
+			, $this->sousmenu
+			, $this->allowed
+			, $this->actif
+		);
 	}
 	private function _db_updateDB() {
-		$requete = sprintf("UPDATE `TBL_ELEMS_MENUS` SET `titre` = '%s', `description` = '%s', `lien` = '%s', `sousmenu` = %d, `modification` = NOW(), `allowed` = '%s' `actif` = %d WHERE `idx` = %d", $this->titre, $this->description, $this->lein, $this->sousmenu, $this->allowed, $this->actif, $this->idx);
+		$requete = sprintf("
+			UPDATE `TBL_ELEMS_MENUS`
+			SET `titre` = '%s'
+			, `description` = '%s'
+			, `lien` = '%s'
+			, `sousmenu` = %d
+			, `modification` = NOW()
+			, `allowed` = '%s'
+			, `actif` = %d
+			WHERE `idx` = %d"
+			, $this->titre
+			, $this->description
+			, $this->lien
+			, $this->sousmenu
+			, $this->allowed
+			, $this->actif
+			, $this->idx
+		);
 	}
 // Display
 	public function debug_display() {
@@ -152,14 +198,16 @@ class menu {
 // Constructeur
 	function __construct($param = NULL) { // $param est l'idx du menu
 		if (! is_null($param)) {
-			$this->idx = $param;
+			$this->idx($param);
 			$this->_build_menu();
 		}
 	}
-	function __destruct() {}
+	function __destruct() {
+		unset($this);
+	}
 // Accesseurs et attribution des valeurs
 	function idx($param = NULL) {
-		if (! is_null($param)) { $this->idx = $param; }
+		if (! is_null($param)) { $this->idx = (int) $param; }
 		return $this->idx;
 	}
 	function titre($param = NULL) {
@@ -218,7 +266,7 @@ class menu {
 	}
 // gestion de l'objet
 	private function _addElem($param) { // ajoute un élément de menu au menu. $param est un objet elemMenu
-		if (! is_object($param)) { return ERR_BADPARAM; } // $param est bien un objet?
+		if (! is_a($param, 'elemMenu')) return ERR_BAD_PARAM; // $param est bien un objet?
 		if (isset($this->arbre[$param->position()]) && $this->arbre[$param->position()] != $param) { // Si la place de l'élément de menu est déjà occupée, on tente d'ajouter l'élément à position+1
 			firePHPInfo($this->arbre, 'position doublement occupée');
 			$param->position($param->position()+1);
@@ -242,7 +290,15 @@ class menu {
 		$array = array();
 		foreach ($this->arbre as $cle => $feuille) {
 			if ($cle != $compteur) { // Si la bdd doit être mise à jour avec les positions des éléments
-				$requete = sprintf("UPDATE `TBL_MENUS_ELEMS_MENUS` SET `position` = %d WHERE `idxm` = %s AND `idxem` = %d", $feuille->position(), $this->idx, $feuille->idx());
+				$requete = sprintf("
+					UPDATE `TBL_MENUS_ELEMS_MENUS`
+					SET `position` = %d
+					WHERE `idxm` = %s
+					AND `idxem` = %d"
+					, $feuille->position()
+					, $this->idx
+					, $feuille->idx()
+				);
 				$_SESSION['db']->db_interroge($requete);
 			}
 			$array[$compteur] = $feuille;
@@ -256,6 +312,7 @@ class menu {
 	function descendElem($param) { // $param est l'index dans arbre de l'élément à déplacer
 	}
 	function s_addElem($param) { // $param est un objet elemMenu
+		if (! is_a($param, 'elemMenu')) { return ERR_BAD_PARAM; } // $param est bien un objet?
 		if (is_null($this->_addElem($param))) {
 			$this->_reOrderArbre(); // Redéfinit la position des éléments de menus lorsque deux entrées se chevauchent
 		}
@@ -285,23 +342,56 @@ class menu {
 		return TRUE;
 	}
 	private function _db_setFromDB() {
-		$requete = sprintf("SELECT * FROM `TBL_MENUS` WHERE `idx` = %d AND `actif` = TRUE AND (%s)", $this->idx, $_SESSION['utilisateur']->db_condition_like_classe('allowed'));
+		$find_in_set = "";
+		foreach (array_flip(array_flip(array_merge(array('all'), $_SESSION['utilisateur']->roles()))) as $set) {
+			$find_in_set .= sprintf("FIND_IN_SET('%s', `allowed`) OR ", $_SESSION['db']->db_real_escape_string($set));
+		}
+		$requete = sprintf("
+			SELECT * FROM `TBL_MENUS`
+			WHERE `idx` = %d
+			AND `actif` = TRUE
+			AND (%s)"
+			, $this->idx
+			, substr($find_in_set, 0, -4)
+		);
+		if (isset($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "DEBUG", "_db_setFromRow", NULL, NULL)'
+				, $requete)
+			); 
+		}
 		return ($this->_db_setFromRow($_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($requete))));
 	}
 	private function _db_getElems() {
-		$requete = sprintf("SELECT `idxem`, `position` FROM `TBL_MENUS_ELEMS_MENUS` WHERE `idxm` = %d ORDER BY `position` ASC", $this->idx);
+		$requete = sprintf("
+			SELECT `idxem`
+			, `position`
+			FROM `TBL_MENUS_ELEMS_MENUS`
+			WHERE `idxm` = %d
+			ORDER BY `position` ASC"
+			, $this->idx
+		);
 		$result = $_SESSION['db']->db_interroge($requete);
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
 			$elemMenu = new elemMenu($row[0]);
-			if (is_null($elemMenu)) continue;
+			if (!is_a($elemMenu, 'elemMenu')) continue;
 			$elemMenu->position($row[1]);
 			$elemMenu->profondeur($this->profondeur + 1);
-			$this->s_addElem($elemMenu);
+			if (ERR_BAD_PARAM === $this->s_addElem($elemMenu)) $elemMenu->__destruct();
 		}
 		mysqli_free_result($result);
 	}
 	private function _db_createMenu() {
-		$requete = sprintf("INSERT INTO `TBL_MENUS` (`idx`, `titre`, `description`, `parent`, `creation`, `modification`, `restricted`, `actif`, `vertical`) VALUES (NULL, '%s', '%s', %d, NOW(), '0000-00-00 00:00:00', %d, %d, %d)", $this->titre, $this->description, $this->parent, $this->restricted, $this->actif, $this->vertical);
+		$requete = sprintf("
+			INSERT INTO `TBL_MENUS`
+			(`idx`, `titre`, `description`, `parent`, `creation`, `modification`, `restricted`, `actif`, `vertical`)
+			VALUES (NULL, '%s', '%s', %d, NOW(), '0000-00-00 00:00:00', %d, %d, %d)"
+			, $this->titre
+			, $this->description
+			, $this->parent
+			, $this->restricted
+			, $this->actif
+			, $this->vertical
+		);
 		$_SESSION['db']->db_interroge($requete);
 	}
 // Display

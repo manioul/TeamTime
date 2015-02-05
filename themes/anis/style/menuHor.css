@@ -1,12 +1,15 @@
 
 /* Main menu */
 
+nav {
+	margin:0 40px;
+}
+
 ul.menuHor
 {
 	display:table; /* Ceci permet de ne pas avoir un menu sur toute la largeur du parent. Sinon supprimer ou remplacer par width:100% */
 	margin: auto; /* auto pour centrer le menu dans le parent ; 0 pour le placer à gauche */
 	margin-bottom:15px;
-	margin-top:5px;
 	padding: 10px 0 0 0;
 	list-style: none;  
 	background: rgba(85,153,102,.9);
@@ -138,11 +141,11 @@ ul.menuHor ul a:hover,
 ul.menuHor ul a:focus
 {
 	background: #5a7;
-	background: -moz-linear-gradient(#ccffcc,  #0186ba);	
-	background: -webkit-gradient(linear, left top, left bottom, from(#ccffcc), to(#0186ba));
-	background: -webkit-linear-gradient(#ccffcc,  #0186ba);
-	background: -o-linear-gradient(#ccffcc,  #0186ba);
-	background: -ms-linear-gradient(#ccffcc,  #0186ba);
+	background: -moz-linear-gradient(#ccffcc,  #01ba86);	
+	background: -webkit-gradient(linear, left top, left bottom, from(#ccffcc), to(#01ba86));
+	background: -webkit-linear-gradient(#ccffcc,  #01ba86);
+	background: -o-linear-gradient(#ccffcc,  #01ba86);
+	background: -ms-linear-gradient(#ccffcc,  #01ba86);
 	background: linear-gradient(#ccffcc, #5a7);
 }
 

@@ -28,13 +28,14 @@ class TitreConges extends tFPDF {
 	// var $nom = iconv('UTF-8', 'ISO-8859-1', 'Forest Agnès'); // Si la police n'est pas utf8
 	// $maxlength; Longueur maximale du motif de congé
 	private $imageFond = array(
-		1	=> 'tfpdf/titreConges.png' // V
-		,2	=> 'tfpdf/titreConges.png' // F
-		,3	=> 'tfpdf/titreConges.png' // W
-		,8	=> 'tfpdf/titreConges.png' // Rcup
-		,30	=> 'tfpdf/titreVro.png' // Vro
-		,32	=> 'tfpdf/titreConges.png' // Vex
+		1	=> 'tfpdf/titreConges' // V
+		,2	=> 'tfpdf/titreConges' // F
+		,3	=> 'tfpdf/titreConges' // W
+		,8	=> 'tfpdf/titreConges' // Rcup
+		,30	=> 'tfpdf/titreVro' // Vro
+		,32	=> 'tfpdf/titreConges' // Vex
 	);
+	private $imageAnnulation = 'Annulation';
 	private $cteam = array(
 		1	=> array( 1 => array(123, 60), 2 => array(245, 115))
 		,2	=> array( 1 => array(123, 60), 2 => array(245, 115))
@@ -107,6 +108,12 @@ class TitreConges extends tFPDF {
 		,30	=> array( 1 => array(64, 146.5))
 		,32	=> array( 1 => array(64, 146.5))
 	);
+	private $annulation = false; // Positionné si il s'agit d'un titre d'annulation de congé
+
+	// Permet de générer un titre d'annulation
+	public function annulation() {
+		$this->annulation = true;
+	}
 
 	public function __construct() {
 		parent::__construct($orientation='l', $unit='mm', $size='A4');
@@ -116,7 +123,7 @@ class TitreConges extends tFPDF {
 		$this->SetFont('DejaVu', '', 10);
 	}
 
-	public function editTitreConges($nom, $typeCong, $nbCong, $dateDebut, $dateFin, $dateReprise, $dateTitre, $team = '9E', $motifVex = NULL, $commentaire = NULL, $maxlength = 28) {
+	public function editTitreConges($nom, $typeCong, $nbCong, $dateDebut, $dateFin, $dateReprise, $dateTitre, $team, $motifVex = NULL, $commentaire = NULL, $maxlength = 28) {
 		$this->AddPage();
 
 		if ($typeCong != 1) {
@@ -139,14 +146,20 @@ class TitreConges extends tFPDF {
 			}
 		}
 		// Image de fond
-		if (isset($this->imageFond[$typeCong])) {
-			$this->Image($this->imageFond[$typeCong]);
+		if ($this->annulation) {
+			if (isset($this->imageFond[$typeCong])) {
+				$this->Image($this->imageFond[$typeCong] . $this->imageAnnulation . '.png');
+			}
+		} else {
+			if (isset($this->imageFond[$typeCong])) {
+				$this->Image($this->imageFond[$typeCong] . '.png');
+			}
 		}
 		// N° équipe
 		if (isset($this->cteam[$typeCong])) {
 			foreach ($this->cteam[$typeCong] as $coord) {
 				$this->SetXY($coord[0], $coord[1]);
-				$this->Cell(0, 0, $team);
+				$this->Cell(0, 0, strtoupper($team));
 			}
 		}
 		// Nom
@@ -209,6 +222,9 @@ class TitreConges extends tFPDF {
 	}
 
 	public function editTitres() {
+		$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+		$titre = sprintf("%s/titresConges/%s_%s_%s_%s.pdf", $_SERVER['DOCUMENT_ROOT'], $affectation['centre'], $affectation['team'], date('YmdHis'), md5($_SESSION['utilisateur']->login() . date('YmdHis')));
+		$this->Output($titre, 'F');
 		$this->Output('titres.pdf', 'D');
 	}
 }

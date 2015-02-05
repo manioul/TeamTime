@@ -41,16 +41,17 @@ $requireAuthenticatedUser = true; // L'utilisateur doit être authentifié pour 
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
 	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
 
+ob_start();
 
 /*
  * Configuration de la page
  */
-        $titrePage = "TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "Annuaire"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
 	$DEBUG = true;
-	$conf['page']['elements']['firePHP'] = true;
+	$conf['page']['elements']['firePHP'] = false;
 
 	/*
 	 * Choix des éléments à afficher
@@ -103,40 +104,22 @@ $requireAuthenticatedUser = true; // L'utilisateur doit être authentifié pour 
 
 require 'required_files.inc.php';
 
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 
-// Affichage des en-têtes de page
-$smarty->display('header.tpl');
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y-m-d'), date('Y-m-d'), $affectation['centre'], $affectation['team']);
 
-// Ajout du menu horizontal
-if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
-
-// Ajout des messages
-if ($conf['page']['elements']['messages']) include('messages.inc.php');
-
-// Ajout du choix du thème
-if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
-
-// Affichage du menu d'administration
-if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
-
-$champs = array('nom', 'prenom', 'email');
-
-$sql = "SELECT ";
-foreach($champs as $champ) {
-	$sql .= "`$champ`, ";
+$arr = array( array('nom', 'prenom', 'email', 'phone') );
+$mailto = array_search('email', $arr[0]);
+foreach ($users as $user) {
+	$array = array();
+	foreach ($arr[0] as $champ) {
+		$array[] = $user->$champ();
+	}
+	$arr[] = $array;
 }
-$sql = substr($sql, 0, -2);
-$sql .= "FROM `TBL_USERS` WHERE `actif` = TRUE ORDER BY `poids`";
-$result = $_SESSION['db']->db_interroge($sql);
-
-$arr = array();
-$arr[] = $champs;
-while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-	$arr[] = $row;
-}
-mysqli_free_result($result);
 
 $smarty->assign('entry', $arr);
+$smarty->assign('mailto', $mailto+1);
 
 $smarty->display('annuaire.tpl');
 
@@ -147,5 +130,7 @@ include 'debug.inc.php';
 
 // Affichage du bas de page
 $smarty->display('footer.tpl');
+
+ob_end_flush();
 
 ?>

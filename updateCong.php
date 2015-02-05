@@ -22,9 +22,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Require admin
-// L'utilisateur doit être editeur pour accéder à cette page
-$requireEditeur = true;
+$requireAuthenticatedUser = true;
 
 /*
  * Configuration de la page
@@ -41,7 +39,7 @@ $requireEditeur = true;
 	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
-	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
+	$conf['page']['include']['smarty'] = NULL; // Smarty sera utilisé sur cette page
 /*
  * Fin de la définition des include
  */
@@ -52,11 +50,20 @@ require 'required_files.inc.php';
 
 firePhpLog($_POST, 'POST');
 
-$etat = ($_POST['f'] >= 2 ? 2 : 1);
 if (preg_match('/u(.+)d(\d{2,4}-\d{2}-\d{2,4})/', $_POST['id'], $array)) { // La date doit respecter les formats fr et us
 	$date = new Date($array[2]);
-	$sql = sprintf("UPDATE `TBL_VACANCES` SET `etat` = %d WHERE `date` = '%s' AND `uid` = %d", $etat, $date->date(), $array[1]);
-	$_SESSION['db']->db_interroge($sql);
+	if (array_key_exists('y', $_POST) && $_POST['y'] == 1) {
+		if ($_SESSION['utilisateur']->hasRole('teamEdit') || $_SESSION['utilisateur']->uid() == $array[1]) {
+			$_SESSION['db']->db_interroge(sprintf("
+				CALL toggleAnneeConge(%d, '%s')
+				", $array[1]
+				, $date->date()));
+		}
+	} elseif (array_key_exists('f', $_POST) && $_SESSION['utilisateur']->hasRole('teamEdit')) {
+		$etat = ($_POST['f'] >= 2 ? 2 : 1);
+		$sql = sprintf("UPDATE `TBL_VACANCES` SET `etat` = %d WHERE `sdid` = (SELECT `sdid` FROM `TBL_L_SHIFT_DISPO` WHERE `date` = '%s' AND `uid` = %d LIMIT 1)", $etat, $date->date(), $array[1]);
+		$_SESSION['db']->db_interroge($sql);
+	}
 } else {
 	$err = "Date inconnue";
 }

@@ -29,3 +29,6 @@ Adapt the installation directory in constantes.inc.php:
 
 Adapt the values in config.inc.php. Mainly $DEBUG and properties of the
 session cookie ($conf['session_cookie'])
+
+templates_c and cache directories should belong to the user running your
+webserver (www-data on Debian)

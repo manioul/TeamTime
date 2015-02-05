@@ -50,6 +50,10 @@ $conf['page']['elements']['firePHP'] = true;
 
 require 'required_files.inc.php';
 
+if (!$_SESSION['TEAMEDIT'] && $_SESSION['utilisateur']->uid() != $_POST['uid']) {
+	print "N'éditez que votre ligne, svp.";
+	return false;
+}
 
 $date = new Date();
 $date->annee($_POST['Year']);
@@ -61,9 +65,10 @@ $dispo = array(
 	,'dispo'	=> $_SESSION['db']->db_real_escape_string($_POST['dispo'])
 	,'oldDispo'	=> $_SESSION['db']->db_real_escape_string($_POST['oldDispo'])
 );
+$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
 
 
-$err = jourTravail::addDispo($dispo);
+$err = jourTravail::addDispo($dispo, $affectation['centre'], $affectation['team']);
 
 if ($err != "") {
 	print(nl2br(htmlspecialchars($err)));

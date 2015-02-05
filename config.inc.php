@@ -28,7 +28,7 @@ $GLOBALS['language'] = 'fr';
 $DEBUG = false;
 
 // Cookie de session
-	$conf['session_cookie']['name'] = 'TeamTime10a';
+	$conf['session_cookie']['name'] = 'TeamTimeMe';
 	$conf['session_cookie']['lifetime'] = 0;
 	$conf['session_cookie']['path'] = '/';
 	$conf['session_cookie']['domain'] = 'dev.web'; // Le domaine hébergeant TeamTime
@@ -44,8 +44,14 @@ $DEBUG = false;
 			if (!empty($_GET['back'])) {
 				header("Location:$back");
 			}
+		} else {
+			setcookie('theme', $conf['theme']['default'], $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
 		}
 	$conf['theme']['current'] = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : $conf['theme']['default'];
+	
+// Gestion des emails
+	// adresse mail d'expédition des emails
+	$GLOBALS['emailsender'] = 'noreply@mail.com';
 
 /* 
  * Chargement des valeurs par défaut
@@ -86,6 +92,8 @@ $DEBUG = false;
 	if (empty($conf['page']['javascript']['grille2'])) $conf['page']['javascript']['grille2'] = false;
 	// chargement du script de gestion administration
 	if (empty($conf['page']['javascript']['administration'])) $conf['page']['javascript']['administration'] = false;
+	// chargement du script de gestion d'équipe
+	if (empty($conf['page']['javascript']['gestionTeam'])) $conf['page']['javascript']['gestionTeam'] = false;
 	// chargement du script de gestion jquery
 	if (empty($conf['page']['javascript']['jquery'])) $conf['page']['javascript']['jquery'] = false;
 	// chargement du script de gestion jquery-ui
@@ -96,10 +104,14 @@ $DEBUG = false;
 	if (empty($conf['page']['javascript']['online'])) $conf['page']['javascript']['online'] = false;
 	// chargement du script de gestion index
 	if (empty($conf['page']['javascript']['index'])) $conf['page']['javascript']['index'] = false;
+	// Chargemenet du script pour la gestion des utilisateurs
+	if (empty($conf['page']['javascript']['gestionUtilisateurs'])) $conf['page']['javascript']['gestionUtilisateurs'] = false;
+	// chargement du script de gestion utilisateur
+	if (empty($conf['page']['javascript']['utilisateur'])) $conf['page']['javascript']['utilisateur'] = false;
 	// chargement du script de gestion tipoftheday
 	if (empty($conf['page']['elements']['tipoftheday'])) $conf['page']['javascript']['tipoftheday'] = false;
-	// Chargemenet du script pour les formulaires de saisie de briefing
-	if (empty($conf['page']['elements']['formulaireBriefing'])) $conf['page']['elements']['formulaireBriefing'] = false;
+	// Chargemenet du script pour les formulaires de choix d'intervalle de dates
+	if (empty($conf['page']['elements']['intervalDate'])) $conf['page']['elements']['intervalDate'] = false;
 
 	// Chargement de la feuille de style 'index'
 	if (empty($conf['page']['stylesheet']['index'])) $conf['page']['stylesheet']['index'] = false;
@@ -112,8 +124,6 @@ $DEBUG = false;
 	if (empty($conf['page']['stylesheet']['jquery-ui'])) $conf['page']['stylesheet']['jquery-ui'] = false;
 	// Chargement de la feuille de style 'grille'
 	if (empty($conf['page']['stylesheet']['grille'])) $conf['page']['stylesheet']['grille'] = false;
-	// Chargement de la feuille de style 'conG'
-	if (empty($conf['page']['stylesheet']['conG'])) $conf['page']['stylesheet']['conG'] = false;
 	// Chargement de la feuille de style 'annuaire'
 	if (empty($conf['page']['stylesheet']['annuaire'])) $conf['page']['stylesheet']['annuaire'] = false;
 	// Chargement de la feuille de style 'grilleUnique'
@@ -121,6 +131,8 @@ $DEBUG = false;
 	// Chargement de la feuille de style 'online'
 	if (empty($conf['page']['stylesheet']['online'])) $conf['page']['stylesheet']['online'] = false;
 	if (empty($conf['page']['elements']['tipoftheday'])) $conf['page']['stylesheet']['tipoftheday'] = false;
+	// Chargement de la feuille de style 'utilisateur'
+	if (empty($conf['page']['stylesheet']['utilisateur'])) $conf['page']['stylesheet']['utilisateur'] = false;
 	
 	// Gestion du compactage des scripts javascript et css
 	if (empty($conf['page']['compact'])) $conf['page']['compact'] = false;
@@ -128,7 +140,7 @@ $DEBUG = false;
 	/*
 	 *  Gestion des dépendances
 	 */
-	if (true === $conf['page']['elements']['formulaireBriefing']) {
+	if (true === $conf['page']['elements']['intervalDate']) {
 		$conf['page']['javascript']['jquery'] = true;
 		$conf['page']['javascript']['jquery-ui'] = true;
 		$conf['page']['stylesheet']['jquery-ui'] = true;
@@ -137,7 +149,7 @@ $DEBUG = false;
 		$conf['page']['include']['class_menu'] = 1; // La classe menu est nécessaire à ce script
 	}
 	// Gestion des dépendances javascript
-	if (true === $conf['page']['javascript']['grille2'] || true === $conf['page']['javascript']['administration']) {
+	if (true === $conf['page']['javascript']['grille2'] || true === $conf['page']['javascript']['administration'] || true === $conf['page']['javascript']['gestionTeam']) {
 		$conf['page']['javascript']['jquery'] = true;
 		$conf['page']['javascript']['ajax'] = true;
 	}
@@ -159,15 +171,18 @@ $DEBUG = false;
 	if (true === $conf['page']['javascript']['ajax']) $javascript[] = 'ajax.js';
 	if (true === $conf['page']['javascript']['grille2']) $javascript[] = 'grille2.js.php';
 	if (true === $conf['page']['javascript']['administration']) $javascript[] = 'administration.js.php';
+	if (true === $conf['page']['javascript']['gestionTeam']) $javascript[] = 'gestionTeam.js.php';
+	if (true === $conf['page']['javascript']['gestionUtilisateurs']) $javascript[] = 'gestionUtilisateurs.js.php';
 	if (true === $conf['page']['javascript']['conG']) $javascript[] = 'tableauxCong.js.php'; // Gestion des tableaux de congés
 	if (true === $conf['page']['javascript']['online']) $javascript[] = 'online.js.php';
 	if (true === $conf['page']['elements']['tipoftheday']) $javascript[] = 'tipoftheday.js';
-	if (true === $conf['page']['elements']['formulaireBriefing']) $javascript[] = 'formulaireBriefing.js.php';
+	if (true === $conf['page']['elements']['intervalDate']) $javascript[] = 'intervalDate.js';
 	if (true === $conf['page']['javascript']['index']) $javascript[] = 'index.js';
+	if (true === $conf['page']['javascript']['utilisateur']) $javascript[] = 'utilisateur.js';
 
 // Liste des feuilles de styles à charger dans l'ordre de chargement
 	// Dépendances
-	$conf['page']['stylesheet']['messages'] = $conf['page']['elements']['messages'];
+
 	$stylesheet = array();
 	$compteur = 0;
 	if (true === $conf['page']['stylesheet']['general']) {
@@ -197,11 +212,6 @@ $DEBUG = false;
 		$stylesheet[$compteur]['media'] = 'print';
 		$compteur++;
 	}
-	if (true === $conf['page']['stylesheet']['messages']) {
-		$stylesheet[$compteur]['href'] = 'messages.css';
-		$stylesheet[$compteur]['media'] = 'screen';
-		$compteur++;
-	}
 	if (true === $conf['page']['stylesheet']['grille']) {
 		$stylesheet[$compteur]['href'] = 'grille.css';
 		$stylesheet[$compteur]['media'] = 'screen';
@@ -212,11 +222,6 @@ $DEBUG = false;
 	}
 	if (true === $conf['page']['stylesheet']['grilleUnique']) {
 		$stylesheet[$compteur]['href'] = 'grilleUnique.css';
-		$stylesheet[$compteur]['media'] = 'screen';
-		$compteur++;
-	}
-	if (true === $conf['page']['stylesheet']['conG']) {
-		$stylesheet[$compteur]['href'] = 'tableauxCong.css';
 		$stylesheet[$compteur]['media'] = 'screen';
 		$compteur++;
 	}
@@ -246,7 +251,17 @@ $DEBUG = false;
 		$stylesheet[$compteur]['media'] = 'print';
 		$compteur++;
 	}
-	if ($DEBUG) {
+	if (true === $conf['page']['stylesheet']['utilisateur']) {
+		$stylesheet[$compteur]['href'] = 'utilisateur.css';
+		$stylesheet[$compteur]['media'] = 'screen';
+		$compteur++;
+		/* TODO 
+		$stylesheet[$compteur]['href'] = 'utilisateurP.css';
+		$stylesheet[$compteur]['media'] = 'print';
+		$compteur++;
+		 */
+	}
+	if (isset($DEBUG) && true === $DEBUG) {
 		$stylesheet[$compteur]['href'] = 'debug.css';
 		$stylesheet[$compteur]['media'] = 'screen';
 		$compteur++;

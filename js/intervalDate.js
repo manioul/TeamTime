@@ -1,0 +1,20 @@
+$(function() {
+	$('#dateD').datepicker({
+		defaultDate:0,
+		changeMonth:true,
+		onSelect:function(selectedDate){
+		$("#dateF").datepicker("option","minDate",selectedDate);}
+		});
+	$('#dateF').datepicker({
+		defaultDate:12,
+		changeMonth:true,
+		onSelect:function(selectedDate){
+			$("#dateD").datepicker("option","maxDate",selectedDate);
+			}
+		});
+	$('#dateM').datepicker({
+		defaultDate:12,
+		changeMonth:true,
+		});
+	$.datepicker.setDefaults($.datepicker.regional['fr']);
+});

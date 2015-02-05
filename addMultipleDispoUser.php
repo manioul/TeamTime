@@ -1,7 +1,7 @@
 <?php
 /* addMultipleDispoUser.php
  *
- * Page squelette pour créer des pages personnalisées
+ * Ajoute une même dispo sur une longue période à un utilisateur
  *
  */
 
@@ -23,7 +23,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-$requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette page
+$requireTeamEdit = true; // L'utilisateur doit être admin de l'équipe pour accéder à cette page
 
 /*
  * INCLUDES
@@ -46,7 +46,7 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 /*
  * Configuration de la page
  */
-        $titrePage = "Administration de TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "Administration de TeamTime"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -106,21 +106,30 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
  * Fin de la configuration de la page
  */
 
+ob_start();
+
 require 'required_files.inc.php';
 
 
 if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) || !isset($_POST['did'])) {
+	$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 	// Recherche des utilisateurs
-	$users = array();
-	$sql = "SELECT `uid`, `nom` FROM `TBL_USERS` WHERE `locked` = FALSE AND `actif` = TRUE AND `gid` > 0 ORDER BY `poids` ASC";
-	$result = $_SESSION['db']->db_interroge($sql);
-	while ($row = $_SESSION['db']->db_fetch_array($result)) {
-		$users[$row[0]] = $row[1];
-	}
-	mysqli_free_result($result);
+	$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo(date('Y') . "-01-01", date('Y') . "-12-31", $affectation['centre'], $affectation['team']);
 
 	// Recherche des dispos
-	$sql = "SELECT `did`, `dispo` FROM `TBL_DISPO` WHERE `jours possibles` = 'all' AND `actif` = 1 AND `need_compteur` != TRUE ORDER BY `poids` ASC";
+	$sql = sprintf("
+		SELECT `did`
+		, `dispo`
+		FROM `TBL_DISPO`
+		WHERE `jours possibles` = 'all'
+		AND `actif` = 1
+		AND `need_compteur` != TRUE
+		AND (`centre` = 'all' OR `centre` = '%s')
+		AND (`team` = 'all' OR `team` = '%s')
+		ORDER BY `poids` ASC
+		", $affectation['centre']
+		, $affectation['team']
+	);
 	$result = $_SESSION['db']->db_interroge($sql);
 	while ($row = $_SESSION['db']->db_fetch_array($result)) {
 		$dispos[$row[0]] = $row[1];
@@ -134,16 +143,29 @@ if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) 
 	if (false === $dateD || false === $dateF || $_POST['did'] != (int) $_POST['did'] || $_POST['uid'] != (int) $_POST['uid']) {
 		$err = "Paramètre incorrect... :o";
 	} else {
-		// Recherche les jours qui ne sont pas des jours de repos dans le cycle
-		$sql = sprintf("SELECT `cid` FROM `TBL_CYCLE` WHERE `vacation` = '%s'", REPOS);
-		$result = $_SESSION['db']->db_interroge($sql);
-		$condition = "";
-		while ($row = $_SESSION['db']->db_fetch_array($result)) {
-			$condition .= sprintf("`cid` != '%s' AND ", $row[0]);
-		}
-		mysqli_free_result($result);
-		// Recherche les dates qui sont dans l'intervalle choisi par l'utilisateur et ne correspondent pas à des jouirs de repos du cycle
-		$sql = sprintf("SELECT `date` FROM `TBL_GRILLE` WHERE %s `date` BETWEEN '%s' AND '%s'", $condition, $dateD->date(), $dateF->date());
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($dateD);
+		// Recherche les dates qui sont dans l'intervalle choisi par l'utilisateur et ne correspondent pas à des jours de repos du cycle
+		$sql = sprintf("
+			SELECT `date`
+			FROM `TBL_GRILLE`
+			WHERE `cid` IN (
+				SELECT `cid`
+				FROM `TBL_CYCLE`
+				WHERE `vacation` != '%s'
+				AND (`centre` = 'all' OR `centre` = '%s')
+				AND (`team` = 'all' OR `team` = '%s')
+			)
+			AND `date` BETWEEN '%s' AND '%s'
+			AND (`centre` = 'all' OR `centre` = '%s')
+			AND (`team` = 'all' OR `team` = '%s')
+			", REPOS
+			, $affectation['centre']
+			, $affectation['team']
+			, $dateD->date()
+			, $dateF->date()
+			, $affectation['centre']
+			, $affectation['team']
+		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$values = "";
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
@@ -151,22 +173,16 @@ if (!isset($_POST['dateD']) || !isset($_POST['dateF']) || !isset($_POST['uid']) 
 		}
 		mysqli_free_result($result);
 		// Insère les données dans la base
-		$sql = sprintf("INSERT INTO `TBL_L_SHIFT_DISPO` (`sdid`, `date`, `uid`, `did`) VALUES %s", substr($values, 0, -1));
+		$sql = sprintf("
+			INSERT INTO `TBL_L_SHIFT_DISPO`
+			(`sdid`, `date`, `uid`, `did`)
+			VALUES %s
+			", substr($values, 0, -1)
+		);
 		$_SESSION['db']->db_interroge($sql);
 	}
 }
 
-// Affichage des en-têtes de page
-$smarty->display('header.tpl');
-
-// Ajout du menu horizontal
-if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
-
-// Ajout du choix du thème
-if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
-
-// Affichage du menu d'administration
-if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
 $smarty->display('addMultipleDispoUser.tpl');
 
 
@@ -177,5 +193,7 @@ include 'debug.inc.php';
 
 // Affichage du bas de page
 $smarty->display('footer.tpl');
+
+ob_end_flush();
 
 ?>

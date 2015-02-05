@@ -1,12 +1,9 @@
-th {
-	font-size: 10pt;
-}
-div.dateGrille {
+.dateGrille {
 	float: left;
 	width: 50%;
 	border-right: .2mm solid #000;
 }
-div.shift {
+.shift {
 	font-size: 14pt;
 }
 .vacances {
@@ -25,41 +22,52 @@ div.shift {
 	height: 0;
 	border: 1mm solid #fff;
 }
-td.nom {
+div.brief {
+	height: 3px;
+	background-color: #f90;
+	border-top: 1px solid #fff;
+}
+div.nobrief {
+	height: 3px;
+	border-top: 1px solid #fff;
+}
+.nom {
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 	font-size: 13pt;
 	text-decoration: bold;
 }
-td.cds {
+.cds {
 	border: 0.5mm solid #50d053;
 }
-td.ce {
+.ce {
 	border: 0.5mm solid #72f676;
 }
-td.pc {
+.pc {
 	border: 0.5mm solid #93fda9;
 }
-td.c {
+.c {
 	border: 0.5mm solid #b7f9bf;
 }
-td.presence {
+.presence {
 	width: 3cm;
 }
-td.present {
-	border: 1mm solid #99cc99;
-	color: #f00;
+.present {
+	color: #111;
 	text-decoration: bold;
 }
-td.absent {
-	border: 1mm solid #ccffcc;
-	color: #cccccc;
+.absent {
+	color: #e00;
+	background:#ddd;
 }
-.decompte, .dcpt {
+.dcpt {
 	font-size: 8pt;
 }
+.cadenasF, .cadenasO{
+	display:none;
+} 
 .locker {
-	display: none;
+	visibility:hidden;
 }
-div#dFormInfoSup {
+#dFormInfoSup {
 	display: none;
 }

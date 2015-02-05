@@ -26,7 +26,7 @@
 define('INSTALL_DIR', "/var/www/TeamTime");
 
 // Numéro de version de l'application
-define('VERSION', "1.0a");
+define('VERSION', "2.5c");
 
 // Les constantes relatives à des erreurs critiques sont préfixées par ERR_
 // Les constantes relatives à des erreurs fatales sont préfixées par FAT_
@@ -62,5 +62,6 @@ define('VERSION', "1.0a");
 
 // Constantes internes au fonctionnement du programme
 	define('REPOS', 'Repos'); // Dénommination des jours de repos du cycle dans la bdd (TBL_CYCLE)
+	define('MAX_CYCLES', 8); // Le nombre maximum de cycles affichables
 
 ?>

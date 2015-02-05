@@ -22,7 +22,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-if ($DEBUG) {
+if (isset($DEBUG) && true === $DEBUG) {
+	$TRACE = true; // Si on veut tracer l'application
 	debug::getInstance()->format('html');
 	//firePhpLog(debug::getInstance()->format(), 'format');
 	// Information de temps de création de la page

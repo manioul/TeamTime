@@ -29,7 +29,7 @@ function hideTableaux()
 }
 function showTableau(sId)
 {
-	$('#'+sId).show();
+	$('#'+sId).show('slow');
 }
 function desemphasize()
 {
@@ -48,20 +48,21 @@ $(function() {
 			});
 		// On retire les liens sur les dates de congés dans les tableaux pour les gérer avec jquery
 		$('td.date').children('a').replaceWith(function() { return $(this).contents(); });
+		$('td.date').dblclick(function() {
+			var sRequest = 'y=1&id='+this.id;
+			submitRequest(sRequest,'updateCong.php');
+			});
 		<?php
-		if (!empty($_SESSION['EDITEURS'])) { ?>
+		if (!empty($_SESSION['TEAMEDIT'])) { ?>
 		$('#datePicker').datepicker($.datepicker.regional['fr']);
 		<? } ?>
 		<?php
-		if (!empty($_SESSION['EDITEURS'])) { ?>
+		if (!empty($_SESSION['TEAMEDIT'])) { ?>
 		$('td.filed').addClass('pointer');
 		$('td.filed').click(function() {
-			var type;
-			if ($(this).hasClass('filed'))
-			{
-				$(this).addClass('confirmed');
-				$(this).removeClass('pointer');
-			}
+			$(this).addClass('valide');
+			$(this).removeClass('pointer');
+			$(this).removeClass('filed');
 			var sRequest = 'f=2&id='+this.id;
 			submitRequest(sRequest,'updateCong.php');
 			});

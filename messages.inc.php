@@ -24,11 +24,53 @@
 $messages = array();
 $index = 0;
 
-if (!empty($_SESSION['ADMIN']) && !get_sql_globals_constant('online')) {
+if (!array_key_exists('iAmVirtual', $_SESSION)) {
+	if (array_key_exists('ADMIN', $_SESSION)) {
+		$messages[$index]['message'] = "Connecté en tant que " . $_SESSION['utilisateur']->login();
+		$messages[$index]['lien'] = "";
+		$messages[$index]['classe'] = "warn";
+		$index++;
+	}
+} else {
+	$messages[$index]['message'] = "Connecté en tant que " . $_SESSION['utilisateur']->login() . " (" . $_SESSION['iAmVirtual'] . ")";
+	$messages[$index]['lien'] = "";
+	$messages[$index]['classe'] = "warn";
+	$index++;
+}
+if (array_key_exists('ADMIN', $_SESSION) && !get_sql_globals_constant('online')) {
 	$messages[$index]['message'] = "Le site est actuellement hors-ligne.";
 	$messages[$index]['lien'] = "administration.php";
 	$messages[$index]['classe'] = "warn";
 	$index++;
+}
+if (array_key_exists('iAmVirtual', $_SESSION)) {// && !array_key_exists('ADMIN', $_SESSION))) {
+	$messages[$index]['message'] = sprintf("Vous vous faites passer pour %s %s. Cliquez ici pour retrouver votre vraie personnalité...", $_SESSION['utilisateur']->prenom(), $_SESSION['utilisateur']->nom());
+	$messages[$index]['lien'] = "impersonate.php?iWantMyselfBack=1";
+	$messages[$index]['classe'] = "warn";
+	$index++;
+}
+foreach ($_SESSION['utilisateur']->retrMessages() as $message) {
+	$messages[$index]['message'] = $message->message();
+	$message->setRead();
+	$index++;
+}
+$_SESSION['utilisateur']->flushMessages();
+// Recherche les comptes créés en attente de validation
+if (array_key_exists('EDITEURS', $_SESSION)) {
+	$sql = sprintf("SELECT * FROM `TBL_SIGNUP_ON_HOLD`
+		WHERE `centre` = '%s'
+		AND `team` = '%s'
+		AND `url` IS NULL
+		", $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+	);
+	$result = $_SESSION['db']->db_interroge($sql);
+	if (mysqli_num_rows($result) > 0) {
+		$messages[$index]['message'] = "Des utilisateurs ont fait une demande d'inscription dans votre équipe et attendent votre acceptation.";
+		$messages[$index]['lien'] = 'confirmUser.php';
+		$index++;
+	}
+	mysqli_free_result($result);	
 }
 
 $smarty->assign('messages', $messages);

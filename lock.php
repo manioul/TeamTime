@@ -27,7 +27,7 @@
 // L'utilisateur doit être éditeur pour accéder à cette page
 // Seuls les utilisateurs habilités à modifier librement la grille peuvent
 // (dé)locker une grille
-$requireEditeur = true;
+$requireTeamEdit = true;
 
 /*
  * Configuration de la page
@@ -50,6 +50,7 @@ $requireEditeur = true;
  */
 require 'required_files.inc.php';
 
+ob_start();
 $err = "";
 
 
@@ -60,7 +61,11 @@ $err = "";
 $dateOK = FALSE;
 $userOK = FALSE;
 
-if ($cycle = new Cycle($_REQUEST['date'])) {
+$date = new Date($_REQUEST['date']);
+
+$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
+
+if ($cycle = new Cycle($date, $affectation['centre'], $affectation['team'])) {
 	$dateOK = TRUE;
 } else {
 	$err .= "Je ne comprends pas la date de base pour (dé)protéger la grille.\n";
@@ -70,36 +75,19 @@ if ($cycle = new Cycle($_REQUEST['date'])) {
 /*
  * Verrouillage
  */
-if ($dateOK) {
+if (true === $dateOK) {
 	if ($_REQUEST['lock'] === 'bloque') {
 		$cycle->lockCycle();
+		print("Cycle verrouillé");
 	}
 	if ($_REQUEST['lock'] === 'ouvre') {
 		$cycle->unlockCycle();
+		print("Cycle déverrouillé");
 	}
 }
 
 
 header("Location:".$_SERVER['HTTP_REFERER']);
-/*
- * Traitement du décompte
- */
-if ($userOK) {
-	$sql = sprintf("SELECT * FROM `TBL_DECOMPTE` WHERE `date` = '%s'", $date->date());
-	$result = $_SESSION['db']->db_interroge($sql);
-	$nbCol = mysqli_num_rows($result);
-	mysqli_free_result($result);
-	$err .= "nbCols = $nbCols\n";
-	$test = FALSE;
-
-	if ($nbCol > 0) {
-		$sqlquery[] = sprintf("UPDATE `TBL_DECOMPTE` SET `uid` = '%s', `decompte` = '%s' WHERE `date` = '%s'", intval($corresp[1]), intval($value), $date->date());
-	} else {
-		$sqlquery[] = sprintf("INSERT INTO `TBL_DECOMPTE` (`date`, `uid`, `decompte`) VALUES ('%s', '%s', '%s')", $date->date(), intval($corresp[1]), intval($value));
-	}
-	$_SESSION['db']->db_interrogeArray($sqlquery);
-}
-
 
 /*
  * Gestion des erreurs
@@ -112,5 +100,7 @@ if ($err != "") {
 if (isset($_GET['noscript'])) { // Si le paramètre noscript est passé alors javascript n'est pas utilisé
 	print ("<br /><a href=\"affiche_grille.php\">Revenir &agrave; la grille</a>");
 }
+
+ob_end_flush();
 
 ?>

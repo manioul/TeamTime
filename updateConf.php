@@ -24,7 +24,7 @@
 
 // Require admin
 // L'utilisateur doit être admin pour accéder à cette page
-$requireEditeur = true;
+$requireTeamEdit = true;
 
 /*
  * Configuration de la page
@@ -41,7 +41,7 @@ $requireEditeur = true;
 	$conf['page']['include']['classUtilisateur'] = NULL; // Le sript utilise uniquement la classe utilisateur (auquel cas, le fichier class_utilisateur.inc.php
 	$conf['page']['include']['class_utilisateurGrille'] = 1; // Le sript utilise la classe utilisateurGrille
 	$conf['page']['include']['class_cycle'] = 1; // La classe cycle est nécessaire à ce script (remplace grille.inc.php
-	$conf['page']['include']['smarty'] = 1; // Smarty sera utilisé sur cette page
+	$conf['page']['include']['smarty'] = NULL; // Smarty sera utilisé sur cette page
 /*
  * Fin de la définition des include
  */
@@ -60,9 +60,33 @@ if ($_POST['conf'] != 'W' && $_POST['conf'] != 'E') {
 if (preg_match('/confa(\d{4})m(\d*)j(\d*)/', $_POST['id'], $array)) {
 	firePhpLog($array, 'arr');
 	$date = new Date(sprintf("%04d-%02d-%02d", $array[1], $array[2], $array[3]));
-	$sql = sprintf("UPDATE `TBL_GRILLE` SET `conf` = '%s' WHERE `readonly` = FALSE AND `date` BETWEEN '%s' AND '%s'", $_POST['conf'], $date->date(), $date->addJours(Cycle::getCycleLength()-1)->date());
+	$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
+	$sql = sprintf("UPDATE `TBL_GRILLE`
+		SET `conf` = '%s'
+		WHERE `readonly` = FALSE
+		AND `date` BETWEEN '%s' AND '%s'
+		AND `centre` = '%s'
+		AND `team` = '%s'
+		", $_POST['conf']
+		, $date->date()
+		, $date->addJours(Cycle::getCycleLength()-1)->date()
+		, $affectation['centre']
+		, $affectation['team']
+	);
+
 	$_SESSION['db']->db_interroge($sql);
-	$err = mysql_error();
+	if ($_SESSION['db']->db_affected_rows() < Cycle::getCycleLength()) { // Le verrouillage ne verrouille pas les jours de REPOS, d'où un nombre de données affectées même lorsque la grille n'est pas modifiable
+		$err = "Modification impossible...";
+		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Modification de la configuration impossible.", "DEBUG", "updateConf.php", "mod failed", "affected_rows:%d;shouldBe:%d;POST:%s;SESSION:%s")'
+			, $_SESSION['db']->db_affected_rows()
+			, Cycle::getCycleLength()
+			, $_SESSION['db']->db_real_escape_string(json_encode($_POST))
+			, $_SESSION['db']->db_real_escape_string(json_encode($_SESSION))
+			)
+		);
+	} else {
+		$err = mysql_error();
+	}
 	firePhpLog($sql, 'SQL');
 } else {
 	$err = "Date inconnue";

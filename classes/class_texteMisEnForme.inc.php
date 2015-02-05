@@ -75,6 +75,21 @@ class texteMisEnForme {
 		$pattern = '/{([\/]*)strong}/';
 		$replacement = '<\1strong>';
 		$this->texte = preg_replace($pattern, $replacement, $this->texte);
+
+		// {p}{/p} paragraphes
+		$pattern = '/{([\/]*)p}/';
+		$replacement = '<\1p>';
+		$this->texte = preg_replace($pattern, $replacement, $this->texte);
+		
+		// {h3}{/h3} titres
+		$pattern = '/{([\/]*)h3}/';
+		$replacement = '<\1h3>';
+		$this->texte = preg_replace($pattern, $replacement, $this->texte);
+		
+		// {h4}{/h4} titres
+		$pattern = '/{([\/]*)h4}/';
+		$replacement = '<\1h4>';
+		$this->texte = preg_replace($pattern, $replacement, $this->texte);
 	}
 }
 

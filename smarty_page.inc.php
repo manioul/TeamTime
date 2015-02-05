@@ -57,16 +57,31 @@ $smarty->assign('VERSION', VERSION);
 
 // Définition des notes de version
 $notesversion = "<strong>TeamTime v" . VERSION . "</strong>"; 
-if ($DEBUG) {
+if (isset($DEBUG) && true === $DEBUG) {
 	$notesversion .= " (Debug On";
-	if ($GLOBALS['firePHP_OK']) {
+	if (isset($GLOBALS['firePHP_OK'])) {
 		$notesversion .= " - firePHP On)";
 	} else {
 		$notesversion .= ")";
 	}
-} elseif ($GLOBALS['firePHP_OK']) {
+} elseif (isset($GLOBALS['firePHP_OK'])) {
 		$notesversion .= " (firePHP On)";
 }
 $smarty->assign('notesversion', $notesversion); 
+
+// Affichage des en-têtes de page
+$smarty->display('html.header.tpl');
+
+// Ajout du menu horizontal
+if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
+
+// Ajout des messages
+if ($conf['page']['elements']['messages']) include('messages.inc.php');
+
+// Ajout du choix du thème
+if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
+
+// Affichage du menu d'administration
+if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
 
 ?>

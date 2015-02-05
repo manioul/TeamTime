@@ -1,5 +1,4 @@
 {* Smarty *}
-<div id='container'>
 	<div id="horlogeFond"></div>
 	{if $nav[1] != ""}<div id="nav1"></div>{/if}
 	{if $nav[2] != ""}<div id="nav2"></div>{/if}
@@ -26,7 +25,7 @@
 	</div>
 	{/if}
 	{if is_array($contenu)}
-	<div id="content" class="boite">
+	<div id="licence" class="boite">
 		{foreach from=$contenu key=id item=v}
 		<div id="$id">
 			<h2>{$v.titre}</h2>
@@ -36,4 +35,4 @@
 	</div>
 	{/if}
 	<div id="version">v{$VERSION}</div>
-</div>
+<div id="info"></div>

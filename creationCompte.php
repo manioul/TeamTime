@@ -23,7 +23,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-$requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette page
+$requireAdmin = true; // L'utilisateur doit être admin pour accéder à cette page
 
 ob_start(); // Obligatoire pour firePHP
 
@@ -47,7 +47,7 @@ ob_start(); // Obligatoire pour firePHP
 /*
  * Configuration de la page
  */
-        $titrePage = "TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "TeamTime"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -106,7 +106,7 @@ require 'required_files.inc.php';
 
 // Recherche des infos des utilisateurs
 $infos = array();
-$sql = "SELECT `nom` FROM `TBL_USERS` WHERE `locked` = FALSE AND `actif` = TRUE AND `gid` > 0 ORDER BY `poids` ASC";
+$sql = "SELECT `nom` FROM `TBL_USERS` WHERE `locked` = FALSE AND `actif` = TRUE ORDER BY `nom` ASC";
 $result = $_SESSION['db']->db_interroge($sql);
 while ($row = $_SESSION['db']->db_fetch_array($result)) {
 	$infos[] = $row[0];
@@ -115,18 +115,6 @@ mysqli_free_result($result);
 $smarty->assign('infos', $infos);
 
 firePhpLog($_SESSION, '$_SESSION');
-
-// Affichage des en-têtes de page
-$smarty->display('header.tpl');
-
-// Ajout du menu horizontal
-if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
-
-// Ajout du choix du thème
-if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
-
-// Affichage du menu d'administration
-if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
 
 $smarty->display('creationCompte.tpl');
 

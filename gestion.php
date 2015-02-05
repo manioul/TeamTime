@@ -1,7 +1,7 @@
 <?php
 /* administration.php
  *
- * Page squelette pour créer des pages personnalisées
+ * Ajout de briefing, période de charge, vacances scolaires
  *
  */
 
@@ -46,7 +46,7 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 /*
  * Configuration de la page
  */
-        $titrePage = "Administration de TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "Briefing, période de charge et vacances scolaires"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -60,7 +60,7 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 	// Affichage du menu horizontal
 	$conf['page']['elements']['menuHorizontal'] = true;
 	// Affichage messages
-	$conf['page']['elements']['messages'] = false;
+	$conf['page']['elements']['messages'] = true;
 	// Affichage du choix du thème
 	$conf['page']['elements']['choixTheme'] = false;
 	// Affichage du menu d'administration
@@ -83,7 +83,7 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 
 
 	// Gestion des briefings
-	$conf['page']['elements']['formulaireBriefing'] = true;
+	$conf['page']['elements']['intervalDate'] = true;
 
 	// Utilisation de jquery
 	$conf['page']['javascript']['jquery'] = true;
@@ -108,22 +108,6 @@ $requireEditeur = true; // L'utilisateur doit être admin pour accéder à cette
 
 require 'required_files.inc.php';
 
-
-// Affichage des en-têtes de page
-$smarty->display('header.tpl');
-
-// Ajout du menu horizontal
-if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
-
-// Ajout des messages
-if ($conf['page']['elements']['messages']) include('messages.inc.php');
-
-// Ajout du choix du thème
-if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
-
-// Affichage du menu d'administration
-if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
-
 $forms = array(
 	'briefing'	=> array(
 		'table'		=> 'TBL_BRIEFING'
@@ -145,27 +129,40 @@ $forms = array(
 // Choix des éléments à gérer (vacances, charge, briefing)
 $get = $_GET['q'];
 
+
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+
 $titres = array();
 $datas = array();
 $arr = $forms[$get];
-		// Recherche des évènements déjà existant et postérieurs à la date courante
-		$sql = sprintf("SELECT `id`, `dateD`, `dateF`, `description` FROM `%s` WHERE `dateF` > NOW()", $arr['table']);
-		$result = $_SESSION['db']->db_interroge($sql);
-		$a = array();
-		while ($row = $_SESSION['db']->db_fetch_array($result)) {
-			$dateD = new Date($row[1]);
-			$dateF = new Date($row[2]);
-			$a[] = array(
-				'id'		=> $row[0]
-				,'dateD'	=> $dateD->formatDate('fr')
-				,'dateF'	=> $dateF->formatDate('fr')
-				,'description'	=> $row[3]
-				,'t'		=> $arr['t']
-			);
-		}
-		mysqli_free_result($result);
-		$datas = $a;
-		$titres = $arr;
+// Recherche des évènements déjà existant et postérieurs à la date courante
+$sql = sprintf("
+	SELECT `id`
+	, `dateD`
+	, `dateF`
+	, `description`
+	FROM `%s`
+	WHERE `dateF` > NOW()
+	AND `centre` = '%s'
+	", $arr['table']
+	, $affectation['centre']
+);
+$result = $_SESSION['db']->db_interroge($sql);
+$a = array();
+while ($row = $_SESSION['db']->db_fetch_array($result)) {
+	$dateD = new Date($row[1]);
+	$dateF = new Date($row[2]);
+	$a[] = array(
+		'id'		=> $row[0]
+		,'dateD'	=> $dateD->formatDate('fr')
+		,'dateF'	=> $dateF->formatDate('fr')
+		,'description'	=> $row[3]
+		,'t'		=> $arr['t']
+	);
+}
+mysqli_free_result($result);
+$datas = $a;
+$titres = $arr;
 
 $smarty->assign('titre', $titres);
 $smarty->assign('datas', $datas);

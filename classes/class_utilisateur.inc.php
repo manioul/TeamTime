@@ -2,6 +2,7 @@
 // class_utilisateur.inc.php
 //
 // classe implémentant les informations et la gestion des utilisateurs
+//
 
 /*
 	TeamTime is a software to manage people working in team on a cyclic shift.
@@ -102,6 +103,50 @@ class utilisateur {
 			 n'a pas les droits suffisants
 		      */
 	private $page = NULL; // La page qui est affichée après la connexion de l'utilisateur
+	protected static $fieldsDefinition = NULL;
+	// Retourne une définition des champs pour être utlisé par un tableau html
+	// $correspondances est un tableau contenant des correspondances
+	// entre les champs de la table et une étiquette à afficher dans le tableau html
+	// $regen permet de régénérer la définition si positionné
+// Méthodes statiques
+	protected static function _fieldsDefinition($correspondances, $regen = NULL) {
+		if (is_null($regen) || is_null($this->fieldsDefinition)) {
+			// Recherche les champs de la table des utilisateurs
+			foreach ($_SESSION['db']->db_getColumnsTable("TBL_USERS") as $row) {
+				self::$fieldsDefinition[$row['Field']]['Field'] = isset($label[$row['Field']]) ? $label[$row['Field']] : $row['Field'];
+				if ($row['Extra'] == 'auto_increment' || $row['Field'] == 'nblogin' || $row['Field'] == 'lastlogin') {
+					// Ce champ ne sera pas saisi par l'utilisateur
+				} else {
+					self::$fieldsDefinition[$row['Field']]['width'] = -1;
+					if (preg_match('/\((\d*)\)/', $row['Type'], $match) == 1) {
+						if ($match[1] > 1) {
+							self::$fieldsDefinition[$row['Field']]['width'] = ($match[1] < 10) ? $match[1] : 10;
+							self::$fieldsDefinition[$row['Field']]['maxlength'] = $match[1];
+						}
+					}
+					if (preg_match('/int\((\d*)\)/', $row['Type'], $match)) {
+						if ($match[1] == 1) {
+							self::$fieldsDefinition[$row['Field']]['type'] = "checkbox";
+							self::$fieldsDefinition[$row['Field']]['value'] = 1;
+						} else {
+							self::$fieldsDefinition[$row['Field']]['type'] = "text";
+						}
+					} elseif ($row['Field'] == 'email') {
+						self::$fieldsDefinition[$row['Field']]['type'] = 'email';
+					} elseif ($row['Field'] == 'password') {
+						self::$fieldsDefinition[$row['Field']]['type'] = 'password';
+					} elseif ($row['Type'] == 'date') {
+						self::$fieldsDefinition[$row['Field']]['type'] = 'date';
+						self::$fieldsDefinition[$row['Field']]['maxlength'] = 10;
+						self::$fieldsDefinition[$row['Field']]['width'] = 6;
+					} else {
+						self::$fieldsDefinition[$row['Field']]['type'] = 'text';
+					}
+				}
+			}
+		}
+		return self::$fieldsDefinition;
+	}
 // Constructeur
 	function __construct($row = NULL) {
 		$this->login = '';
@@ -115,8 +160,23 @@ class utilisateur {
 	}
 	function __destruct() {
 		$this->logout();
+		unset($this);
 	}
-	// Accesseurs
+// Accesseurs
+	public function asArray() {
+		return array(
+			'login'			=> $this->login
+			, 'email'		=> $this->email
+			, 'sha1'		=> $this->sha1
+			, 'lastlogin'		=> $this->lastlogin
+			, 'nblogin'		=> $this->nblogin
+			, 'locked'		=> $this->locked
+			, 'creation'		=> $this->creation
+			, 'modification'	=> $this->modification
+			, 'actif'		=> $this->actif
+			, 'page'		=> $this->page
+		);
+	}
 	private function _setFromRow($row) {
 		foreach ($row as $cle => $valeur) {
 			if (method_exists($this, $cle)) {
@@ -138,9 +198,14 @@ class utilisateur {
 		}
 		return $this->sha1;
 	}
+	public function password($param = NULL) {
+		if (is_null($param)) return false;
+		$this->sha1(sha1($this->login . $param));
+		return true;
+	}
 	public function email ($param = NULL) {
 		if (!is_null($param)) {
-			$this->email = $param;
+			$this->email = filter_var($param, FILTER_VALIDATE_EMAIL); // retourne FALSE si erreur http://www.php.net/manual/en/function.filter-var.php
 		}
 		return $this->email;
 	}
@@ -158,7 +223,7 @@ class utilisateur {
 	}
 	public function actif ($param = NULL) {
 		if (!is_null($param)) {
-			$this->actif = $param;
+			$this->actif = (empty($param) ? 0 : 1);
 		}
 		return $this->actif;
 	}
@@ -170,19 +235,24 @@ class utilisateur {
 	}
 	public function lastlogin ($param = NULL) {
 		if (!is_null($param)) {
-			$this->lastlogin = $param;
+			$this->lastlogin = new Date($param);
 		}
 		return $this->lastlogin;
 	}
 	public function locked($param = NULL) {
 		if (!is_null($param)) {
-			$this->locked = $param;
+			$this->locked = ($param == 1 ? 1 : 0);
 		}
 		return $this->locked;
 	}
 	public function page($param = NULL) {
 		if (!is_null($param)) {
-			$this->page = $param;
+		       if (preg_match('/^[a-z][a-z_]*\.php\?*[[a-z_]*=*[a-z]*\&*]*/i', $param)) {
+			       $this->page = $param;
+		       } else {
+			       firePhpWarn("Page non conforme", $param);
+			       return false;
+		       }
 		}
 		return $this->page;
 	}
@@ -283,7 +353,7 @@ class utilisateur {
 		return FALSE;
 	}
 
-	/*
+/*
 	public function add_groupe($groupe) {
 		$this->groupes[] = $groupe;
 	}
@@ -367,20 +437,20 @@ class utilisateur {
 			// Retourne une condition toujours valide pour l'admin
 			return '1 = 1';
 		}
-		$condition = "( " . $field . " = 'nogroup' OR ";
+		$condition = "`" . $field . "` IN ('nogroup', ";
 		foreach ($this->groupes as $groupe) {
 			if ($groupe == 'nogroup') { continue; }
-			$condition .= sprintf ("%s = '%s' OR ", $field, $groupe);
+			$condition .= "'" . $groupe "', ";
 		}
-		$condition = substr ($condition, 0, -4);
-		$condition .= " )";
+		$condition = substr ($condition, 0, -2);
+		$condition .= ")";
 		return $condition;
 	}
 	// Retourne le lastlogin sous une forme francisée
 	public function lastlogin_fr() {
 		return date_sql2fr($this->lastlogin);
 	}
-	*/
+*/
 }
 
 ?>

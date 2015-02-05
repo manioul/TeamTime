@@ -21,6 +21,10 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+set_include_path(implode(PATH_SEPARATOR, array(realpath('.'), get_include_path())));
+
+require_once 'constantes.inc.php';
+
 class database {
 	private $link;
 	private $DSN;
@@ -33,13 +37,17 @@ class database {
 		} else {
 			$this->DSN = $GLOBALS['DSN']['nobody'];
 		}
-		$this->_db_connect();
+		if (FALSE === $this->_db_connect()) {
+			return FALSE;
+		}
 		if ( !mysqli_set_charset($this->link, $this->DSN['NAMES']) ) {
 			// Erreur du passage en utf8 du dialogue avec la base de données
 			firePHPInfo(sprintf('Erreur du passage en %s du dialogue avec la base.', $this->DSN['NAMES']));
+			return FALSE;
 		} else {
 			firePHPInfo(sprintf('Passage en %s du dialogue avec la base.', $this->character_set()));
 		}
+		return TRUE;
 	}
 	function __destruct() {
 		$this->_db_ferme();
@@ -75,7 +83,8 @@ class database {
 	private function _db_connect() {
 		if (! is_array($this->DSN)) { $this->DSN = $GLOBALS['DSN']['nobody']; }
 		if ( ERR_DB_CONN === $this->_uns_db_connect() ) {
-			die ( 'Erreur de connexion (' . mysqli_connect_errno() . ') ' . mysqli_connect_error() );
+			print ( 'Erreur de connexion (' . mysqli_connect_errno() . ') ' . mysqli_connect_error() );
+			return FALSE;
 		}
 		$this->_uns_db_set_NAMES();
 	}
@@ -96,15 +105,24 @@ class database {
 			//$this->db_interroge( sprintf("SET NAMES '%s'", $this->DSN['NAMES']) ); // Plante la bdd avec mysqli
 		}
 	}
+	public function change_user($DSN) {
+		if (mysqli_change_user($this->link, $DSN['username'], $DSN['password'], $DSN['dbname'])) {
+			$this->DSN = $DSN;
+			return true;
+		}
+		return false;
+	}
 // Interrogation
 	public function db_interroge ($query) {
 		if (! (is_resource($this->link)) ) {
 			$this->_db_connect();
 		}
-		if ( !(	$result = mysqli_query ( $this->link, $query ) ))
+		if ( ( $result = mysqli_query ( $this->link, $query ) ) === FALSE)
 		{ // Erreur de requête
+			$result = "Erreur";
 			debug::getInstance()->lastError(ERR_DB_SQL);
 			debug::getInstance()->triggerError(sprintf("Erreur de requête (%s): %s\n", $query, mysqli_error($this->link)));
+			//printf("Erreur de requête (%s): %s\n", $query, mysqli_error($this->link));
 		}
 		return $result;
 	}
@@ -152,60 +170,129 @@ class database {
 	// colonne 2  ..      ..    ..    ..     ..     ..
 	// ...
 	public function db_getColumnsTable($table) {
-		$query = "SHOW COLUMNS FROM `$table`";
-		$result = $_SESSION['db']->db_interroge($query);
+		$result = $this->db_interroge("SHOW COLUMNS FROM `$table`");
 		$fields = array();
 		while ($row = mysqli_fetch_assoc($result)) {
-			$fields[] = $row;
+			if ($row['Null'] == "YES") {
+				$row['Null'] = "NULL";
+			} else {
+				$row['Null'] = "NOT NULL";
+			}
+			$fields[$row['Field']] = $row;
 		}
 		mysqli_free_result($result);
 		//print (nl2br(print_r ($fields, TRUE)));
 		return $fields;
 	}
+	// Retourne les champs d'une table
+	// sous forme de tableau si le deuxième paramètre est 'array'
+	// sinon sous forme de chaîne pour préparer une insertion si le deuxième paramètre est 'insert'
+	public function db_getFields($table, $param = 'array') {
+		$result = $this->db_interroge("SHOW COLUMNS FROM `$table`");
+		if ($param == 'array') {
+			$return = array();
+			while ($row = $this->db_fetch_assoc($result)) {
+				$return[] = $row['Field'];
+			}
+		} elseif ($param == 'insert') {
+			$return = "";
+			while ($row = $this->db_fetch_assoc($result)) {
+				$return .= "`" . $row['Field'] . "`, ";
+			}
+			$return = substr($return, 0, -2);
+		}
+		mysqli_free_result($result);
+		return $fields;
+	}
+	// Effectue une requête d'insertion des champs $values dans la table $table
+	// et retourne la valeur de l'id inséré
+	// $values = array('Field' => "value"...)
+	public function db_insert($table, $values) {
+		$sql = "INSERT INTO `$table` (";
+		$val = " VALUES (";
+		foreach ($this->db_getColumnsTable($table) as $row) {
+			$sql .= "`" . $row['Field'] . "`, ";
+			if ($row['Key'] == 'PRI') {
+				$val .= "NULL, ";
+			} else {
+				$val .= "'" . $this->db_real_escape_string($values[$row['Field']]) . "', ";
+			}
+		}
+		$sql = substr($sql, 0, -2) . ")";
+		$val = substr($val, 0, -2) . ")";
+		firePhpLog($sql . $val, 'insert request from class db');
+		$this->db_interroge($sql . $val);
+		return $this->db_insert_id();
+	}
+	// Effectue une requête UPDATE de la table $table avec les valeurs $values
+	// la référence est la clé primaire
+	public function db_update($table, $values) {
+		$sql = "UPDATE `$table` SET ";
+		$where = " WHERE ";
+		$flag = false;
+		foreach ($this->db_getColumnsTable($table) as $row) {
+			if (!isset($values[$row['Field']])) continue;
+			if ($row['Key'] == 'PRI') {
+				if ($flag) $where .= " AND ";
+				$where .= "`" . $row['Field'] . "` = '" . $this->db_real_escape_string($values[$row['Field']]) . "'";
+			} else {
+				$sql .= "`" . $row['Field'] . "` = '" . $this->db_real_escape_string($values[$row['Field']]) . "', ";
+			}
+		}
+		$sql = substr($sql, 0, -2);
+		firePhpLog($sql . $where, 'update request from class db');
+		return $this->db_interroge($sql . $where);
+	}
 	// Retourne un tableau exploitable pour créer un formulaire
 	// à partir des caractéristiques d'une table dont le nom est passé en paramètre
-	public function db_columnToForm($table) {
+	// $correspondances est un tableau contenant des correspondances
+	// entre les champs de la table et une étiquette à afficher dans le tableau html
+	public function db_columnToForm($table, $correspondance = array()) {
 		$fields = $this->db_getColumnsTable($table);
 		$fieldtype = array( 0 => 
-			array('name'		=> 'boolean'
+			array('name'	=> 'boolean'
 			,'pattern'	=> '/^tinyint\(1\)$/i'
-			,'formtype'	=> 'checkbox')
+			,'formtype'	=> 'checkbox'
+			,'value'	=> 1
+			)
 			,1 =>
-			array('name'		=> 'integer'
+			array('name'	=> 'integer'
 			,'pattern'	=> '/^(tiny|small|medium|big)*int(\(([^1]|[1-9][0-9][0-9]*)\))$/i'
 			,'formtype'	=> 'text')
 			,2 =>
-			array('name'		=> 'text'
+			array('name'	=> 'text'
 			,'pattern'	=> '/^((var)*char|(tiny|medium|long)*text)\(([0-9]+)\)$/i'
 			,'formtype'	=> 'text')
 			,3 =>
-			array('name'		=> 'date'
+			array('name'	=> 'date'
 			,'pattern'	=> '/date/i'
-			,'formtype'	=> 'text')
+			,'formtype'	=> 'date')
 			,4 =>
-			array('name'		=> 'liste'
+			array('name'	=> 'liste'
 			,'pattern'	=> "/^enum(\(.+\))$/i"
 			,'formtype'	=> 'select')
 			,5 =>
-			array('name'		=> 'multiple'
+			array('name'	=> 'multiple'
 			,'pattern'	=> "/^set(\(.+\))$/i"
 			,'formtype'	=> 'select')
 		);
-		for ($i=0; $i < count($fields); $i++) {
+		foreach ($fields as $Field => $row) {
 			// Détection du type d'élément INPUT à attribuer
 			foreach ($fieldtype as $ft) {
-				if (preg_match($ft['pattern'], $fields[$i]['Type'], $matches)) {
-					$fields[$i]['Input'] = $ft['formtype'];
-					if ($ft['formtype'] === 'text') {
-						if ($ft['name'] === 'date') {
-							$fields[$i]['Length'] = 10;
-						} else {
-							$fields[$i]['Length'] = $matches[count($matches)-1];
-						}
+				if (preg_match($ft['pattern'], $fields[$Field]['Type'], $matches)) {
+					$fields[$Field]['Input'] = $ft['formtype'];
+					if (isset($correspondances[$Field])) {
+						$fields[$Field]['label'] = $correspondances[$Field];
+					} else {
+						$fields[$Field]['label'] = $Field;
 					}
-					if ($ft['formtype'] === 'select') {
+					if (isset($ft['value'])) $fields[$Field]['value'] = $ft['value'];
+					if ($ft['formtype'] === 'text' && isset($matches[1])) {
+						$fields[$Field]['maxlength'] = $matches[1];
+						$fields[$Field]['width'] = $matches[1];
+					} elseif ($ft['formtype'] === 'select') {
 						if (preg_match_all("/'([^()']+)'/Ui", $matches[1], $moui)) {
-							$fields[$i]['Select'] = $moui[1];
+							$fields[$Field]['Select'] = $moui[1];
 						}
 					}
 					break;
@@ -218,6 +305,45 @@ class database {
 	// Retourne une chaîne protégée qui peut être intégrée dans une requête mysql
 	public function db_real_escape_string($string) {
 		return mysqli_real_escape_string($this->link, $string);
+	}
+	// Copie la structure d'une table $origin
+	// vers la table $dest
+	// si $drop est non null la table $dest est supprimée avant
+	// si $data est non null les données sont recopiées
+	public function db_copy_table($origin, $dest, $drop = NULL, $datas = NULL) {
+		if ($origin != $this->db_real_escape_string($origin) || $dest != $this->db_real_escape_string($dest)) {
+			return FALSE;
+		}
+		$copy = "";
+		if (!is_null($drop)) {
+			$this->db_interroge("DROP TABLE IF EXISTS `$dest`");
+		}
+		$row = $this->db_fetch_row($this->db_interroge("SHOW CREATE TABLE `$origin`"));
+		$copy .= preg_replace("/$origin/", $dest, $row[1]);
+		$this->db_interroge($copy);
+		if (!is_null($datas)) {
+			$this->db_interroge("SET SQL_MODE = 'NO_AUTO_VALUE_ON_ZERO'");
+			$this->db_interroge("INSERT INTO `$dest`
+				SELECT *
+				FROM `$origin`");
+		}
+	}
+	// Retourne dans un tableau les valeurs SET ou ENUM d'un champ
+	// Le premier paramètre est la table, le second est le champ
+	public function db_set_enum_to_array($table, $field) {
+		$aEnum = array();
+		$sql = sprintf("
+			SHOW COLUMNS
+			FROM `%s`
+			LIKE '%s'
+			", $this->db_real_escape_string($table)
+			, $this->db_real_escape_string($field)
+		);
+		$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+		preg_match('/^(set|enum)\((.*)\)$/', $row['Type'], $enum);
+		$aEnum = preg_split("/[,'+]/", $enum[2], NULL, PREG_SPLIT_NO_EMPTY);
+		$aEnum['Type'] = $enum[1]; // Le type SET ou ENUM
+		return $aEnum;
 	}
 }
 

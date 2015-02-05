@@ -22,6 +22,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+set_include_path(implode(PATH_SEPARATOR, array(realpath('.'), realpath('..'), get_include_path())));
+
 require_once('config.inc.php');
 
 /*
@@ -133,6 +135,16 @@ class Date {
 	 * au format "YYYY-m-d" ou un tableau décrivant la date
 	 */
 	function __construct($row=NULL) {
+		if (isset($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("%s", "TRACE", "%s;%s:%s", "%s", "%s")'
+				, $msg
+				, __FUNCTION__
+				, __CLASS__
+				, __METHOD__
+				, $short
+				, $context)
+			);
+		} 
 		if (!is_null($row)) {
 			if ($this->date($row) === false) {
 				if ($this->DEBUG) {
@@ -167,14 +179,36 @@ class Date {
 			debug::getInstance()->postMessage($string);
 		}
 	}
-	// Méthodes d'attribution et d'accès à l'objet
+// Méthodes d'attribution et d'accès à l'objet
+	// Attribue éventuellement la date et retourne une date au format YYYY-MM-dd
 	public function date($date=NULL) {
 		if (!is_null($date)) {
 			if (is_string($date)) {
+				if (isset($TRACE) && true === $TRACE) {
+					$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Calling method _initiateDateFromString", "TRACE", "%s:%s", "", "date:%s")'
+						, __CLASS__
+						, __METHOD__
+						, $date)
+					);
+				}
 				return $this->_initiateDateFromString($date);
 			} else if (is_array($date)) {
+				if (isset($TRACE) && true === $TRACE) {
+					$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Calling method _initiateDateFromArray", "TRACE", "%s:%s", "", "date:%s")'
+						, __CLASS__
+						, __METHOD__
+						, $date)
+					);
+				}
 				return $this->_initiateDateFromArray($date);
 			} else {
+				if (isset($TRACE) && true === $TRACE) {
+					$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Unable to construct Date object", "TRACE", "%s:%s", "", "date:%s")'
+						, __CLASS__
+						, __METHOD__
+						, $date)
+					);
+				}
 				if ($this->DEBUG) {
 					ob_start();
 					print("date:\nErreur: Format de données inconnu pour Date: \n");
@@ -193,12 +227,25 @@ class Date {
 		return $this->date;
 	}
 	private function _initiateDateFromString($date) {
+		if (isset($TRACE) && true === $TRACE) {
+			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("", "TRACE", "%s:%s", "", "date:%s")'
+				, __CLASS__
+				, __METHOD__
+				, $date)
+			);
+		} 
+		// La bdd attribue '0000-00-00' aux dates vides
+		// On attribue, quand même, la valeur à date, mais l'on retourne false
+		// et on ne remplit aucun attribut supplémentaire
+		if ('0000-00-00' == $date) {
+			$this->date = "0000-00-00";
+			return false;
+		}
 		// vérification du format de la date et remplissage des champs
 		if (preg_match('/^([12][0-9]{3,3})[-\/]' . // YYYY[-/]   Les années sont comprises entre 1000 et 2999
 			'(0?[1-9]|1[0-2])[-\/]' . 	       // m[-/]
 			'(0?[1-9]|[12][0-9]|3[01])$/i', // d
 			$date, $det_date)) {
-				//printf("<pre>det_date: %s</pre>\\<br />", var_dump($det_date));
 				$this->date = sprintf("%04d-%02d-%02d", $det_date[1], $det_date[2], $det_date[3]);
 				$this->annee = (int)$det_date[1];
 				$this->mois = (int)$det_date[2];
@@ -254,6 +301,7 @@ class Date {
 					debug::getInstance()->lastError(DATE_ERR_INVALID_FORMAT);
 				}
 				$this->__destruct();
+				unset($this);
 				return false;
 			}
 	}
@@ -270,6 +318,9 @@ class Date {
 		et renvoie la chaîne ou false si la date n'est pas valable
 	 */
 	private function setDate() {
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		if ($this->annee && $this->mois && $this->jour) {
 			$this->date = sprintf("%04d-%02d-%02d", $this->annee, $this->mois, $this->jour);
 			// Met à jour le jour de la semaine et définit si l'on est en weekend
@@ -293,7 +344,8 @@ class Date {
 		switch ($format) {
 		case 'fr':
 			if ($this->annee && $this->mois && $this->jour) return sprintf("%02d-%02d-%04d", $this->jour, $this->mois, $this->annee);
-			break;
+			// On ne break pas pour continuer sur la valeur défaut
+			// afin de prendre en compte les dates 0000-00-00
 		default:
 			return $this->date;
 		}
@@ -342,6 +394,9 @@ class Date {
 		return (int) $this->mois;
 	}
 	public function jour($jour=false) {
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		if ($jour) {
 			if ($jour > 31 || $jour < 1) {
 				if ($this->DEBUG) {
@@ -387,6 +442,9 @@ class Date {
 	// cela permet de commencer la semaine le dimanche (0) ou le lundi (1)
 	// Cependant, tm_wday est prévu de 0 à 6
 	public function jourSemaine() {
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		if (($decomp = strptime($this->date(), '%Y-%m-%d')) != false) {
 			$this->jourSemaine = $decomp['tm_wday'];
 			if ($this->jourSemaine == 0 || $this->jourSemaine >= 6) {
@@ -413,6 +471,9 @@ class Date {
 		return $this->weekend;
 	}
 	public function timestamp($timestamp=false) {
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		if ($timestamp > 0) {
 			$this->timestamp = (int) $timestamp;
 			$localtime = localtime($this->timestamp);
@@ -424,16 +485,19 @@ class Date {
 		return (int) $this->timestamp;
 	}
 	public function calendrier($recalc = false) { // le paramètre à true force le recalcul du calendrier
-		return self::genCalendrier($this->annee);
-		/*if (!$this->calendrier || $recalc) {
-			$this->calendrier = self::genCalendrier($this->annee);
-			//printf("Recalcul des jours du mois pour %s<br />fev: %s<br />", $this->annee(), $this->calendrier[2]['nbJours']);
+		if ($this->date == '0000-00-00') {
+			return false;
 		}
-		return $this->calendrier;
-		 */
+		return self::genCalendrier($this->annee);
 	}
 	public function nbJoursMois() {
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		$cal = $this->calendrier();
+		if ( $this->mois() == 0 ) {
+			return -1;
+		}
 		/*print("<pre>");
 		print_r($cal[$this->mois()]);
 		print("</pre>");
@@ -456,6 +520,9 @@ class Date {
 	}
 	// retourne le nombre de jour qui sépare la date du 1er janvier précédent
 	public function debutAnnee() {
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		$nombreDeJours = $this->jour;
 		$month = $this->mois() - 1;
 		$cal = $this->calendrier();
@@ -466,6 +533,9 @@ class Date {
 	}
 	// Retourne le nombre de jour qui sépare la date du 31 décembre suivant
 	public function finAnnee() {
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		$nombreDeJours = $this->nbJoursMois() - $this->jour();
 		$month = $this->mois() + 1;
 		$cal = $this->calendrier();
@@ -475,23 +545,26 @@ class Date {
 		return $nombreDeJours;
 	}
 	public function addJours($nbJours) { // Retourne la date augmentée du nombre de jours $nbJours
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		if (!is_int($nbJours)) { $nbJours = (int) $nbJours; }
 			//printf("addJours %s + %s<br />", $this->date(), $nbJours);
 			if ($nbJours == 0) { return new Date($this->date); } // Si l'incrément est nul, l'objet date est cloné
-				if ($nbJours < 0) { return $this->subJours(-$nbJours); }
-					if ($this->nbJoursMois() < $this->jour + $nbJours) { // On doit changer de mois
-						//printf("chgt mois: %s < %s + %s<br />", $this->nbJoursMois(), $this->jour, $nbJours);
-						$tempoNbJoursMois = $this->nbJoursMois();
-						if ($this->mois == 12) { // On doit changer d'année et revenir au mois de janvier
-							$this->mois(1);
-							$this->annee($this->annee()+1);
-						} else { $this->mois++; }
-							$newNbJours = $nbJours - ($tempoNbJoursMois - $this->jour) - 1;
-						$this->jour = 1;
-						if ($newNbJours > 0) { return $this->addJours($newNbJours); }
-					} else {
-						$this->jour += $nbJours;
-					}
+			if ($nbJours < 0) { return $this->subJours(-$nbJours); }
+			if ($this->nbJoursMois() < $this->jour + $nbJours) { // On doit changer de mois
+				//printf("chgt mois: %s < %s + %s<br />", $this->nbJoursMois(), $this->jour, $nbJours);
+				$tempoNbJoursMois = $this->nbJoursMois();
+				if ($this->mois == 12) { // On doit changer d'année et revenir au mois de janvier
+					$this->mois(1);
+					$this->annee($this->annee()+1);
+				} else { $this->mois++; }
+					$newNbJours = $nbJours - ($tempoNbJoursMois - $this->jour) - 1;
+				$this->jour = 1;
+				if ($newNbJours > 0) { return $this->addJours($newNbJours); }
+			} else {
+				$this->jour += $nbJours;
+			}
 		$this->date = false; // on force la date à être redéfinie
 		$this->date();
 		return $this;
@@ -500,6 +573,9 @@ class Date {
 		return $this->addJours(1);
 	}
 	public function subJours($nbJours) { // Retourne l'objet Date résultat de la date diminuée du nombre de jours $nbJours
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		if (!is_int($nbJours)) { $nbJours = (int) $nbJours; }
 			if ($nbJours == 0) { return $this; } // Si l'incrément est nul, l'objet date est retourné
 				if ($nbJours < 0) { return $this->addJours(-$nbJours); }
@@ -527,6 +603,9 @@ class Date {
 	//         un nombre négatif si l'objet est antérieur au paramètre
 	//          0 si les dates sont identiques
 	public function compareDate($date) {
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		if (is_string($date)) {
 			$date = new Date($date);
 		}
@@ -547,6 +626,9 @@ class Date {
 	// Soustrait la date contenue dans l'objet à la date (de l'objet ou de la chaîne) passé en argument
 	// $date2 peut être une chaîne au format "Y-m-d"
 	public function soustrait($date) {
+		if ($this->date == '0000-00-00') {
+			return false;
+		}
 		if (is_string($date)) {
 			$date = new Date($date);
 		}

@@ -9,6 +9,8 @@
 // L'utilisateur doit être logué pour accéder à cette page
 $requireAuthenticatedUser = true;
 
+ob_start();
+
 header('Content-Type: application/javascript');
 //ob_start();
 $conf['page']['elements']['firePHP'] = true;
@@ -26,14 +28,34 @@ require_once('../session.inc.php');
 
 firePHPLog($_SESSION, 'SESSION');
 // tableau des dispos
-$sql = "SELECT `dispo` FROM `TBL_DISPO` WHERE `type decompte` = 'dispo' AND `actif` = TRUE";
+$sql = sprintf("
+	SELECT *
+	FROM `TBL_DISPO`
+	WHERE `actif` IS TRUE
+	AND (`centre` = '%s' OR `centre` = 'all')
+	AND (`team` = '%s' OR `team` = 'all')"
+	, $_SESSION['utilisateur']->centre()
+	, $_SESSION['utilisateur']->team()
+	);
 $dispos = "";
+// L'ensemble des activités
+$activites = array();
+// Les activités autorisant une info supplémentaire (un title)
+$sActTitle = "";
 $result = $_SESSION['db']->db_interroge($sql);
-while ($x = $_SESSION['db']->db_fetch_assoc($result)) {
-	$dispos .= sprintf("'%s',", $x['dispo']);
+while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+	$activites[] = $row;
+	if ($row['type decompte'] == 'dispo') {
+		$dispos .= sprintf("'%s',", $row['dispo']);
+	}
+	if ($row['title']) {
+		$sActTitle .= sprintf("case '%s':\n", $row['dispo']);
+	}
 }
 mysqli_free_result($result);
 $sDispos = substr($dispos, 0, -1);
+
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 
 //***********************
 // Fonctions principales
@@ -46,12 +68,27 @@ function getAvailableOccupations(oThis) {
 	       	alert("Impossible d'obtenir les infos");
 		return false;
        	}
-<?
-	$peutPoserCondition = "";
-	if (empty($_SESSION['ADMIN'])) { // Les non admins ont des restrictions sur les dispo qu'ils peuvent poser
-		$peutPoserCondition = sprintf(" AND (%s)", $_SESSION['utilisateur']->db_condition_like_classe('peut poser'));
+<?php
+	$find_in_set = "";
+	if (!array_key_exists('ADMIN', $_SESSION)) { // Les non admins ont des restrictions sur les dispo qu'ils peuvent poser
+		foreach (array_flip(array_flip(array_merge(array('all', $_SESSION['utilisateur']->login(), $affectation['grade']), $_SESSION['utilisateur']->roles()))) as $set) {
+			$find_in_set .= sprintf("FIND_IN_SET('%s', `peut poser`) OR ", $_SESSION['db']->db_real_escape_string($set));
+		}
+		$find_in_set = " AND (" . substr($find_in_set, 0, -4) . ")";
 	}
-	$sqlDispo = "SELECT `dispo`, `jours possibles` FROM `TBL_DISPO` WHERE `actif` = '1'$peutPoserCondition ORDER BY `poids`";
+	$sqlDispo = sprintf("
+		SELECT `dispo`
+		, `jours possibles`
+		FROM `TBL_DISPO`
+		WHERE `actif` IS TRUE
+		AND (`centre` = '%s' OR `centre` = 'all')
+		AND (`team` = '%s' OR `team` = 'all')
+		%s
+		ORDER BY `poids`"
+		, $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+		, $find_in_set
+	);
 	$resDispo = $_SESSION['db']->db_interroge($sqlDispo);
 	$sqlCycle = sprintf("SELECT `vacation` FROM `TBL_CYCLE` WHERE `vacation` != '%s'", REPOS);
 	$result = $_SESSION['db']->db_interroge($sqlCycle);
@@ -66,31 +103,25 @@ function getAvailableOccupations(oThis) {
 		$dispo[$vacation] = '';
 	}
 	while ($row = $_SESSION['db']->db_fetch_row($resDispo)) {
-		if ($row[1] == 'all') { // On ajoute toutes les dispo valides pour all
-			$aDispo .= sprintf("'%s',", $row[0]);
-		} else {
-			foreach($vacations as $vacation) { // On parcourt toutes les possibilités de vacation pour voir si la dispo lui correspond
-				if (preg_match("/$vacation/", $row[1]) > 0) {
-					$dispo[$vacation] .= sprintf("'%s',", $row[0]);
-				}
+		foreach ($vacations as $vacation) {
+			if ($row[1] == 'all' || preg_match("/$vacation/", $row[1]) > 0) { // On ajoute les dispo valides par vacation
+				$dispo[$vacation] .= sprintf("'%s',", $row[0]);
 			}
 		}
 	}
 	mysqli_free_result($resDispo);
 	?>
-	var aDispo = new Array(<?=substr($aDispo, 0, -1)?>);
-		switch (aArray["Vacation"]) {<?
+	switch (aArray["Vacation"]) {<?php
 	foreach($vacations as $vacation) {?>
-			case "<?=$vacation?>":
-				var aDispoExt = new Array(<?=substr($dispo[$vacation], 0, -1)?>);
-				break;
-	<?
+		case "<?=$vacation?>":
+			var aDispo = new Array(<?=substr($dispo[$vacation], 0, -1)?>);
+			break;
+	<?php
 	}?>
 			default:
 				var aDispoExt = new Array();
 			break;
 	}
-	aDispo = aDispo.concat(aDispoExt);
 	// Suppression des jours week end où il ne devrait pas y en avoir
 	if (!aArray["isFerie"]) {
 		var x = aDispo.indexOf("W");
@@ -131,7 +162,6 @@ function addDispo(oThis, sDispo)
 	}
 
 	// Si l'ancienne valeur était un 'V', on doit propager
-	debug("oldDispo: "+sOldDispo);
 	switch (sOldDispo) {
 	       case "V":
 		var aNewArray = new Array();
@@ -142,11 +172,9 @@ function addDispo(oThis, sDispo)
 			var oSibling = $(oTempThis).prev();
 			aNewArray = infosFromId(oSibling[0].id);
 			if (!aNewArray) {
-				debug("aNewArray n'existe pas.");
 				break;
 			}
 			// Si on est sur le jour d'avant
-			debug(parseInt(aArray["Day"]) - aNewArray["Day"]);
 			if ((parseInt(aArray["Day"]) - aNewArray["Day"]) <= iX && (parseInt(aArray["Day"]) - aNewArray["Day"]) > 0) {
 				changeValue(oSibling[0], "");
 			}
@@ -218,8 +246,22 @@ function addDispo(oThis, sDispo)
 			$("#remplaMonth").val(aArray['Month']);
 			$("#remplaDay").val(aArray['Day']);
 			break;
+<?php
+	if ($sActTitle != "") {
+	print ($sActTitle);
+?>
+			var p = $('#'+oThis.id).position();
+			$("#dFormInfoSup").css({"left" : p.left + 10 , "top" : p.top + 20, "position": "absolute"});
+			$("#fFormInfoSup").show('slow');
+			$("#infoSupUid").val(aArray['uid']);
+			$("#infoSupYear").val(aArray['Year']);
+			$("#infoSupMonth").val(aArray['Month']);
+			$("#infoSupDay").val(aArray['Day']);
+			break;
+<?php
+	}
+?>
 		default:
-			debug(sDispo);
 		break;
 	}
 	return true;
@@ -234,13 +276,13 @@ function changeValue(oThis, sDispo)
 	comptePresents(oThis.id);
 }
 <?
-if (!empty($_SESSION['EDITEURS'])) {
+if (array_key_exists('TEAMEDIT', $_SESSION)) {
 	// Ces fonctions ne doivent pas être accessible à tous
 	// Seuls les éditeurs peuvent (dé)protéger la grille
+	// Effectue les actions nécessaires à la (dé)protection de la grille
+	// Envoi d'une requête ajax
+	// mise à jour des données de la grille (affichage...)
 ?>
-// Effectue les actions nécessaires à la (dé)protection de la grille
-// Envoi d'une requête ajax
-// mise à jour des données de la grille (affichage...)
 function lock(sS)
 {
 	// Extrait les informations permettant de protéger la grille
@@ -307,55 +349,19 @@ function attribProtect(oThis)
 function attribUnprotect(oThis)
 {
 	$('#'+oThis.id).removeClass('protected');
-	$('#'+oThis.id).toggle(function() {
-		// l'élément cliqué est mis en valeur
-		$(this).addClass("emphasize");
-		// La première case (contenant le nom) est mise en évidence
-		var oParent = $(this).parent();
-		var oChildren = $(oParent[0]).children();
-		$(oChildren[0]).addClass("emphasize");
-		// Recherche des informations de l'élément afin de déterminer la tête de colonne correspondante
-		var aArray = infosFromId(this.id);
-		var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
-		// la tête de colonne est mise en évidence
-		$(sVacationId).addClass("emphasize");
-		// Recherche des possibles occupations pour remplir la boîte de choix
-		var sString = getAvailableOccupations(this);
-		$("#sandbox").replaceWith(sString);
-		// Placement de la boîte de choix
-		var p = $(this).position();
-		$("#sandbox").css({"left" : p.left + 10 , "top" : p.top + 20});
-		$("#sandbox").show('slow');
-		// Action du clic dans la boîte de choix
-		var oThis = this;
-		$("#sandbox li").click(function() {
-			$("#sandbox").hide('slow');
-			addDispo(oThis, $(this).text());
-			$("td.nom").removeClass("emphasize");
-			$(sVacationId).removeClass("emphasize");
-		});
-	},function() {
-		$(this).removeClass("emphasize");
-		$("#sandbox").hide();
-		$("td.nom").removeClass("emphasize");
-		// Recherche la tête de colonne correspondante
-		var aArray = infosFromId(this.id);
-		var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
-		// mise en évidence de la tête de colonne supprimée
-		$(sVacationId).removeClass("emphasize");
-	});
+	$('#'+oThis.id).one("click", dropDownAct(this));
 }
 // Ajoute un texte pour le verrouillage de la grille
 function definitVerrouillage()
 {
+	return; // TODO on reçoit une erreur 500 : dépassement de mémoire autorisé dans class_date.php sur la méthode calendrier()
 	var aDecSep = $('td[id*="lock"]');
 	for (var iCpt=0; iCpt<aDecSep.length; iCpt++)
 	{
 		var sS =  aDecSep[iCpt].id;
-		var aLinks = $('#'+sS).children('a');
+		var aLinks = $('#'+sS).find('a');
 		var sUri = aLinks[0];
-		return; // TODO
-		var aMatches = sUri.val().match(/lock=(.+)&/);
+		var aMatches = sUri.href.match(/lock=(.+)&/);
 		var sLockOrNot = aMatches[1];
 		$('#'+sS).children('a').remove(); // On supprime le lien (il ne doit pas être suivi si js est activé
 	       	// Sauvegarde du lien pour récupérer l'état de lock (ouvre ou bloque)
@@ -367,10 +373,17 @@ function definitVerrouillage()
 $(function() {
 		definitVerrouillage();
 });
-<?
+<?php
 }
-// Compte le nombre de présent pour la colonne à laquelle sId appartient
 ?>
+
+// Retire les classes des cases ayant un style définit.
+// FIXME Ceci peut poser problème pour les actions définis selon la classe
+$(function() {
+	$('td[style]').removeClass();
+}
+);
+// Compte le nombre de présent pour la colonne à laquelle sId appartient
 function comptePresents(sId)
 {
 	if (sId == undefined) { return false; }
@@ -387,36 +400,56 @@ function comptePresents(sId)
 	}
 	<?
 	// Recherche les dispo qui correspondent à des absences pour les enlever du décompte des présents
-	$sqlDispo = "SELECT `dispo` FROM `TBL_DISPO` WHERE `actif` = '1' AND `absence` = '1' ORDER BY `poids`";
+	$sqlDispo = sprintf("SELECT `dispo` FROM `TBL_DISPO` WHERE `actif` = '1' AND `absence` = '1' ORDER BY `poids`");
+	$sqlDispo = sprintf("
+		SELECT `dispo`
+		, 1 - `absence`
+		, `type decompte`
+		FROM `TBL_DISPO`
+		WHERE `actif` IS TRUE
+		AND (`centre` = '%s' OR `centre` = 'all')
+		AND (`team` = '%s' OR `team` = 'all')
+		ORDER BY `poids`"
+		, $_SESSION['utilisateur']->centre()
+		, $_SESSION['utilisateur']->team()
+	);
 	$resDispo = $_SESSION['db']->db_interroge($sqlDispo);
 	$absences = "";
+	$dispo = "";
 	while ($abs = $_SESSION['db']->db_fetch_row($resDispo)) {
-		$absences .= sprintf("'%s', ", $abs[0]);
+		$absences .= sprintf("'%s':%u, ", $abs[0], $abs[1] + .5);
+		if ($abs[2] == "dispo") {
+			$dispo .= sprintf("'%s':0, ", $abs[0]);
+		} else {
+			$dispo .= sprintf("'%s':%0.1f, ", $abs[0], $abs[1]);
+		}
 	}
 	mysqli_free_result($resDispo);
 	?>
-	var aAbsent = new Array(<?=substr($absences, 0, -2)?>);
-	var aPresents = {'cds': 0, 'ce': 0, 'pc': 0, 'c': 0};
+	var aAbsent = {<?=substr($absences, 0, -2)?>};
+	var aD = {<?=substr($dispo, 0, -2)?>};
+	var aPresents = {'cds': 0, 'ce': 0, 'fmp' : 0, 'dtch': 0, 'pc': 0, 'c': 0, 'aD':0};
 	var aListeUid = listeUid();
 	for (var iUid in aListeUid)
 	{
 		var sTemp = '#u'+iUid+sDate;
-		var iPresent = 1;
-		for (var iNdx in aAbsent)
+		if (!$(sTemp).hasClass('absent'))
 		{
-			if ($(sTemp).text() == aAbsent[iNdx])
-			{
-				iPresent = 0;
-				break;
+			if ($(sTemp).text() == " ") {
+				aPresents[aListeUid[iUid]]++;
+				if (aListeUid[iUid] != 'c') {
+					aPresents['aD']++;
+				}
+			} else {
+				aPresents[aListeUid[iUid]] += aAbsent[$(sTemp).text()] || 0;
+				if (aListeUid[iUid] != 'c') {
+					aPresents['aD'] += aD[$(sTemp).text()] || 0;
+				}
 			}
 		}
-		if (iPresent == 1)
-		{
-			aPresents[aListeUid[iUid]]++;
-		}
 	}
-	aPresents['pc'] += aPresents['ce'] + aPresents['cds'];
-	$('#dec'+sDate).text(aPresents['pc']+"/"+aPresents['c']);
+	aPresents['pc'] += aPresents['ce'] + aPresents['cds'] + aPresents['dtch'] + aPresents['fmp'];
+	$('#dec'+sDate).text(aPresents['aD']+"/"+aPresents['pc']+"/"+aPresents['c']);
 	if (aPresents['pc'] < <?=get_sql_globals_constant('effectif_mini')?> && !$('#dec'+sDate).hasClass('protected'))
 	{
 		$('#dec'+sDate).addClass('emphasize');
@@ -489,7 +522,6 @@ function prepareAjaxRequest(oThis, sDispo)
 		sRequest += '&';
 	}
 	sRequest = sRequest.substr(0, sRequest.length-1);
-	debug(sRequest);
 	return sRequest;
 }
 <?
@@ -551,7 +583,7 @@ function infosFromId(sId) {
 		}
 		else
 		{
-			aId = sId.match(/locka(\d+)m(\d+)j(\d+)(c\d+)/);
+			aId = sId.match(/locka(\d+)m(\d+)j(\d+)c(\d+)/);
 			if (aId instanceof Array) {
 				var aArray = new Array();
 				aArray["Year"] = aId[1];
@@ -562,7 +594,20 @@ function infosFromId(sId) {
 			}
 			else
 			{
-				return false;
+				aId = sId.match(/deca(\d+)m(\d+)j(\d+)s(.+)c(\d+)/);
+				if (aId instanceof Array) {
+					var aArray = new Array();
+					aArray["Year"] = aId[1];
+					aArray["Month"] = aId[2];
+					aArray["Day"] = aId[3];
+					aArray["Vacation"] = aId[4];
+					aArray["cycleId"] = aId[5];
+					return aArray;
+				}
+				else
+				{
+					return false;
+				}
 			}
 		}
 	}
@@ -571,7 +616,7 @@ function infosFromId(sId) {
 // Retourne un tableau avec les uid présents sur le tableau
 ?>
 function listeUid() {
-	var aClasses = new Array('cds', 'ce', 'pc', 'c');
+	var aClasses = new Array('cds', 'ce', 'pc', 'c', 'dtch', 'fmp');
 	var aEffectif = new Array();
 	var aClass = new Array();
 	for (var iClass in aClasses)
@@ -587,55 +632,10 @@ function listeUid() {
 			}
 			else
 			{
-				debug('Une erreur s\'est produite dans le décompte à '+sId);
 			}
 		}
 	}
 	return aEffectif;
-}
-<?
-//***********************
-// Fonctions de debugage
-//***********************
-?>
-function debug(sMsg) {
-	var oDate = new Date();
-	var sTime = (oDate.getHours()>9) ? "" : "0";
-	sTime += oDate.getHours()+":";
-	sTime += (oDate.getMinutes()>9) ? "" : "0";
-	sTime += oDate.getMinutes()+":";
-	sTime += (oDate.getSeconds()>9) ? "" : "0";
-	sTime += oDate.getSeconds();
-	var sMtime = oDate.getTime();
-	var sString = "<dt class=\""+sMtime+"\">"+sTime+":</dt><dd class=\""+sMtime+"\">&quot;"+sMsg+"&quot;<br /></dd>"
-	$("#debugListe").prepend(sString);
-	if (!$("#debugMessages").hasClass("redBorder")) {
-		$("#debugMessages").addClass("redBorder");
-	}
-	$("#debugMessages").show();
-	$("#debugListe").show("slow");
-	$("."+sMtime).dblclick(function() {
-			$("."+sMtime).remove();
-			});
-	$("#debugMessages a").toggle(function(event) {
-			$("#debugListe").hide("slow");
-			$(this).text('Show');
-			$("#debugMessages").removeClass("redBorder");
-			event.preventDefault();
-			},function() {
-			$("#debugMessages").addClass("redBorder");
-			$("#debugListe").show("slow");
-			$(this).text('Hide');
-			event.preventDefault();
-			});
-}
-function initDebug() {
-	var sString = '<dl id="debugListe"></dl>';
-	$("#debugMessages").append(sString);
-	$("#debugListe").hide();
-	$("#debugMessages").hide();
-	$("#debugMessages").addClass("redBorder");
-	$("#debugMessages").append("<button onclick='comptePresents();'>listeUid()</button>");
 }
 <?
 //****************
@@ -643,72 +643,39 @@ function initDebug() {
 //****************
 ?>
 $(function() {
-		initDebug();
 		$('#dFormRemplacement').hide();
-			$(<?if (!empty($_SESSION['EDITEURS'])) {
-				print "'.presence'";
-			} else {
-				printf ("'.presence[id*=u%sa]'", $_SESSION['utilisateur']->uid()); // Les utilisateurs sans droits étendus ne peuvent modifier que leur ligne
-			}?>).toggle(function() {
-<?			// l'élément cliqué est mis en valeur ?>
-			$(this).addClass("emphasize");
-<?			// La première case (contenant le nom) est mise en évidence ?>
-			var oParent = $(this).parent();
-			var oChildren = $(oParent[0]).children();
-			$(oChildren[0]).addClass("emphasize");
-<?			// Recherche des informations de l'élément afin de déterminer la tête de colonne correspondante ?>
-			var aArray = infosFromId(this.id);
-			var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
-<?			// la tête de colonne est mise en évidence ?>
-			$(sVacationId).addClass("emphasize");
-<?			// Recherche des possibles occupations pour remplir la boîte de choix ?>
-			var sString = getAvailableOccupations(this);
-			$("#sandbox").replaceWith(sString);
-<?			// Placement de la boîte de choix ?>
-			var p = $(this).position();
-			$("#sandbox").css({"left" : p.left + 10 , "top" : p.top + 20});
-			$("#sandbox").show('slow');
-<?			// Action du clic dans la boîte de choix ?>
-			var oThis = this;
-			$("#sandbox li").click(function() {
-				$("#sandbox").hide('slow');
-				addDispo(oThis, $(this).text());
-				$("td.nom").removeClass("emphasize");
-				$(sVacationId).removeClass("emphasize");
-			});
-			},function() {
-				$(this).removeClass("emphasize");
-				$("#sandbox").hide();
-				$("td.nom").removeClass("emphasize");
-<?				// Recherche la tête de colonne correspondante ?>
-				var aArray = infosFromId(this.id);
-				var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
-<?				// mise en évidence de la tête de colonne supprimée ?>
-				$(sVacationId).removeClass("emphasize");
-			});
-<?		/* Supprime le menu pour modifier les dispo sur les cases protected */
+<?php
+	// teamEdit peut modifier toutes les lignes
+	if ($_SESSION['utilisateur']->hasRole('teamEdit')) { ?>
+	$('.presence').one('click', function() { dropDownAct(this); });
+<?php	// Les utilisateurs standards ne peuvent modifier que leur ligne
+	} else {
+		printf("\$('.presence[id*=u%sa]').one('click', function() { dropDownAct(this); });", $_SESSION['utilisateur']->uid());
+	}
+		/* Supprime le menu pour modifier les dispo sur les cases protected */
 ?>		$('.protected').unbind();
-<?		/* Permet de n'afficher qu'une seule ligne en cliquant sur le nom */
-?>		$(".nom").toggle(function() {
-				var sId = "#" + this.id;
-				collapseRow(sId);
-				},function() {
-				var sId = "#" + this.id;
-				uncollapseRow(sId);
-				});
 		decomptePresents();
+		$('.nom').one('click', function() { collapseRow(this); });
+<?php
+// Masque le texte des cases dtch
+if ($_SESSION['utilisateur']->getPref('dtch') === 1) {
+	?>
+	$("td:contains('dtch')").text('');
+<?php
+}
+?>
 });
 <?
 	// Gestion de la configuration des cycles (E/W)
 	// TODO interdire l'édition lorsque la grille n'est pas éditable.
-	if (!empty($_SESSION['EDITEURS'])) {
+	if (!empty($_SESSION['TEAMEDIT'])) {
 ?>
 $(function() {
 	$('.conf').click(function() {
 		var a = {'W':'E','E':'W'};
 		var id = this.id;
 		var sreq = 'id='+id+'&conf='+a[$(this).text()];
-		submitRequest(sreq, 'updateConf.php');
+		submitRequest(sreq, 'ajax.php');
 		$(this).contents().replaceWith(a[$(this).text()]);
 	});
 });
@@ -725,12 +692,13 @@ function collapseRow(sId) {
 	var sRow = "#"+oParent[0].id;
 	var aSiblings = $(sRow).siblings();
 	var sTest = "";
-	for (var i=0; i<aSiblings.length; i++) {
+	for (var i=0; i<aSiblings.length - 1; i++) {
 		var sTempId = "#" + aSiblings[i].id;
 		if (sId != sTempId) {
 			$(sTempId).hide();
 		}
 	}
+	$(sId).one('click', function() { uncollapseRow(this); });
 }
 <?
 // Montre le rang qui contient l'id sId
@@ -745,8 +713,51 @@ function uncollapseRow(sId) {
 			$(sTempId).show();
 		}
 	}
+	$(sId).one('click', function() { collapseRow(this); });
+}
+// Les actions à effectuer lorsqu'une case est cliquée
+function dropDownAct(oThis)
+{
+	// l'élément cliqué est mis en valeur
+	$(oThis).addClass("emphasize");
+	// La première case (contenant le nom) est mise en évidence
+	var oParent = $(oThis).parent();
+	var oChildren = $(oParent[0]).children();
+	$(oChildren[0]).addClass("emphasize");
+	// Recherche des informations de l'élément afin de déterminer la tête de colonne correspondante
+	var aArray = infosFromId(oThis.id);
+	var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
+	// la tête de colonne est mise en évidence
+	$(sVacationId).addClass("emphasize");
+	// Recherche des possibles occupations pour remplir la boite de choix
+	var sString = getAvailableOccupations(oThis);
+	$("#sandbox").replaceWith(sString);
+	// Placement de la boite de choix
+	var p = $(oThis).position();
+	$("#sandbox").css({"left" : p.left + 10 , "top" : p.top + 20});
+	$("#sandbox").show('slow');
+	// Action du clic dans la boite de choix
+	$("#sandbox li").click(function() {
+		$("#sandbox").hide('slow');
+		addDispo(oThis, $(this).text());
+		$("td.nom").removeClass("emphasize");
+		$(sVacationId).removeClass("emphasize");
+		$(oThis).one('click', function() { dropDownAct(this); });
+	});
+	$(oThis).one('click', function() { liftUpAct(this); });
+}
+// actions à effectuer lorsqu'une case est à nouveau cliquée
+function liftUpAct(oThis)
+{
+	$("td.nom").removeClass("emphasize");
+	// Recherche des informations de l'élément afin de déterminer la tête de colonne correspondante
+	var aArray = infosFromId(oThis.id);
+	var sVacationId = "#a"+aArray["Year"]+"m"+aArray["Month"]+"j"+aArray["Day"]+"s"+aArray["Vacation"];
+	$(sVacationId).removeClass("emphasize");
+	$('#sandbox').hide('slow');
+	$(oThis).one('click', function() { dropDownAct(this); });
 }
 
 <?
-//			ob_end_flush();
+ob_end_flush();
 ?>

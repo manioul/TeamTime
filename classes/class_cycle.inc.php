@@ -29,12 +29,65 @@ class Cycle {
 	private static $_cycleLengthNoRepos = null; // La longueur du cycle sans compter les jours de repos
 	private $cycleId; // Un Id pour identifier le cycle
 	private $dateRef; // La date de référence du cycle (date du premier jour) sous forme d'objet Date
-	private $dispos = array(); // La grille (jourTravail et dispos)
+	protected $dispos = array(); // La grille (jourTravail et dispos)
 	private $conf; // La configuration cds
 	private $decompte; // Un tableau contenant le décompte pour chaque utilisateur
 	private $compteTypeUser = array(); // Un tableau des décomptes par type (cf `type decompte` dans la bdd) et par utilisateur
 	private $compteTypeUserFin = array(); // Un tableau des décomptes par type (cf `type decompte` dans la bdd) et par utilisateur pour la fin du cycle
-	public function __construct($date=false) {
+	private $centre = NULL;
+	private $team = NULL;
+	// Liste les jours du cycle pour un centre et une équipe
+	// Ceci est directement utilisable avec html.form.select.tpl
+	public static function listeCycle($name = "j", $centre = NULL, $team = NULL, $selected = NULL) {
+		if (is_null($centre)) {
+			$centre = $_SESSION['utilisateur']->centre();
+		}
+		if (is_null($team)) {
+			$team = $_SESSION['utilisateur']->team();
+		}
+		$array = array(
+			'name'	=> $name
+			, 'options'	=> array(
+				array(
+					'content'	=> "all"
+					, 'value'	=> "all"
+				)
+			)
+		);
+		if ($selected == 'all') {
+			$array['options'][0]['selected'] = 'selected';
+		}
+		$index = 1;
+		$sql = sprintf("
+			SELECT `vacation`
+			FROM `TBL_CYCLE`
+			WHERE `centre` = '%s'
+			AND (`team` = '%s' OR `team` = 'all')
+			AND `vacation` != '%s'
+			", $_SESSION['db']->db_real_escape_string($centre)
+			, $_SESSION['db']->db_real_escape_string($team)
+			, REPOS
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			 $array['options'][$index]['content'] = $row['vacation'];
+			$array['options'][$index]['value'] = $row['vacation'];
+			if (!is_null($selected) && $row['vacation'] == $selected) {
+				$array['options'][$index]['selected'] = "selected";
+			}
+			$index++;
+		}
+		mysqli_free_result($result);		
+		return $array;
+	}
+	public function __construct($date=NULL, $centre = NULL, $team = NULL) {
+		if (!is_a($date, 'Date')) return false;
+		if (!is_null($centre)) {
+			$this->centre($centre);
+		}
+		if (!is_null($team)) {
+			$this->team($team);
+		}
 		return $this->loadCycle($date);
 	}
 	public function __destruct() { // TODO Supprimer l'objet de la liste $_definedCycles
@@ -43,24 +96,89 @@ class Cycle {
 	 * Des fonctions statiques en rapport avec le planning annuel
 	 */
 
-	// Recherche la longueur du cycle
-	public static function getCycleLength() {
+	/**
+	 * Recherche la longueur du cycle.
+	 *
+	 * Recherche la longueur du cycle pour le centre et l'équipe concernée et le sauvegarde dans self::$_cycleLength.
+	 *
+	 * @param string $centre le centre concerné
+	 * @param string $team l'équipe concernée
+	 *
+	 * @return int self::$_cycleLength la longueur du cycle en jours
+	 */
+	public static function getCycleLength($centre = 'athis', $team = '9e') {
 		if (is_null(self::$_cycleLength)) {
-			$requete = "SELECT COUNT(*) FROM `TBL_CYCLE`";
+			$requete = sprintf("
+				SELECT COUNT(*)
+				FROM `TBL_CYCLE`
+				WHERE (`centre` = '%s' OR `centre` = 'all')
+				AND (`team` = '%s' OR `team` = 'all')
+				"
+				, $centre
+				, $team
+			);
 			$out = $_SESSION['db']->db_fetch_row($_SESSION['db']->db_interroge($requete));
 			self::$_cycleLength = $out[0];
 		}
 		return self::$_cycleLength;
 	}
-	// Recherche la longueur du cycle sans compter les jours de repos
-	public static function getCycleLengthNoRepos() {
+	/**
+	 * Recherche la longueur du cycle sans compter les jours de repos.
+	 *
+	 * @param string $centre le centre concerné
+	 * @param string $team l'équipe concernée
+	 *
+	 * @return int self::$_cycleLengthNoRepos
+	 */
+	public static function getCycleLengthNoRepos($centre = 'athis', $team = '9e') {
 		if (is_null(self::$_cycleLengthNoRepos)) {
-			$requete = sprintf("SELECT COUNT(*) FROM `TBL_CYCLE` WHERE `vacation` != '%s'", REPOS);
+			$requete = sprintf("
+				SELECT COUNT(*)
+				FROM `TBL_CYCLE`
+				WHERE `vacation` != '%s'
+				AND (`centre` = '%s' OR `centre` = 'all')
+				AND (`team` = '%s' OR `team` = 'all')
+				"
+				, REPOS
+				, $centre
+				, $team
+			);
 			$out = $_SESSION['db']->db_fetch_row($_SESSION['db']->db_interroge($requete));
 			self::$_cycleLengthNoRepos = $out[0];
 		}
 		return self::$_cycleLengthNoRepos;
 	}
+	/**
+	 * La liste des jours de travail d'un cycle.
+	 *
+	 * @param string $centre le centre concerné.
+	 *
+	 * @return array $array('rang' => "", 'vacation' => "", 'horaires' => "")
+	 */
+	public static function jtCycle($centre = NULL) {
+		if (is_null($centre)) {
+			$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
+			$centre = $affectation['centre'];
+		}
+		$array = array();
+		$sql = sprintf("
+			SELECT `rang`, `vacation`, `horaires`
+			FROM `TBL_CYCLE`
+			WHERE `vacation` != '%s'
+			AND `centre` = '%s'
+			", REPOS
+			, $centre
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$array[] = $row;
+		}
+		mysqli_free_result($result);
+		return $array;
+	}
+	/*
+	 * Fin des fonctions statiques
+	 */
 
 	//-----------
 	// Accesseurs
@@ -79,6 +197,14 @@ class Cycle {
 		}
 		return $this->conf;
 	}
+	public function centre($centre = NULL) {
+		if (is_null($centre)) return $this->centre;
+		return $this->centre = $centre;
+	}
+	public function team($team = NULL) {
+		if (is_null($team)) return $this->team;
+		return $this->team = $team;
+	}
 	//-----------------------------------------------------------
 	// Retourne les joursTravail du tableau $dispos
 	// Avec le décompte de début de cycle en première colonne
@@ -91,124 +217,171 @@ class Cycle {
 			return $this->dispos[$date];
 		}
 	}
-	//--------------------------------------------------------------
-	// Vérifie que la grille existe pour une année, sinon, la génère
-	//
-	// Pour cela, on recherche si la table TBL_GRILLE a des données
-	// correspondant au 31 décembre de l'année passée en paramètre
-	//--------------------------------------------------------------
-	private static function grilleExists($annee) {
-		$requete = sprintf("SELECT * FROM `TBL_GRILLE` WHERE `date` = '%4d-12-31'", $annee);
-		$result = $_SESSION['db']->db_interroge($requete);
-		$row = $_SESSION['db']->db_fetch_assoc($result);
-		mysqli_free_result($result);
-		if (!is_array($row) && $annee >= date('Y')) { // On a les conditions remplies pour générer une nouvelle grille
-			$requete = sprintf("SELECT * FROM `TBL_GRILLE` WHERE `date` = '%4d-12-31'", $annee-1);
-			$result = $_SESSION['db']->db_interroge($requete);
-			$row = $_SESSION['db']->db_fetch_assoc($result);
-			mysqli_free_result($result);
-			if (!is_array($row)) {
-				self::grilleExists($annee-1);
-				$requete = sprintf("SELECT * FROM `TBL_GRILLE` WHERE `date` = '%4d-12-31'", $annee-1);
-				$result = $_SESSION['db']->db_interroge($requete);
-				$row = $_SESSION['db']->db_fetch_assoc($result);
-				mysqli_free_result($result);
-			}
-			//echo "Génère la grille pour $annee";
-			$jourTravail = new jourTravail($row);
-			self::genere_grille($jourTravail);
-			return true;
-		} else if (is_array($row)) {
-			return true;
-		} else {
-			debug::getInstance()->lastError(ERR_DB_NORESULT);
-			return false;
-		}
-	}
-	//--------------------------------
-	// Construit la grille dans la bdd
-	//--------------------------------
-	private static function genere_grille($jourTravail) {
-		// $jourTravail est un objet jourTravail
 
-		// L'année de la grille que l'on va créer
-		$an = $jourTravail->annee();
-		// Si le mois du jour de référence est en fin d'année on crée la grille de l'année suivante
-		if ($jourTravail->mois() >= 11) { $an++; }
-		// Le dernier jour de la grille à créer est le 31 décembre de l'année $an
-		$cpt = 1; // Un compteur de sécurité
-		//  TODO Ouch ! Ça va être un peu long gare au timeExceeded
-		while ($jourTravail->annee() <= $an && $cpt++ < 430) {
-			$jourTravail->incDate();
-			$jourTravail->cid((string)$jourTravail->nextCid());
-			$jourTravail->dbSafeInsert();
-		}
-	}
-	//-------------------------------
-	// Charge le planning d'une année
-	//-------------------------------
-	public static function load_planning($annee) { // Retourne un tableau de la forme $planning[mois][jourDuMois] = jourDuCycle
-		// On doit d'abord créer la grille de l'année si elle n'existe pas
-		self::grilleExists($annee);
-		$sql = sprintf("SELECT * FROM `TBL_GRILLE` WHERE YEAR(`date`) = '%s'", $annee);
-		$result = $_SESSION['db']->db_interroge($sql);
-		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$planning[] = new jourTravail($row);
-		}
-		mysqli_free_result($result);
-		return $planning;
-	}
-	/*
-	 * Fin des fonctions statiques
+	/**
+	 * Génère les cycles dans TBL_GRILLE jusqu'au cycle contenant $dateDebut.
+	 *
+	 * @param Date $dateDebut la date contenu dans le dernier cycle que l'on veut construire.
+	 *
+	 * @return void
 	 */
+	private function genCycleIntoDb($dateDebut) {
+		if (!is_a($dateDebut, 'Date')) { // On teste si le paramètre est un objet de la classe Date
+			$dateDebut = new Date($dateDebut);
+			if (!$dateDebut) return false;
+		}
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($dateDebut);
+		$confTab = array('E' => 'W', 'W' => 'E');
+		$dateDebut->addJours(self::getCycleLength($affectation['centre'], $affectation['team'])); // On veut s'assurer que le cycle complet contenant la date est généré
+		// Recherche la dernière entrée de cycle dans la base
+		$sql = sprintf("
+			SELECT `date`,
+				`cid`,
+				`conf`
+			FROM `TBL_GRILLE`
+			WHERE `centre` = '%s'
+			AND `team` = '%s'
+			ORDER BY `date` DESC
+			LIMIT 1
+			"
+			, $affectation['centre']
+			, $affectation['team']
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		$row = $_SESSION['db']->db_fetch_row($result);
+		mysqli_free_result($result);
+		$startDate = new Date($row[0]);
+		$cid = $row[1];
+		$conf = $row[2];
 
-	//-------------------------------------------------
-	// Charge le cycle
-	//
-	// Renvoie true si la création s'est bien passée
-	// false sinon. lastError contient le code d'erreur
-	//-------------------------------------------------
+		if ($dateDebut->compareDate($row[0]) < 0) return true;
+
+		$sql = "";
+		$intro = "INSERT INTO `TBL_GRILLE`
+			( `grid`,
+			`date`,
+			`cid`,
+			`grilleId`,
+			`conf`,
+			`pcid`,
+			`vsid`,
+			`briefing`,
+			`readOnly`,
+			`ferie`,
+			`centre`,
+			`team` )
+			VALUES ";
+		while ($startDate->compareDate($dateDebut) < 0) {
+			$startDate->incDate();
+			$nCid = ($cid % self::getCycleLength($this->centre, $this->team)) + 1;
+			if ($nCid < $cid) $conf = $confTab[$conf];
+			$cid = $nCid;
+			$sql .= sprintf("
+				('', '%s', %d, '', '%s', '', '', '', '', '', '%s', '%s'),"
+				, $startDate->date()
+				, $cid
+				, $conf
+				, $affectation['centre']
+				, $affectation['team']
+			);
+		}
+		if ($sql != "") {
+			$sql = $intro . substr($sql, 0, -1);
+			$_SESSION['db']->db_interroge($sql);
+			$this->dbDiscrepancy();
+		}
+	}
+	/**
+	 * Charge le cycle.
+	 *
+	 * @param Date $dateDebut la date contenu dans le cycle que l'on veut charger.
+	 *
+	 * @return boolean true si la création s'est bien passée, false sinon. lastError contient le code d'erreur
+	 */
 	private function loadCycle($dateDebut) {
 		if (!is_a($dateDebut, 'Date')) { // On teste si le paramètre est un objet de la classe Date
 			$dateDebut = new Date($dateDebut);
 			if (!$dateDebut) return false;
 		}
-		// D'abord s'assurer que la grille existe pour l'année
-		if (!self::grilleExists($dateDebut->annee())) { // Something went wrong...
-			return false; // lastError est déjà remplie
-		}
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($dateDebut);
 		// On va chercher le cycle qui contient la date $dateDebut
 		$dateMin = clone $dateDebut;
-		$dateMin->subJours(self::getCycleLength()-1);
+		$dateMin->subJours(self::getCycleLength($affectation['centre'], $affectation['team'])-1);
 		$dateMaxS = clone $dateDebut;
-		$dateMaxS->addJours(self::getCycleLength()-1);
+		$dateMaxS->addJours(self::getCycleLength($affectation['centre'], $affectation['team'])-1);
+		// D'abord s'assurer que la grille existe pour le cycle demandé
+		$this->genCycleIntoDb($dateMaxS);
 		$sql = sprintf("
-			SELECT `date`, `TBL_GRILLE`.`cid`,
-			`TBL_GRILLE`.`vsid`,
-			`TBL_GRILLE`.`pcid`,
-			`TBL_GRILLE`.`briefing`,
-			`TBL_GRILLE`.`conf`,
-			`TBL_GRILLE`.`readOnly`,
-			`TBL_GRILLE`.`ferie`,
-			`TBL_CYCLE`.`vacation`
-			FROM `TBL_GRILLE`,
-		       		`TBL_CYCLE`
-			WHERE `TBL_CYCLE`.`cid` = `TBL_GRILLE`.`cid`
-			AND `TBL_CYCLE`.`vacation` <> 'Repos'
+			SELECT `date`,
+			`g`.`cid`,
+			`g`.`vsid`,
+			`g`.`pcid`,
+			`g`.`briefing`,
+			`g`.`conf`,
+			`g`.`readOnly`,
+			`g`.`ferie`,
+			`c`.`vacation`
+			FROM `TBL_GRILLE` AS `g`,
+		       		`TBL_CYCLE` AS `c`
+			WHERE `c`.`cid` = `g`.`cid`
+			AND `c`.`vacation` != '%s'
 			AND `date` BETWEEN
-		       		(SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = 1 AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
-				AND (SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = '%s' AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
-				ORDER BY date ASC"
-				, $dateMin->date()
-				, $dateDebut->date()
-				, self::getCycleLength()
-				, $dateDebut->date()
-				, $dateMaxS->date());
+				(SELECT `date`
+				FROM `TBL_GRILLE`
+				WHERE `cid` =
+					(SELECT `cid`
+						FROM `TBL_CYCLE`
+						WHERE `rang` = 1
+						AND (`centre` = '%s' OR `centre` = 'all')
+						AND (`team` = '%s' OR `team` = 'all')
+					)
+				AND `date` BETWEEN '%s' AND '%s'
+				AND (`centre` = '%s' OR `centre` = 'all')
+				AND (`team` = '%s' OR `team` = 'all')
+				LIMIT 0,1
+				)
+			AND
+			       	(SELECT `date`
+				FROM `TBL_GRILLE`
+				WHERE `cid` =
+					(SELECT MAX(`cid`)
+						FROM `TBL_CYCLE`
+						WHERE (`centre` = '%s' OR `centre` = 'all')
+						AND (`team` = '%s' OR `team` = 'all')
+					)
+				AND `date` BETWEEN '%s' AND '%s'
+				AND (`centre` = '%s' OR `centre` = 'all')
+				AND (`team` = '%s' OR `team` = 'all')
+				LIMIT 0,1
+				)
+			AND (`g`.`centre` = '%s' OR `g`.`centre` = 'all')
+			AND (`g`.`team` = '%s' OR `g`.`team` = 'all')
+			AND (`c`.`centre` = '%s' OR `c`.`centre` = 'all')
+			AND (`c`.`team` = '%s' OR `c`.`team` = 'all')
+			ORDER BY `date` ASC"
+			, REPOS
+			, $affectation['centre']
+			, $affectation['team']
+			, $dateMin->date()
+			, $dateDebut->date()
+			, $affectation['centre']
+			, $affectation['team']
+			, $affectation['centre'] // On suppose ici que les `cid` d'une même entité croissent avec le `rang`
+			, $affectation['team']	// Ce qui est logique sauf si le cycle est ultérieurement modifié
+			, $dateDebut->date()
+			, $dateMaxS->date()
+			, $affectation['centre']
+			, $affectation['team']
+			, $affectation['centre']
+			, $affectation['team']
+			, $affectation['centre']
+			, $affectation['team']
+		);
 		//debug::getInstance()->postMessage($sql);
 		$result = $_SESSION['db']->db_interroge($sql);
 		$check = true;
 		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
-			$this->dispos[$row['date']]['jourTravail'] = new jourTravail($row); // $dispo[date]['jourTravail'] = jourTravail
+			$this->dispos[$row['date']]['jourTravail'] = new jourTravail($row, $affectation['centre'], $affectation['team']); // $dispo[date]['jourTravail'] = jourTravail
 			if ($check) { // la date de référence est la première date du cycle
 				$this->dateRef = new Date($row['date']);
 				$this->moisAsHTML = $this->dispos[$row['date']]['jourTravail']->moisAsHTML();
@@ -218,28 +391,78 @@ class Cycle {
 		}
 		mysqli_free_result($result);
 		$sql =  sprintf("
-			SELECT `TL`.`uid`, `TL`.`date`,
-			`dispo` FROM `TBL_L_SHIFT_DISPO` AS `TL`,
+			SELECT `TL`.`uid`,
+			`TL`.`date`,
+			`dispo`,
+			`TL`.`title`,
+			`css`
+			FROM `TBL_L_SHIFT_DISPO` AS `TL`,
 			`TBL_DISPO` AS `TD`,
 			`TBL_USERS` AS `TU`,
-			`TBL_GRILLE` AS `TG`
+			`TBL_GRILLE` AS `TG`,
+			`TBL_CYCLE` AS `TC`
 			WHERE `TG`.`date` = `TL`.`date`
+			AND `TC`.`vacation` != '%s'
+			AND `TC`.`cid` = `TG`.`cid`
 			AND `TU`.`uid` = `TL`.`uid`
 			AND `TU`.`actif` = '1'
 			AND `TL`.`date` BETWEEN
-		       		(SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = 1 AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
-				AND (SELECT `date` FROM `TBL_GRILLE` WHERE `cid` = '%s' AND `date` BETWEEN '%s' AND '%s' LIMIT 0,1)
+				(SELECT `date`
+		       			FROM `TBL_GRILLE`
+					WHERE `cid` =
+					(SELECT `cid`
+						FROM `TBL_CYCLE`
+						WHERE `rang` = 1
+						AND (`centre` = '%s' OR `centre` = 'all')
+						AND (`team` = '%s' OR `team` = 'all')
+					)
+					AND `date` BETWEEN '%s' AND '%s'
+					AND (`centre` = '%s' OR `centre` = 'all')
+					AND (`team` = '%s' OR `team` = 'all')
+				      	LIMIT 0,1
+				)
+				AND
+			       	(SELECT `date`
+			       		FROM `TBL_GRILLE`
+					WHERE `cid` =
+					(SELECT MAX(`cid`)
+						FROM `TBL_CYCLE`
+						WHERE (`centre` = '%s' OR `centre` = 'all')
+						AND (`team` = '%s' OR `team` = 'all')
+					)
+					AND `date` BETWEEN '%s' AND '%s'
+					AND (`centre` = '%s' OR `centre` = 'all')
+					AND (`team` = '%s' OR `team` = 'all')
+					LIMIT 0,1
+				)
 			AND `TD`.`did` = `TL`.`did`
+			AND `TL`.`pereq` IS FALSE
+			AND `TG`.`centre` = '%s'
+			AND `TG`.`team` = '%s'
 			ORDER BY date ASC"
+			, REPOS
+			, $affectation['centre']
+			, $affectation['team']
 			, $dateMin->date()
 			, $dateDebut->date()
-			, self::getCycleLength()
+			, $affectation['centre']
+			, $affectation['team']
+			, $affectation['centre'] // On suppose ici que les `cid` d'une même entité croissent avec le `rang`
+			, $affectation['team']	// Ce qui est logique sauf si le cycle est ultérieurement modifié
 			, $dateDebut->date()
-			, $dateMaxS->date());
+			, $dateMaxS->date()
+			, $affectation['centre']
+			, $affectation['team']
+			, $affectation['centre']
+			, $affectation['team']
+		);
 		//debug::getInstance()->postMessage($sql);
 		$result = $_SESSION['db']->db_interroge($sql);
-		while ($row = $_SESSION['db']->db_fetch_row($result)) {
-			$this->dispos[$row[1]][$row[0]] = $row[2]; // $dispos[date][uid] = dispo
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$this->dispos[$row['date']][$row['uid']]['activite'] = $row['dispo']; // $dispos[date][uid][activite] = dispo
+			if (!is_null($row['title'])) {
+				$this->dispos[$row['date']][$row['uid']]['title'] = $row['title']; // $dispos[date][uid][title] = title
+			}
 		}
 		mysqli_free_result($result);
 		return true;
@@ -250,8 +473,30 @@ class Cycle {
 	//-----------------------------------------------
 	public function compteType($type = 'dispo') {
 		$date = clone $this->dateRef();
-		$date->decDate();
-		$sql = sprintf("SELECT `uid`, MOD(COUNT(`tl`.`sdid`), 10) FROM `TBL_L_SHIFT_DISPO` AS `tl`, `TBL_DISPO` AS `td` WHERE `tl`.`did` = `td`.`did` AND `td`.`type decompte` = '%s' AND `tl`.`date` < '%s' GROUP BY `uid`", $type, $date->date());
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
+		$date->subJours(1);
+		$sql = sprintf("
+			SELECT `l`.`uid`,
+			MOD(COUNT(`l`.`sdid`), 10)
+			FROM `TBL_L_SHIFT_DISPO` AS `l`,
+			`TBL_ANCIENNETE_EQUIPE` AS `a`,
+			`TBL_DISPO` AS `d`
+			WHERE `l`.`did` = `d`.`did`
+			AND `l`.`uid` = `a`.`uid`
+			AND `a`.`centre` = '%s'
+			AND `a`.`team` = '%s'
+			AND `a`.`global` IS TRUE
+			AND `d`.`type decompte` = '%s'
+			AND `l`.`date` <= '%s'
+			AND `l`.`date` >= `a`.`beginning`
+			AND '%s' BETWEEN `a`.`beginning` AND `a`.`end`
+			GROUP BY `uid`"
+			, $affectation['centre']
+			, $affectation['team']
+			, $type
+			, $date->date()
+			, $date->date()
+		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
 			$this->compteTypeUser[$type][$row[0]] = $row[1];
@@ -272,8 +517,32 @@ class Cycle {
 	//-----------------------------------------------
 	public function compteTypeFin($type = 'dispo') {
 		$date = clone $this->dateRef();
+		$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
 		$date->addJours(self::getCycleLength()-1);
-		$sql = sprintf("SELECT `uid`, MOD(COUNT(`tl`.`sdid`), 10) FROM `TBL_L_SHIFT_DISPO` AS `tl`, `TBL_DISPO` AS `td` WHERE `tl`.`did` = `td`.`did` AND `td`.`type decompte` = '%s' AND `tl`.`date` < '%s' GROUP BY `uid`", $type, $date->date());
+		$sql = sprintf("
+			SELECT `l`.`uid`,
+			MOD(COUNT(DISTINCT `l`.`sdid`), 10)
+			FROM `TBL_L_SHIFT_DISPO` AS `l`,
+			`TBL_ANCIENNETE_EQUIPE` AS `a`,
+			`TBL_DISPO` AS `d`
+			WHERE `l`.`did` = `d`.`did`
+			AND `l`.`uid` = `a`.`uid`
+			AND `a`.`centre` = '%s'
+			AND `a`.`team` = '%s'
+			AND `a`.`global` IS TRUE
+			AND `d`.`type decompte` = '%s'
+			AND `l`.`date` <= '%s'
+			AND `l`.`date` >= `a`.`beginning`
+			AND `a`.`beginning` <= '%s'
+			AND `a`.`end` >= '%s'
+			GROUP BY `uid`"
+			, $affectation['centre']
+			, $affectation['team']
+			, $type
+			, $date->date()
+			, $date->date()
+			, $this->dateRef()->date()
+		);
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_array($result)) {
 			$this->compteTypeUserFin[$type][$row[0]] = $row[1];
@@ -305,6 +574,191 @@ class Cycle {
 		foreach ($this->dispos as $date => $array) {
 			$array['jourTravail']->setReadWrite();
 		}
+	}
+/*
+* DB Discrepancy
+
+* Effectue des tests sur la base de données et corrige les éventuelles erreurs
+*
+*/
+	/*
+	 * Vérification des vacances scolaires
+	 *
+	 * Lorsqu'un nouveau cycle est créé dans la base,
+	 * on ne met pas les infos de vacances scolaires.
+	 * Cette méthode met à jour la base pour ajouter
+	 * les vacances scolaires aux jours de la grille
+	 * qui auraient été créés après la saisie des
+	 * dates de vacances scolaires.
+	 *
+	 * $date est une chaîne contenant la date à partir
+	 * de laquelle il faut mettre à jour.
+	 * Par défaut, il s'agit de la date du jour.
+	 */
+	public function dbDiscrepancyVacancesScolaires($date = NULL) {
+		if (is_null($date)) {
+			$date = date('Y-m-d');
+		} elseif (!is_string($date)) {
+			return false;
+		}
+		// Recherche des vacances scolaires
+		$sql = sprintf("SELECT *
+			FROM `TBL_VACANCES_SCOLAIRES`
+			WHERE `dateF` > '%s'
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $date
+			, $this->centre
+			, $this->team
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$sql = sprintf("
+				UPDATE `TBL_GRILLE`
+				SET `vsid` = %d
+				WHERE `date` BETWEEN '%s' AND '%s'
+				"
+				, $row['id']
+				, $row['dateD']
+				, $row['dateF']
+			);
+			if ($row['centre'] != 'all') {
+				$sql .= sprintf("
+					AND `centre` = '%s'"
+					, $row['centre']
+				);
+			}
+			if ($row['team'] != 'all') {
+				$sql .= sprintf("
+					AND `team` = '%s'"
+					, $row['team']
+				);
+			}
+			$_SESSION['db']->db_interroge($sql);
+		}
+		mysqli_free_result($result);
+	}
+	/*
+	 * Vérification des briefings
+	 *
+	 * Lorsqu'un nouveau cycle est créé dans la base,
+	 * on ne met pas les infos de briefing.
+	 * Cette méthode met à jour la base pour ajouter
+	 * les briefings aux jours de la grille
+	 * qui auraient été créés après la saisie des
+	 * dates de briefings.
+	 *
+	 * $date est une chaîne contenant la date à partir
+	 * de laquelle il faut mettre à jour.
+	 * Par défaut, il s'agit de la date du jour.
+	 */
+	public function dbDiscrepancyBriefing($date = NULL) {
+		if (is_null($date)) {
+			$date = date('Y-m-d');
+		} elseif (!is_string($date)) {
+			return false;
+		}
+		// Recherche des périodes de briefing
+		$sql = sprintf("SELECT *
+			FROM `TBL_BRIEFING`
+			WHERE `dateF` > '%s'
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $date
+			, $this->centre
+			, $this->team
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$sql = sprintf("
+				UPDATE `TBL_GRILLE`
+				SET `briefing` = %s
+				WHERE `date` BETWEEN '%s' AND '%s'
+				"
+				, $row['description']
+				, $row['dateD']
+				, $row['dateF']
+			);
+			if ($row['centre'] != 'all') {
+				$sql .= sprintf("
+					AND `centre` = '%s'"
+					, $row['centre']
+				);
+			}
+			if ($row['team'] != 'all') {
+				$sql .= sprintf("
+					AND `team` = '%s'"
+					, $row['team']
+				);
+			}
+			$_SESSION['db']->db_interroge($sql);
+		}
+		mysqli_free_result($result);
+	}
+	/*
+	 * Vérification de la période de charge
+	 *
+	 * Lorsqu'un nouveau cycle est créé dans la base,
+	 * on ne met pas les infos de la période de charge.
+	 * Cette méthode met à jour la base pour ajouter
+	 * la période de charge aux jours de la grille
+	 * qui auraient été créés après la saisie des
+	 * dates de période de charge.
+	 *
+	 * $date est une chaîne contenant la date à partir
+	 * de laquelle il faut mettre à jour.
+	 * Par défaut, il s'agit de la date du jour.
+	 */
+	public function dbDiscrepancyPeriodeDeCharge($date = NULL) {
+		if (is_null($date)) {
+			$date = date('Y-m-d');
+		} elseif (!is_string($date)) {
+			return false;
+		}
+		// Recherche des vacances scolaires
+		$sql = sprintf("SELECT *
+			FROM `TBL_PERIODE_CHARGE`
+			WHERE `dateF` > '%s'
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $date
+			, $this->centre
+			, $this->team
+		);
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$sql = sprintf("
+				UPDATE `TBL_GRILLE`
+				SET `pcid` = %d
+				WHERE `date` BETWEEN '%s' AND '%s'
+				"
+				, $row['id']
+				, $row['dateD']
+				, $row['dateF']
+			);
+			if ($row['centre'] != 'all') {
+				$sql .= sprintf("
+					AND `centre` = '%s'"
+					, $row['centre']
+				);
+			}
+			if ($row['team'] != 'all') {
+				$sql .= sprintf("
+					AND `team` = '%s'"
+					, $row['team']
+				);
+			}
+			$_SESSION['db']->db_interroge($sql);
+		}
+		mysqli_free_result($result);
+	}
+	public function dbDiscrepancy($date = NULL) {
+		$this->dbDiscrepancyVacancesScolaires($date);
+		$this->dbDiscrepancyBriefing($date);
+		$this->dbDiscrepancyPeriodeDeCharge($date);
 	}
 }
 

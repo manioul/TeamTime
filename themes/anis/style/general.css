@@ -2,13 +2,25 @@
 	margin:0;
 	padding:0;
 	border:0;
+	list-style:none;
+}
+html {
+	height:100%;
 }
 body {
 	font-family: "Times New Roman", Times, "Liberation Serif", FreeSerif, serif;
 	font-size: 8pt;
+}
+body, #container {
 	background-color: #efe;
-	margin: 0;
-	padding: 0;
+	background: -moz-linear-gradient(-45deg, #ffffff 0%, #eaffea 17%, #eeffee 100%) no-repeat; /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, right bottom, color-stop(0%,#ffffff), color-stop(17%,#eaffea), color-stop(100%,#eeffee)) no-repeat; /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(-45deg, #ffffff 0%,#eaffea 17%,#eeffee 100%) no-repeat; /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(-45deg, #ffffff 0%,#eaffea 17%,#eeffee 100%) no-repeat; /* Opera 11.10+ */
+	background: -ms-linear-gradient(-45deg, #ffffff 0%,#eaffea 17%,#eeffee 100%) no-repeat; /* IE10+ */
+	background: linear-gradient(135deg, #ffffff 0%,#eaffea 17%,#eeffee 100%) no-repeat; /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#eeffee',GradientType=1 ) no-repeat; /* IE6-9 fallback on horizontal gradient */
+	min-height:100%;
 }
 h1 {
 	display: block;
@@ -26,27 +38,34 @@ a {
 /*
  * Page gestion.php
  */
-div#dBriefing {
-	width:950px;
+#dBriefing {
+	width:750px;
 	margin:auto;
 }
-div#dBriefing table {
-	margin: 10px;
-	margin-left:5em;
-}
-.genElem {
-	margin:auto;
+#dBriefing table {
+	margin: auto;
 }
 /*
  * fin page gestion.php
  */
-div#contenu {
-	margin:auto;
-	width:98%;
+#container {
+	position:relative;
 }
-div#container {
+#content {
 	margin: auto;
-	width: 300px;
+	padding-bottom:2.5em;
+}
+/*
+ * notes de version
+ */
+#notesversion {
+	position:fixed;
+	bottom:0;
+	width: 100%;
+	font-size: 9pt;
+	text-align: center;
+	color: #575;
+	background-color: #eaffea;
 }
 div.logo {
 	background: url('../images/glue.png') 0 0 no-repeat;
@@ -80,6 +99,7 @@ img.cnl {
 	left:-75px;
 	top:-24px;
 	clip:rect(24px, 87px, 36px, 75px);
+	cursor:pointer;
 }
 div.nav-present {
 	float:left;
@@ -115,13 +135,114 @@ img.cadenasF {
 	clip:rect(48px, 87px, 60px, 75px);
 }
 /*
+ * Classe pour les formulaires ou autre en superposition
+ */
+.superpose {
+	position: absolute;
+	font-size: 2em;
+	display: none;
+	background-color: rgba(255,255,255,.9);
+	padding: 10px;
+	left:auto;
+	top:auto;
+	z-index:9999;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	border-radius: 3px;
+}
+.superpose input {
+	background-color:#e7ffe7;
+}
+#dMessages > ul {
+	margin: auto;
+	padding:5px;
+	margin-bottom:5px;
+	list-style-type: none;
+	max-width:870px;
+	display:block;
+	background-color: #fff;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	border-radius: 3px;
+}
+#dMessages .warn a {
+	color: #700;
+	font-size: 13px;
+	background-color: #fdd;
+}
+.warning {
+	color:red;
+	font-weight:bold;
+}
+.clic {
+	cursor:pointer;
+}
+/*
+ * Mise en forme comme un tableau
+ */
+.table {
+	display:table;
+}
+.row {
+	display:table-row;
+}
+.cell {
+	display:table-cell;
+	margin:3px;
+}
+.thead {
+	display:table-header-group;
+}
+.tbody {
+	display:table-row-group;
+}
+.tfoot {
+	display:table-footer-group;
+}
+.middle {
+	vertical-align:middle;
+}
+/*
  * Éléments de formulaire
  */
-input, textarea {
+form, input, textarea, select {
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
-	font-size: 7pt;
-	background-color: #cfc;
+	font-size: 11pt;
 	color: #060;
+	max-width:100%;
+}
+form ul li {
+	list-style:none;
+	line-height:30px;
+}
+fieldset:first-of-type {
+	margin:0;
+}
+fieldset {
+	padding:5px;
+	border:1px solid #060;
+	border-right:3px solid #060;
+	border-bottom:3px solid #060;
+	-moz-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	-ms-border-radius: 3px;
+	-o-border-radius: 3px;
+	border-radius: 3px;
+	margin:15px auto 0 auto;
+}
+legend {
+	padding:5px;
+	font-size:180%;
+}
+fieldset fieldset legend {
+	font-size:120%;
+}
+input, textarea, select {
+	background-color: #cfc;
 	border: 1px solid #060;
 	-moz-border-radius: 3px;
 	-webkit-border-radius: 3px;
@@ -129,16 +250,140 @@ input, textarea {
 	-o-border-radius: 3px;
 	border-radius: 3px;
 }
-label {
+.bouton, input[type=submit] {
+	width:100%;
+	height:50px;
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
-	font-size: 7pt;
+	font-size: 11pt;
+	text-align:center;
 	color: #060;
-	vertical-align: top;
-	padding: 5px;
+	border: 1px solid #060;
+	-moz-border-radius: 8px;
+	-webkit-border-radius: 8px;
+	-ms-border-radius: 8px;
+	-o-border-radius: 8px;
+	border-radius: 8px;
+
+	background: #ccffcc; /* Old browsers */
+	background: -moz-linear-gradient(top, #e7ffe7 0%, #c7ffc7 50%, #c0f9c0 51%, #e7ffe7 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#e7ffe7), color-stop(50%,#c7ffc7), color-stop(51%,#c0f9c0), color-stop(100%,#e7ffe7)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e7ffe7', endColorstr='#e7ffe7',GradientType=0 ); /* IE6-9 */
+
+	box-shadow: 2px 2px 2px #88aa88;
+
+	padding:0 15px;
+	margin:0 auto;
+
+	cursor:pointer;)
 }
-select {
-	background-color: #cfc;
+.bouton_small {
+	height:15px;
 }
+.round-button {
+	border-radius:50%;
+	border:1px solid #b3bead;
+	width:1em;
+	height:1em;
+	text-align:center;
+	color:#fff;
+	background-color:#ccc;
+	background: -moz-radial-gradient(center, ellipse cover, #b3bead 0%, #dfe5d7 84%, #fcfff4 100%); /* FF3.6+ */
+	background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,#b3bead), color-stop(84%,#dfe5d7), color-stop(100%,#fcfff4)); /* Chrome,Safari4+ */
+	background: -webkit-radial-gradient(center, ellipse cover, #b3bead 0%,#dfe5d7 84%,#fcfff4 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-radial-gradient(center, ellipse cover, #b3bead 0%,#dfe5d7 84%,#fcfff4 100%); /* Opera 12+ */
+	background: -ms-radial-gradient(center, ellipse cover, #b3bead 0%,#dfe5d7 84%,#fcfff4 100%); /* IE10+ */
+	background: radial-gradient(ellipse at center, #b3bead 0%,#dfe5d7 84%,#fcfff4 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b3bead', endColorstr='#fcfff4',GradientType=1  ); /* IE6-9 fallback on horizontal gradient */
+	cursor:pointer;
+	box-shadow: 2px 2px 0 #b3bead;
+	text-shadow:1px 1px 0 #575;
+}
+.round-button_medium {
+	font-size:25pt;
+}
+.round-button:hover {
+	box-shadow: 1px 1px 0 #b3bead;
+}
+input[type=submit]:last-of-type {
+	margin:15px auto 5px auto;
+}
+.bouton:hover, input[type=submit]:hover {
+	box-shadow: -1px -1px 0 #88aa88;
+}
+:disabled {
+	border:0;
+}
+label, .label {
+}
+/*
+ * placeholder
+ */
+	::-webkit-input-placeholder { color:#7a7; }
+	::-moz-placeholder { color:#7a7; } /* firefox 19+ */
+	:-ms-input-placeholder { color:#7a7; } /* ie */
+	input:-moz-placeholder { color:#7a7; }
+
+.header {
+	font-size: 300%;
+	height:50px;
+	text-align:center;
+	background: #ccffcc; /* Old browsers */
+	background: -moz-linear-gradient(top, #e7ffe7 0%, #c7ffc7 50%, #c0f9c0 51%, #e7ffe7 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#e7ffe7), color-stop(50%,#c7ffc7), color-stop(51%,#c0f9c0), color-stop(100%,#e7ffe7)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #e7ffe7 0%,#c7ffc7 50%,#c0f9c0 51%,#e7ffe7 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#e7ffe7', endColorstr='#e7ffe7',GradientType=0 ); /* IE6-9 */
+	border-bottom:1px solid rgba(50,200,50,.3);
+	margin-bottom:30px;
+	color:#060;
+}
+
+.panel {
+	max-width:800px;
+	margin:auto;
+}
+
+.ng {
+	color:#060;
+	background-color:#beb;
+	border-radius:15px;
+	box-shadow: 2px 2px 2px #88aa88;
+}
+.ng caption {
+	font-size:200%;
+	padding-bottom:10px;
+}
+.w24 {
+	width:240px;
+	padding:10px;
+	margin:10px auto;
+}
+.w24 table {
+	margin:10px 5px;
+	border:1px solid #060;
+	width:220px;
+}
+.panel .w24 {
+	float:left;
+	margin-right:5px;
+}
+.panel ul {
+	list-style:none;
+}
+.panel p {
+	font-size:200%;
+	margin:20px 0;
+}
+.bloc {
+	float:left;
+}
+
 div#dConnexion {
 	width: 70px;
 	margin: auto;
@@ -149,18 +394,530 @@ div#dConnexion input {
 	height: 1.5em;
 	font-size: 7pt;
 }
+
+#helpButton {
+	position:absolute;
+	left:20px;
+	top:5px;
+}
+#helpButton:hover {
+	left:21px;
+}
+#help {
+	display:none;
+	background:rgba(255,255,255,.95);
+	position:absolute;
+	left:20px;
+	top:50px;
+	margin:10px 20px;
+	max-width:435px;
+	max-height:640px;
+	overflow:auto;
+	font-size:120%;
+	color:#242;
+	padding:10px;
+	border-radius:5px;
+	border:1px solid #9c9;
+	cursor:pointer;
+}
+#help p {
+	margin:1em 0;
+	text-align:justify;
+}
+
+input,
+select {
+	height:1.5em;
+	margin-top:5px;
+	margin-bottom:5px;
+}
+input[!type=submit]:last-of-type,
+select:last-of-type {
+	height:1.5em;
+	margin-top:5px;
+	margin-bottom:0;
+}
+input[type=date] {
+	width:5.5em;
+}
+input#poids {
+	max-width:1.5em;
+}
+/*
+ * Formulaire de péréquations
+ */
+	form#fPereq {
+		float:left;
+		font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+		font-size: 11pt;
+		width:320px;
+		background-color:#beb;
+		border-radius:15px;
+		padding:10px;
+		margin:auto;
+
+		box-shadow: 2px 2px 2px #88aa88;
+	}
+	form#fPereq fieldset {
+		margin-bottom:10px;
+		border:none;
+	}
+	form#fPereq fieldset:last-of-type {
+		margin-bottom:0;
+	}
+	form#fPereq ul li {
+		border:3px solid rgba(255,255,255,.8);
+		border-radius:8px;
+		line-height:30px;
+		padding:5px 10px;
+		margin-bottom:8px;
+	}
+	form#fPereq label {
+		float:left;
+		width:150px;
+		font-weight:bold;
+	}
+	form#fPereq input:not([type=radio]),
+	form#fPereq select {
+		width:110px;
+	}
+	form#fPereq button {
+		display:block;
+		font-size:120%;
+		margin:auto;
+	}
+/*
+ * Fin du formulaire de péréquations
+ */
+
+/*
+ * Formulaires mon compte
+ */
+	div#monCompte {
+		margin:auto;
+	}
+	div#monCompte form {
+		max-width:850px;
+		margin:auto;
+		padding:10px;
+	}
+	div#monCompte fieldset {
+		border:0;
+	}
+	form#fContact fieldset {
+		margin-bottom:10px;
+		border:none;
+	}
+	form#fContact li.contact {
+		float:left;
+		max-width: 400px;
+		margin-right:10px;
+	}
+	form#fContact li.contact:last-of-type {
+		margin:0;
+	}
+	form#fContact fieldset:last-of-type {
+		margin-bottom:0;
+	}
+	form#fContact ul li {
+		border:3px solid rgba(255,255,255,.8);
+		border-radius:8px;
+		line-height:30px;
+		padding:5px 10px;
+		margin-bottom:8px;
+	}
+	form#fContact ul ul ul li {
+		border:0;
+	}
+	form#fContact label {
+		float:left;
+		width:120px;
+		font-weight:bold;
+	}
+	input[type=text],
+	input[type=tel],
+	input[type=password],
+	input[type=email],
+	select[not(multiple=multiple)],
+	textarea {
+		max-width:15em;
+	}
+	select[multiple=multiple] {
+		height:4em;
+		text-align:center;
+	}
+	form#fContact input[type=button] {
+		width:100%;
+	}
+	form#fAffectation table {
+		border-left:1px solid #3f7f00;
+		width:850px;
+	}
+/*
+ * Fin des formulaires mon compte
+ */
+
+/*
+ * Formulaire saisie d'heures
+ */
+	form#fSaisieHeures ul li {
+		float:left;
+		width: 210px;
+		border:3px solid rgba(255,255,255,.8);
+		border-radius:8px;
+		line-height:15px;
+		padding:5px 10px;
+		margin-right:10px;
+		margin-bottom:8px;
+	}
+	form#fSaisieHeures ul li:last-of-type {
+		padding:13px;
+		border:0;
+	}
+	form#fSaisieHeures textarea {
+		width:202px;
+		height:250px;
+		color: #060;
+		border: 1px solid #060;
+		-moz-border-radius: 8px;
+		-webkit-border-radius: 8px;
+		-ms-border-radius: 8px;
+		-o-border-radius: 8px;
+		border-radius: 8px;
+
+		background: #ccffcc; /* Old browsers */
+		background: -moz-linear-gradient(top, #d7ffd7 0%, #c7ffc7 50%, #d7ffd7 100%); /* FF3.6+ */
+		background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#d7ffd7), color-stop(50%,#c7ffc7), color-stop(100%,#d7ffd7)); /* Chrome,Safari4+ */
+		background: -webkit-linear-gradient(top, #d7ffd7 0%,#c7ffc7 50%,#d7ffd7 100%); /* Chrome10+,Safari5.1+ */
+		background: -o-linear-gradient(top, #d7ffd7 0%,#c7ffc7 50%,#d7ffd7 100%); /* Opera 11.10+ */
+		background: -ms-linear-gradient(top, #d7ffd7 0%,#c7ffc7 50%,#d7ffd7 100%); /* IE10+ */
+		background: linear-gradient(to bottom, #d7ffd7 0%,#c7ffc7 50%,#d7ffd7 100%); /* W3C */
+		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d7ffd7', endColorstr='#d7ffd7',GradientType=0 ); /* IE6-9 */
+		padding:4px;
+		margin:auto;
+	}
+	.hInput {
+		width:4em;
+	}
+/*
+ * formulaire de configuration de la distribution des heures
+ */
+	form#fDistribHeures {
+		float:left;
+		width:582px;
+	}
+	form#fDistribHeures fieldset {
+		margin-bottom:10px;
+		border:none;
+	}
+	form#fDistribHeures legend {
+		text-transform:uppercase;
+		margin-left:-1em;
+	}
+	form#fDistribHeures ul li {
+		float:left;
+		width: 250px;
+		border:3px solid rgba(255,255,255,.8);
+		border-radius:8px;
+		line-height:15px;
+		padding:2px 10px;
+		margin-right:10px;
+		margin-bottom:8px;
+	}
+	form#fDistribHeures ul ul li {
+		border:0;
+	}
+	form#fDistribHeures li:last-of-type {
+		margin:0;
+	}
+	form#fDistribHeures fieldset:last-of-type {
+		margin-bottom:0;
+	}
+	form#fDistribHeures ul li:last-of-type {
+		border:0;
+	}
+	form#fDistribHeures ul ul ul li {
+		border:0;
+	}
+	form#fDistribHeures label[for=iAddPhone],
+	form#fDistribHeures label[for=iAddAddress] {
+		width:200px;
+	}
+	form#fDistribHeures label {
+		float:left;
+		width:160px;
+		font-weight:bold;
+	}
+	form#fDistribHeures fieldset#joursDuCycle label,
+	form#fDistribHeures fieldset#grades label {
+		text-transform:uppercase;
+	}
+/*
+ * Fin formulaire de configuration de la distribution des heures
+ */
+
+/*
+ * Formulaire de sélection de l'intervalle d'heures à afficher pour le listing d'heures
+ */
+	form#fIntervalHeures fieldset {
+		float:left;
+		border:3px solid rgba(255,255,255,.8);
+		border-radius:8px;
+		padding:2px 10px;
+		margin-bottom:8px;
+	}
+	form#fIntervalHeures fieldset label {
+		float:left;
+		width:120px;
+		padding-right:5px;
+	}
+	form#fIntervalHeures input[type=date] {
+		float:left;
+		width:80px;
+		margin:5px 0;
+	}
+/*
+ * Fin du formulaire de sélection de l'intervalle d'heures
+ */
+
+/*
+ * Formulaire de saisie heures individuelles
+ */
+	form#fSaisieHeuresInd ul li {
+		line-height:30px;
+	}
+	form#fSaisieHeuresInd label {
+		float:left;
+		width:57px;
+		padding:0 5px 0 8px;
+	}
+	form#fSaisieHeuresInd fieldset {
+		float:left;
+		width:180px;
+		border:3px solid rgba(255,255,255,.8);
+		border-radius:8px;
+		padding:2px 10px;
+		margin-right:10px;
+		margin-bottom:8px;
+	}
+	form#fSaisieHeuresInd fieldset legend {
+		text-transform:uppercase;
+	}
+	form#fSaisieHeuresInd fieldset fieldset {
+		width:172px;
+	}
+	form#fSaisieHeuresInd fieldset label {
+		float:left;
+		width:90px;
+		padding-left:0;
+	}
+	form#fSaisieHeuresInd fieldset fieldset label {
+		width:110px;
+	}
+	form#fSaisieHeuresInd input[type=date] {
+		width:100px;
+	}
+	form#fSaisieHeuresInd input[type=text] {
+		width:50px;
+	}
+/*
+ * Fin du formulaire de saisie heures individuelles
+ */
+
+/*
+ * Formulaire de gestion du calendrier
+ */
+	form#fGestionCalendrier {
+		width:600px;
+	}
+	form#fGestionCalendrier ul li {
+		line-height:30px;
+	}
+	form#fGestionCalendrier fieldset {
+		float:left;
+		width: 410px;
+		border:3px solid rgba(255,255,255,.8);
+		border-radius:8px;
+		padding:2px 10px;
+		margin-right:10px;
+		margin-bottom:8px;
+	}
+	form#fGestionCalendrier label {
+		float:left;
+		width:350px;
+	}
+	form#fGestionCalendrier ul li label {
+		width:300px;
+	}
+	form#fGestionCalendrier input[type=date] {
+		width:100px;
+	}
+	form#fGestionCalendrier input[type=text] {
+		width:590px;
+	}
+	form#fGestionCalendrier input[type=submit] {
+		height:71px;
+		width:145px;
+	}
+/*
+ * Fin du formulaire de gestion du calendrier
+ */
+
+/*
+ * Formulaire d'ajout d'activité pour l'équipe
+ */
+	form#fActvt {
+		width:430px;
+		margin:auto;
+	}
+	form#fActvt li {
+		margin-top:5px;
+	}
+	form#fActvt label[for=isd],
+	form#fActvt label[for=needCpt]{
+		width:380px;
+	}
+	form#fActvt label {
+		float:left;
+		width:200px;
+	}
+	form#fActvt input[type=text]{
+		width:100px;
+	}
+	form#fActvt input[type=submit] {
+		width:415px;
+		margin:auto;
+	}
+	/*form#fActvt {
+	form#fActvt {
+	form#fActvt {
+	form#fActvt {
+/*
+ * Fin du formulaire de gestion du calendrier
+ */
+
+/*
+ * Tableau d'affichage des heures
+ */
+	table#listeHeures {
+		margin:auto;
+	}
+	table#listeHeures caption {
+		font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+		font-size:200%;
+		padding-bottom:10px;
+	}
+/*
+ * Fin du tableau d'affichage des heures
+ */
+/*
+ * Tableau d'affichage de la distribution des heures
+ */
+	table#heuresJour {
+		margin:auto;
+	}
+	table#heuresJour caption {
+		font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
+		font-size:200%;
+		padding-bottom:10px;
+	}
+/*
+ * Fin du tableau d'affichage de la distribution des heures
+ */
+/*
+ * Titres de congés déjà édités
+ */
+	div#tce {
+		width:500px;
+		margin:auto;
+		background-color:#beb;
+		border-radius:15px;
+		box-shadow: 2px 2px 2px #88aa88;
+	}
+	div#tce h3 {
+		font-size:200%;
+		margin:30px 0;
+		text-align:center;
+	}
+	div#tce ul {
+		margin:0 30px;;
+		font-size:150%;
+	}
+/*
+ * Fin de titres de congés déjà édités
+ */
+/*
+ * Tableau de gestion de la distribution des heures
+ */
+	div#dispatchSchema {
+		float:left;
+		margin:0 30px;
+	}
+.dispoMultiples {
+	display:block;
+	float:left;
+	margin:0 30px;
+}
+/*
+ * Affichage des heures à partager déjà saisies
+ */
+	form#fHS {
+		width:220px;
+		margin:auto;
+		border:1px solid #060;
+		box-shadow:none;
+	}
+	form#fHS ul li {
+		line-height:30px;
+	}
+	form#fHS label {
+		float:left;
+		width:40px;
+		margin:0 25px;
+	}
+	form#fHS input[type=date] {
+		width:90px;
+	}
+/*
+ * tableaux
+ */
+.genElem {
+	margin:auto;
+}
+.altern-row, .genElem {
+	background-color: #beb;
+}
+.altern-row tr:nth-child(even), .genElem tr:nth-child(even) {
+	background-color: #d4ffaa;
+}
+.altern-row tr:nth-child(odd), .genElem tr:nth-child(odd) {
+	background-color: #faffcc;
+}
 table {
+	margin: 0 0 30px 0;
 	border-spacing: 2px;
-	/*border-top: 5px solid #9b9;*/
-	border-right: 5px solid #9b9;
+	border-top:1px solid #3f7f00;                                                                                                        
+	border-right: 1px solid #3f7f00;
 	border-bottom: 5px solid #beb;
 	border-left: 5px solid #beb;
-	background-color: #eee;
-	border-radius: 8px;
-	-moz-border-radius: 8px;
-	-ms-border-radius: 8px;
-	-o-border-radius: 8px;
-	-webkit-border-radius: 8px;
+
+	box-shadow: 10px 10px 5px #888888;
+
+	-moz-border-radius-bottomleft:5px;
+	-webkit-border-bottom-left-radius:5px;
+	border-bottom-left-radius:5px;
+
+	-moz-border-radius-bottomright:5px;
+	-webkit-border-bottom-right-radius:5px;
+	border-bottom-right-radius:5px;
+
+	-moz-border-radius-topright:5px;
+	-webkit-border-top-right-radius:5px;
+	border-top-right-radius:5px;
+
+	-moz-border-radius-topleft:5px;
+	-webkit-border-top-left-radius:5px;
+	border-top-left-radius:5px;
 }
 th {
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
@@ -171,41 +928,86 @@ th {
 td {
 	padding: 5px;
 	text-align: center;
-	background-color: #faffcc;
 	border-radius:3px;
 	-moz-border-radius: 3px;
 	-ms-border-radius: 3px;
 	-o-border-radius: 3px;
 	-webkit-border-radius: 3px;
-}
-/*
- * Fenêtre d'information
- */
-div#info {
-	position: absolute;
-	font-size: 2em;
-	display: none;
-	background-color: rgba(255,255,255,.9);
-	padding: 5px;
-	left: 300px;
-	top: 300px;
-	z-index:9999;
+	max-width:12em;
 }
 
 /*
- * notes de version
+ * Onglets
  */
-div#notesversion {
-	position: relative;
-	vertical-align: bottom;
-	margin-top: 5em;
-	padding: 10px;
-	width: 100%;
-	font-size: 9pt;
-	text-align: center;
-	color: #575;
-	background-color: #fff;
+.onglets {
 }
+dl.onglets dt {
+	font-size:220%;
+	max-width:5em;
+	margin:0 15px;
+	padding:0 15px;
+	background:rgb(23,123,0);
+	color:white;
+}
+dl.sous-onglets dt {
+	font-size:180%;
+	background:rgb(50,153,50);
+	color:rgb(220,255,220);
+}
+dl.sous-onglets dd {
+	display:none;
+}
+
+/*
+ * Annuaire
+ */
+	div#annuaire ul {
+		list-style:none;
+	}
+/*
+ * Fenêtre d'information
+ */
+#info {
+	position:absolute;
+	font-size: 2em;
+	display: none;
+	background: rgba(255,255,255,.9);
+	padding: 5px;
+	margin:auto;
+	top:50%;
+	right:35%;
+	width:30%;
+	max-width: 500px;
+	z-index:9999;
+	text-align:center;
+}
+
+/*
+ * classe pour marquer les erreurs
+ */
+.erreur {
+	font-style:italic;
+	font-size:150%;
+	color:#060;
+	width:30%;
+	margin:auto;
+	padding:5px 25px;
+	background: #ceffce; /* Old browsers */
+	background: -moz-linear-gradient(top, #ceffce 0%, #c7ffc7 50%, #c0f9c0 51%, #ceffce 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ceffce), color-stop(50%,#c7ffc7), color-stop(51%,#c0f9c0), color-stop(100%,#ceffce)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #ceffce 0%,#c7ffc7 50%,#c0f9c0 51%,#ceffce 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #ceffce 0%,#c7ffc7 50%,#c0f9c0 51%,#ceffce 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #ceffce 0%,#c7ffc7 50%,#c0f9c0 51%,#ceffce 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #ceffce 0%,#c7ffc7 50%,#c0f9c0 51%,#ceffce 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ceffce', endColorstr='#ceffce',GradientType=0  ); /* IE6-9 */
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	-ms-border-radius: 10px;
+	-o-border-radius: 10px;
+	border-radius: 10px;
+	border:2px solid rgb(255,200,200);
+}
+
 
 /*
  * Choix du thème

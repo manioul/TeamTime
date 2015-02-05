@@ -8,7 +8,8 @@
 	font-size: 1em;
 	width: 33px;
 }
-table#grille {
+table#grille,
+.tabCong > table {
 	margin: auto;
 }
 th.ferie {
@@ -50,10 +51,30 @@ div.nobrief {
 	font-size: 9pt;
 	font-weight: normal;
 }
+.dateGrille a {
+	color:rgb(0,0,0);
+}
+.dateGrille a:hover {
+	color:#333;
+}
+.compteur-vertical {
+	-webkit-transform-origin:50 0;
+	-ms-transform-origin:50 0;
+	transform-origin:50 0;
+	-webkit-transform:rotate(90deg);
+	-ms-transform:rotate(90deg);
+	transform: rotate(90deg);
+	width:25px;
+	margin-top:-20px;
+}
+.w15 {
+	width:15px;
+	overflow:hidden;
+}
 /*
  * Affichage des utilisateurs dans la grille
 */
-td.nom {
+#grille td.nom {
 	font-weight: bold;
 	font-size: 12px;
 	padding: 1px;
@@ -61,40 +82,72 @@ td.nom {
 	height: 22px;
 	cursor: pointer;
 }
-td.cds {
+#grille td.cds {
 	background-color: #50d053;
 }
-td.ce {
+#grille td.ce {
 	background-color: #72f676;
 }
-td.pc {
+#grille td.dtch,
+#grille td.fmp,
+#grille td.pc {
 	background-color: #93fda9;
 }
-td.c {
+#grille td.c {
 	background-color: #b7f9bf;
 }
-td.dtch {
+.fmp {
+	color:purple;
+}
+#grille td.dtch {
 	color: #900;
 }
-td.presence {
+#grille td.presence {
 	text-align: center;
 	font-size: 9pt;
 	font-weight: normal;
 	width: 2.5em;
 	cursor: pointer;
 }
-td.presence:hover {
+#grille td.presence:hover {
 }
 /* Protection de la grille */
-td.protected {
-	color: #300;
+#grille td.protected {
 	cursor: default;
 }
-td.present {
-	background-color: #ccffcc;
+#grille td.present {
+	background: #ccffcc; /* Old browsers */
+	background: -moz-linear-gradient(top, #c0ffc0 0%, #c7ffc7 50%, #c0f9c0 51%, #c0ffc0 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#c0ffc0), color-stop(50%,#c7ffc7), color-stop(51%,#c0f9c0), color-stop(100%,#c0ffc0)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #c0ffc0 0%,#c7ffc7 50%,#c0f9c0 51%,#c0ffc0 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #c0ffc0 0%,#c7ffc7 50%,#c0f9c0 51%,#c0ffc0 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #c0ffc0 0%,#c7ffc7 50%,#c0f9c0 51%,#c0ffc0 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #c0ffc0 0%,#c7ffc7 50%,#c0f9c0 51%,#c0ffc0 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#c0ffc0', endColorstr='#c0ffc0',GradientType=0 ); /* IE6-9 */
 }
-td.absent {
+#grille td.absent {
 	background-color: #99cc99;
+	background: -moz-linear-gradient(top, #aaddaa 0%, #99cc99 50%, #99cc99 51%, #aaddaa 100%); /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#aaddaa), color-stop(50%,#99cc99), color-stop(51%,#99cc99), color-stop(100%,#aaddaa)); /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top, #aaddaa 0%,#99cc99 50%,#99cc99 51%,#aaddaa 100%); /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top, #aaddaa 0%,#99cc99 50%,#99cc99 51%,#aaddaa 100%); /* Opera 11.10+ */
+	background: -ms-linear-gradient(top, #aaddaa 0%,#99cc99 50%,#99cc99 51%,#aaddaa 100%); /* IE10+ */
+	background: linear-gradient(to bottom, #aaddaa 0%,#99cc99 50%,#99cc99 51%,#aaddaa 100%); /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#aaddaa', endColorstr='#aaddaa',GradientType=0 ); /* IE6-9 */
+}
+.tabCong td {
+	width:6em;
+}
+.date {
+	font-size: 9px;
+}
+.user {
+	font-weight: bold;
+}
+#dDatePicker {
+	width: 200px;
+	margin: 10px auto;
+	text-align:center;
 }
 .pointer {
 	cursor: pointer;
@@ -179,7 +232,6 @@ td.dcpt, td.dpt {
 	font-family: Arial, Helvetica, "Liberation Sans", FreeSans, sans-serif;
 	font-size: .9em;
 	background-color: #dfe;
-	border-top: 1px solid #5a6;
 	margin: 0;
 	padding: 0;
 	padding-top: 3px;
@@ -216,7 +268,29 @@ div#dFormRemplacement table {
 div#dFormRemplacement table td {
 	background-color:transparent;
 }
+#dFormInfoSup {
+	background-color:rgba(255,255,255,.9);
+	padding:10px;
+	border-spacing:0;
+	border:0px solid #fff;
+	-moz-border-radius:15px;
+	-webkit-border-radius: 15px;
+	-ms-border-radius: 15px;
+	-o-border-radius: 15px;
+	border-radius: 15px;
+	box-shadow: 0 1px 3px rgba(0,0,0,.3),
+	0 3px 5px rgba(0,0,0,.2),
+	0 5px 10px rgba(0,0,0,.2),
+	0 20px 20px rgba(0,0,0,.15);
+	max-width:195px;
+}
 .emphasize {
 	background-color: #fdd;
 	color: #f00;
+}
+.valide {
+	color:#0070ff;
+}
+.filed {
+	color:#f00;
 }

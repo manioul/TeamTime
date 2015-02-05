@@ -1,0 +1,904 @@
+-- Requiert utilisateurs.sql pour searchAffectation
+-- source utilisateurs.sql
+
+
+CREATE TABLE IF NOT EXISTS TBL_VACANCES_A_ANNULER (
+	uid INT(11) NOT NULL,
+	did INT(11) NOT NULL,
+	date DATE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CREATE TABLE IF NOT EXISTS TBL_VACANCES_RECAP (
+	centre VARCHAR(50) NOT NULL,
+	team VARCHAR(10) NOT NULL,
+	uid INT(11) NOT NULL,
+	nom VARCHAR(64) NOT NULL,
+	did SMALLINT(6) NOT NULL,
+	dispo VARCHAR(16) NOT NULL,
+	nom_long VARCHAR(45) NOT NULL,
+	year YEAR(4) NOT NULL,
+	déposé SMALLINT(6) NOT NULL,
+	reliquat SMALLINT(6) NOT NULL,
+	quantity SMALLINT(6) NOT NULL,
+	poids SMALLINT(6) NOT NULL
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DELIMITER |
+DROP PROCEDURE IF EXISTS attribAnneeConge|
+CREATE PROCEDURE attribAnneeConge( IN uid_ SMALLINT(6) , IN date_ DATE , IN annee_ SMALLINT(6) )
+BEGIN
+	DECLARE shiftDid INT(11);
+	DECLARE dispoid INT(11);
+	DECLARE	debutDemiCycle DATE; -- La date de début du demi-cycle
+	DECLARE	finDemiCycle DATE; -- La date de fin du demi-cycle
+	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
+	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
+	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
+
+	-- Recherche le sdid en vérifiant qu'il correspond à un congé
+	-- Recherche également le did pour les traitements spéciaux (cas des demi-cycles)
+	SELECT l.sdid, did
+	INTO shiftDid, dispoid
+	FROM TBL_L_SHIFT_DISPO AS l,
+	TBL_VACANCES AS v
+	WHERE l.sdid = v.sdid
+	AND date = date_
+	AND uid = uid_;
+
+	IF dispoid = 1 THEN
+		-- Définit le début et fin du demi-cycle
+		CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
+		SET date_ = debutDemiCycle;
+		REPEAT
+			SELECT l.sdid, did
+			INTO shiftDid, dispoid
+			FROM TBL_L_SHIFT_DISPO AS l,
+			TBL_VACANCES AS v
+			WHERE l.sdid = v.sdid
+			AND date = date_
+			AND uid = uid_;
+			IF dispoid = 1 THEN
+				-- Attribue l'année du congé
+				CALL __attribAnneeConge(shiftDid, annee_);
+			ELSE
+				-- Le did n'est pas celui attendu : le type de congé ne correspond pas.
+				CALL messageSystem('Le type de congé ne correspond pas : on attendait un did de 1', 'ERREUR', 'attribAnneeConge', 'erreur de did', NULL, CONCAT('uid:', uid_, ';date:', date_, ';annee_:', annee_, ';dispoid:', dispoid));
+			END IF;
+			SET date_ = DATE_ADD(date_, INTERVAL 1 DAY);
+		UNTIL date_ > finDemiCycle END REPEAT;
+	ELSE
+		CALL __attribAnneeConge(shiftDid, annee_);
+	END IF;
+END
+|
+DROP PROCEDURE IF EXISTS __attribAnneeConge|
+CREATE PROCEDURE __attribAnneeConge( IN shiftDid INT(11) , IN annee_ SMALLINT(6) )
+BEGIN
+	UPDATE TBL_VACANCES
+	SET year = annee_
+	WHERE sdid = shiftDid;
+END
+|
+DROP PROCEDURE IF EXISTS toggleAnneeConge|
+CREATE PROCEDURE toggleAnneeConge( IN uid_ SMALLINT(6) , IN date_ DATE )
+BEGIN
+	DECLARE annee, year_ SMALLINT(6) DEFAULT NULL;
+	DECLARE sdid_, did_ INT(11);
+	DECLARE dateLimite, debutDemiCycle, finDemiCycle DATE;
+	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
+	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
+	DECLARE grade_ VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+
+	CALL searchAffectation(uid_, date_, centre_, team_, grade_);
+
+	SELECT year, l.sdid, did
+	INTO year_, sdid_, did_
+	FROM TBL_VACANCES AS v
+	, TBL_L_SHIFT_DISPO AS l
+	WHERE date = date_
+	AND l.sdid = v.sdid
+	AND uid = uid_;
+
+	-- Cas des W qui sont restreints à l'année du congé
+	IF did_ = 3 THEN
+		UPDATE TBL_VACANCES
+		SET year = YEAR(date_)
+		WHERE sdid = sdid_;
+	-- Traitement des V
+	ELSEIF did_ = 1 THEN
+		IF year_ < YEAR(date_) THEN
+			CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
+			UPDATE TBL_VACANCES
+			SET year = YEAR(date_)
+			WHERE sdid IN (SELECT sdid
+				FROM TBL_L_SHIFT_DISPO AS l
+				WHERE date BETWEEN debutDemiCycle AND finDemiCycle
+				AND uid = uid_);
+		ELSE
+			CALL dateLimiteConges(YEAR(date_) - 1, centre_, dateLimite);
+			IF date_ <= dateLimite THEN
+				CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
+				UPDATE TBL_VACANCES
+				SET year = YEAR(date_) - 1
+				WHERE sdid IN (SELECT sdid
+					FROM TBL_L_SHIFT_DISPO AS l
+					WHERE date BETWEEN debutDemiCycle AND finDemiCycle
+					AND uid = uid_);
+			END IF;
+		END IF;
+	ELSE
+		IF year_ < YEAR(date_) THEN
+			SET annee = YEAR(date_);
+			UPDATE TBL_VACANCES
+			SET year = YEAR(date_)
+			WHERE sdid = sdid_;
+		ELSE
+			CALL dateLimiteConges(YEAR(date_) - 1, centre_, dateLimite);
+			IF date_ <= dateLimite THEN
+				UPDATE TBL_VACANCES
+				SET year = YEAR(date_) - 1
+				WHERE sdid = sdid_;
+			END IF;
+		END IF;
+	END IF;
+END
+|
+DROP PROCEDURE IF EXISTS dateLimiteConges|
+CREATE PROCEDURE dateLimiteConges( IN year SMALLINT(6) , IN centre_ VARCHAR(50) , OUT dateLimite DATE )
+BEGIN
+	-- Recherche la date limite de dépôt des congés
+
+	-- Recherche si une date a été définie pour l'année concernée
+	SELECT valeur
+	INTO dateLimite
+	FROM TBL_CONSTANTS
+	WHERE nom LIKE CONCAT("dlCong_", year , '_' ,  centre_);
+	-- Si aucune date n'a été définie, on se base sur la date par défaut
+	IF dateLimite IS NULL THEN
+		SELECT CONCAT(year + 1, "-" , valeur)
+		INTO dateLimite
+		FROM TBL_CONSTANTS
+		WHERE nom = CONCAT("dlCong_default_", centre_);
+	END IF;
+	SET dateLimite = CAST(dateLimite AS DATE);
+END
+|
+DROP PROCEDURE IF EXISTS demiCycle|
+CREATE PROCEDURE demiCycle( IN date_ DATE , IN centre_ VARCHAR(50) , IN team_ VARCHAR(10) , OUT debutDemiCycle DATE , OUT finDemiCycle DATE )
+BEGIN
+	DECLARE vac VARCHAR(8);
+
+	-- Vérifie que le jour n'est pas un jour de repos
+	SELECT vacation
+	INTO vac
+	FROM TBL_CYCLE AS c,
+	TBL_GRILLE AS g
+	WHERE date = date_
+	AND (c.centre = centre_ OR c.centre = 'all')
+	AND (c.team = team_ OR c.team = 'all')
+	AND (g.centre = centre_ OR g.centre = 'all')
+	AND (g.team = team_ OR g.team = 'all')
+	AND c.cid = g.cid;
+
+	IF vac != 'Repos' THEN
+		-- TODO Ceci n'est pas très portable...
+		-- Recherche la date qui n'est pas un jour de repos deux jours avant
+		-- un demi-cycle dure 3 jours
+		SELECT MIN(date)
+		INTO debutDemiCycle
+		FROM TBL_GRILLE AS g,
+		TBL_CYCLE AS c
+		WHERE c.cid = g.cid
+		AND c.vacation != 'Repos'
+		AND date >= DATE_SUB(date_, INTERVAL 2 DAY)
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all')
+		AND (g.centre = centre_ OR g.centre = 'all')
+		AND (g.team = team_ OR g.team = 'all');
+		SELECT MAX(date)
+		INTO finDemiCycle
+		FROM TBL_GRILLE AS g,
+		TBL_CYCLE AS c
+		WHERE c.cid = g.cid
+		AND c.vacation != 'Repos'
+		AND date <= DATE_ADD(date_, INTERVAL 2 DAY)
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all')
+		AND (g.centre = centre_ OR g.centre = 'all')
+		AND (g.team = team_ OR g.team = 'all');
+	ELSE
+		-- Le jour n'est pas un jour de travail
+		CALL messageSystem(CONCAT('Le jour attendu est un jour de travail, or le jour ', date_, ' est un ', vac), 'ERREUR', 'demiCycle', 'invalid day', CONCAT('date:', date_, ';centre:', centre_, ';team:', team_, ';debutDemiCycle:', debutDemiCycle, ';finDemiCycle:', finDemiCycle));
+	END IF;
+END
+|
+-- Passer NULL comme oldDisponibilite pour supprimer automatiquement l'ancienne dispo sur la date/l'utilisateur
+-- oldDisponibilite est systématiquement fixé à NULL dans la mesure où l'on n'utilise pas de dispo multiples
+DROP PROCEDURE IF EXISTS addDispo|
+CREATE PROCEDURE addDispo( IN uid_ SMALLINT(6) , IN date_ DATE , IN disponibilite VARCHAR(16) , IN oldDisponibilite VARCHAR(16) , IN perequation BOOLEAN )
+BEGIN
+	-- /!\
+	-- La date détermine l'affectation de l'utilisateur
+	-- Ceci est à prendre en considération dans le cas de péréquations
+	-- /!\
+	-- TODO Vérifier les droits à poser la dispo :
+	-- le jour est-il ok pour cette dispo, l'utilisateur peut-il recevoir cette dispo ? L'utilisateur a-t-il le droit de poser cette dispo ?...
+	DECLARE isReadOnly BOOLEAN DEFAULT 0;
+	DECLARE dispoid INT(11);
+	DECLARE	typeDecompte VARCHAR(255);
+	DECLARE vac VARCHAR(8);
+	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
+	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
+	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
+
+	-- oldDisponibilite est systématiquement fixé à NULL dans la mesure où l'on n'utilise pas de dispo multiples
+	SET oldDisponibilite = NULL;
+
+	-- Recherche la vacation
+	SELECT vacation
+	INTO vac
+	FROM TBL_CYCLE AS c,
+	TBL_GRILLE AS g
+	WHERE c.cid = g.cid
+	AND date = date_
+	AND g.centre = centre_
+	AND g.team = team_
+	AND (c.centre = centre_ OR c.centre = 'all')
+	AND (c.team = team_ OR c.team = 'all');
+
+	IF NOT perequation THEN
+		-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
+		IF vac = 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	ELSE
+		-- De même si il s'agit d'une péréquation, on vérifie que la date est un jour de repos
+		IF vac != 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	END IF;
+
+	-- Vérifie si la date est éditable
+	IF NOT isReadOnly THEN
+		SELECT readOnly
+		INTO isReadOnly
+		FROM TBL_GRILLE
+		WHERE date = date_
+		AND centre = centre_
+		AND team = team_;
+	END IF;
+
+	IF NOT isReadOnly THEN
+		IF oldDisponibilite IS NULL THEN
+			SELECT dispo
+			INTO oldDisponibilite
+			FROM TBL_L_SHIFT_DISPO AS l
+			, TBL_DISPO AS d
+			WHERE date = date_
+			AND uid = uid_
+			AND l.did = d.did
+			AND (centre = centre_ OR centre = 'all')
+			AND (team = team_ OR team = 'all')
+			LIMIT 1;
+		END IF;
+		-- Supprime l'ancienne dispo
+		IF oldDisponibilite != "" THEN
+			CALL messageSystem('Une ancienne dispo existe et doit être effacée : appel delDispo', 'TRACE', 'addDispo', NULL, CONCAT('date:', date_, ';oldDisponibilite:', oldDisponibilite, ';uid:', uid_));
+			CALL delDispo( uid_, date_, oldDisponibilite, FALSE);
+		END IF;
+		IF disponibilite != "" THEN
+			-- Vérifie si la nouvelle dispo est un congé
+			SELECT did, `type decompte`
+			INTO dispoid, typeDecompte
+			FROM TBL_DISPO
+			WHERE dispo = disponibilite
+			AND (`jours possibles` = 'all' OR FIND_IN_SET(vac, `jours possibles`))
+			AND (centre = centre_ OR centre = 'all')
+			AND (team = team_ OR team = 'all')
+			LIMIT 1;
+
+			CALL messageSystem('La nouvelle dispo est-elle un congé ?', 'DEBUG', 'addDispo', NULL, CONCAT('dispoid:', dispoid, ';typeDecompte:', typeDecompte));
+			-- Si la dispo est un congé
+			IF typeDecompte = 'conges' THEN
+				CALL addConges( uid_, date_, dispoid, perequation );
+			ELSE
+				CALL messageSystem('Ajout de la dispo', 'TRACE', 'addDispo', NULL, CONCAT('dispoid:', dispoid, ';uid:', uid_, 'date:', date_, 'pereq:', perequation));
+				INSERT INTO TBL_L_SHIFT_DISPO
+				(date, uid, did, pereq)
+				VALUES
+				(date_, uid_, dispoid, perequation);
+			END IF;
+		END IF;
+	ELSE -- La date n'est pas éditable
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'addDispo', 'read only', CONCAT("uid_:", uid_, ";date:", date_, ";dipo:", disponibilite, ";"));
+	END IF;
+END
+|
+DROP PROCEDURE IF EXISTS addConges|
+CREATE PROCEDURE addConges( IN uid_ SMALLINT(6) , IN date_ DATE , IN dispoid INT(11) , IN perequation BOOLEAN )
+BEGIN
+	DECLARE isReadOnly BOOLEAN DEFAULT 0;
+	DECLARE	congeDispo BOOLEAN DEFAULT 1;
+	DECLARE	anneeConge INT(11); -- l'année du congé
+	DECLARE	reliquat INT(11); -- le reliquat de congés de ce type
+	DECLARE	dateLimite VARCHAR(10); -- la date limite de dépôt des congés
+	DECLARE	debutDemiCycle DATE; -- La date de début du demi-cycle
+	DECLARE	finDemiCycle DATE; -- La date d efin du demi-cycle
+	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
+	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
+	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+	DECLARE vac VARCHAR(8);
+
+	DECLARE athis_recouvrement INT(11); -- La quantité de congés en transformable de V en F pour Athis
+	SET athis_recouvrement = 3; -- fractionnables par demi-vac
+	-- SET athis_recouvrement = 6; -- fractionnables par vac
+
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
+
+	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
+	IF NOT perequation THEN
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac = 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	ELSE
+		-- De même si il s'agit d'une péréquation, on vérifie que la date est un jour de repos
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac != 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	END IF;
+
+	-- Vérifie si la date est éditable
+	IF NOT isReadOnly THEN
+		SELECT readOnly
+		INTO isReadOnly
+		FROM TBL_GRILLE
+		WHERE date = date_
+		AND centre = centre_
+		AND team = team_;
+	END IF;
+
+	IF NOT isReadOnly THEN
+		-- Recherche la date limite des congés)s 
+		CALL dateLimiteConges(YEAR(date_)-1, centre_, dateLimite);
+
+		-- Recherche les congés identiques sur l'année qui seraient postérieurs TODO
+		-- SELECT 
+		-- FROM TBL_VACANCES AS v,
+		-- TBL_L_SHIFT_DISPO AS l
+		-- WHERE v.sdid = l.sdid
+		-- AND year = 
+		-- AND did = dispoid
+		-- AND date > date_
+		-- ORDER BY date DESC;
+		
+		-- Les W ne sont posables que sur l'année => dateLimite = 31/12
+		IF (dispoid = 3) THEN
+			SET dateLimite = CONCAT(YEAR(date_), '-12-31');
+		END IF;
+
+		-- Si le congé est situé avant la date limite de l'année passée
+		IF date_ <= dateLimite THEN
+			-- On recherche si il reste des congés de ce type
+			-- sur l'année passée
+			SELECT quantity - COUNT(v.sdid)
+			INTO reliquat
+			FROM TBL_VACANCES AS v,
+			TBL_L_SHIFT_DISPO AS l,
+			TBL_DISPO AS d
+			WHERE l.did = dispoid
+			AND d.did = l.did
+			AND v.sdid = l.sdid
+			AND uid = uid_
+			AND year = YEAR(date_) - 1;
+			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_) - 1, ':', reliquat, ';uid:', uid_, ';did:', dispoid));
+			IF reliquat > 0 THEN
+				-- Cas particuliers des V fractionnables à Athis
+				IF (dispoid = 1 OR dispoid = 2) AND reliquat <= athis_recouvrement THEN 
+					SELECT quantity - athis_recouvrement - COUNT(v.sdid)
+					-- Il y a 6 jours en plus dans la quantité de congés autorisés sur V et F pour simuler la vac fractionnable
+					-- Les 6 (3 ?) jours (athis_recouvrement) doivent être intacts dans l'autre activité (F si on recherche pour V et réciproquement)
+					-- pour qu'il reste des congés de la catégorie cherchée.
+					INTO reliquat
+					FROM TBL_VACANCES AS v,
+					TBL_L_SHIFT_DISPO AS l,
+					TBL_DISPO AS d
+					-- L'inverse du dispoid est 3 - dispoid (1 => 2 ; 2 => 1)
+					WHERE l.did = 3 - dispoid
+					AND d.did = l.did
+					AND v.sdid = l.sdid
+					AND uid = uid_
+					AND year = YEAR(date_) - 1;
+
+					IF reliquat >= 0 THEN
+						SET anneeConge = YEAR(date_) - 1;
+					ELSE
+						SET anneeConge = YEAR(date_);
+					END IF;
+					CALL messageSystem('Reliquat de congés V ou F', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_) - 1, ':', reliquat, ';uid:', uid_, ';did:', dispoid, ';anneeConge:', anneeConge));
+				ELSE
+					SET anneeConge = YEAR(date_) - 1;
+				END IF;
+			ELSE
+				-- On recherche si il reste des congés de ce type
+				-- sur l'année en cours
+				SELECT quantity - COUNT(v.sdid)
+				INTO reliquat
+				FROM TBL_VACANCES AS v,
+				TBL_L_SHIFT_DISPO AS l,
+				TBL_DISPO AS d
+				WHERE l.did = dispoid
+				AND d.did = l.did
+				AND v.sdid = l.sdid
+				AND uid = uid_
+				AND year = YEAR(date_);
+				CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat_', YEAR(date_), ':', reliquat, ';uid:', uid_, ';did:', dispoid));
+				IF reliquat > 0 THEN
+					SET anneeConge = YEAR(date_);
+				ELSE
+					-- Plus de congé de ce type disponible
+					SET congeDispo = FALSE;
+					CALL messageSystem('Plus de congé de ce type disponible', 'USER', 'addConges', 'Plus de congé', CONCAT('uid:', uid_, ';reliquat_', YEAR(date_), ':', reliquat, ';did:', dispoid));
+				END IF;
+			END IF;
+		ELSE
+			-- On recherche si il reste des congés de ce type
+			-- sur l'année en cours
+			SELECT quantity - COUNT(v.sdid)
+			INTO reliquat
+			FROM TBL_VACANCES AS v,
+			TBL_L_SHIFT_DISPO AS l,
+			TBL_DISPO AS d
+			WHERE l.did = dispoid
+			AND d.did = l.did
+			AND v.sdid = l.sdid
+			AND uid = uid_
+			AND year = YEAR(date_);
+			CALL messageSystem('Reliquat de congés', 'DEBUG', 'addConges', NULL, CONCAT('reliquat:', reliquat, ';uid:', uid_, ';did:', dispoid));
+			IF reliquat > 0 THEN
+				SET anneeConge = YEAR(date_);
+			ELSE
+				-- Plus de congé de ce type disponible
+				SET congeDispo = FALSE;
+				CALL messageSystem('Plus de congé de ce type disponible', 'USER', 'addConges', 'Plus de congé', CONCAT('reliquat_', YEAR(date_), ':', reliquat, ';uid:', uid_, ';did:', dispoid));
+			END IF;
+		END IF;
+
+		IF congeDispo IS TRUE THEN
+			-- Traitement du cas particulier des congés en demi-cycle
+			IF dispoid = 1 THEN
+				IF NOT perequation THEN
+					CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
+					SET date_ = debutDemiCycle;
+					REPEAT
+					-- Suppression des anciennes occupations
+					CALL delDispo(uid_, date_, 
+								(SELECT dispo
+								FROM TBL_L_SHIFT_DISPO AS l
+								, TBL_DISPO AS d
+								WHERE date = date_
+								AND uid = uid_
+								AND l.did = d.did
+								AND (centre = centre_ OR centre = 'all')
+								AND (team = team_ OR team = 'all')
+								LIMIT 1)
+							, FALSE);
+					-- Ajout des congés dans la table
+					CALL __addConges(uid_, date_, dispoid, anneeConge, perequation);
+					SET date_ = DATE_ADD(date_, INTERVAL 1 DAY);
+					UNTIL date_ > finDemiCycle END REPEAT;
+				ELSE
+					CALL __addConges(uid_, date_, dispoid, anneeConge, perequation);
+					CALL __addConges(uid_, date_, dispoid, anneeConge, perequation);
+					CALL __addConges(uid_, date_, dispoid, anneeConge, perequation);
+				END IF;
+			ELSE
+				-- Ajout des congés dans la table
+				CALL __addConges(uid_, date_, dispoid, anneeConge, perequation);
+			END IF;
+		END IF;
+	ELSE -- La date n'est pas éditable
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'addConges', 'read only', CONCAT("uid_:", uid_, ";date:", date_, ";dipoid:", dispoid, ";"));
+	END IF;
+END
+|
+DROP PROCEDURE IF EXISTS __addConges|
+CREATE PROCEDURE __addConges( IN uid_ SMALLINT(6) , IN date_ DATE , IN dispoid INT(11) , IN anneeConge INT(11) , IN perequation BOOLEAN )
+BEGIN
+	INSERT INTO TBL_L_SHIFT_DISPO
+	(date, uid, did, pereq)
+	VALUES
+	(date_, uid_, dispoid, perequation);
+	INSERT INTO TBL_VACANCES
+	(sdid, etat, year)
+	VALUES
+	(LAST_INSERT_ID(), 0, anneeConge);
+END
+|
+DROP PROCEDURE IF EXISTS delDispo|
+CREATE PROCEDURE delDispo( IN uid_ SMALLINT(6), IN date_ DATE , IN disponibilite VARCHAR(16) , IN perequation BOOLEAN)
+BEGIN
+	-- /!\
+	-- La date déterrmine l'affectation de l'utilisateur
+	-- Ceci est à prendre en considération dans le cas de péréquations
+	-- /!\
+	DECLARE isReadOnly BOOLEAN DEFAULT 0;
+	DECLARE dispoid INT(11);
+	DECLARE	isConge INT(11) DEFAULT 0;
+	DECLARE	typeDecompte VARCHAR(255);
+	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
+	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
+	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+	DECLARE vac VARCHAR(8);
+
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
+
+	CALL messageSystem('This is delDispo', 'TRACE', 'delDispo', NULL, CONCAT('uid:', uid_, ';date:', date_, ';disponibilite:', disponibilite, ';pereq:', perequation, ';centre:', centre_, ';team:', team_, ';grade:', grad));
+
+	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
+	IF NOT perequation THEN
+		CALL messageSystem('Vérifie que la date est un jour travaillé (!pereq)', 'TRACE', 'delDispo', NULL, '_');
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac = 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+		CALL messageSystem('Vérifie que la date est un jour travaillé (!pereq)', 'TRACE', 'delDispo', NULL, CONCAT('isReadOnly:', isReadOnly, ';vac:', vac));
+	ELSE
+		-- De même si il s'agit d'une péréquation, on vérifie que la date est un jour de repos
+		CALL messageSystem('Vérifie que la date est un jour de repos (pereq)', 'TRACE', 'delDispo', NULL, NULL);
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac != 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+		CALL messageSystem('Vérifie que la date est un jour de repos (pereq)', 'TRACE', 'delDispo', NULL, CONCAT('isReadOnly:', isReadOnly, ';vac:', vac));
+	END IF;
+
+	CALL messageSystem('La date est-elle éditable ?', 'TRACE', 'delDispo', NULL, CONCAT('_'));
+	-- Vérifie si la date est éditable
+	SELECT readOnly
+	INTO isReadOnly
+	FROM TBL_GRILLE
+	WHERE date = date_
+	AND (centre = centre_ OR centre = 'all')
+	AND (team = team_ OR team = 'all');
+	CALL messageSystem('La date est-elle éditable ?', 'TRACE', 'delDispo', NULL, CONCAT('isReadOnly:', isReadOnly));
+
+	IF NOT isReadOnly THEN
+		-- Vérifie si la dispo est un congé
+		SELECT did, `type decompte`
+		INTO dispoid, typeDecompte
+		FROM TBL_DISPO
+		WHERE dispo = disponibilite
+		AND (`jours possibles` = 'all' OR FIND_IN_SET(vac, `jours possibles`))
+		AND (centre = centre_ OR centre = 'all')
+		AND (team = team_ OR team = 'all');
+		CALL messageSystem('La date est éditable', 'TRACE', 'delDispo', NULL, CONCAT('dispoid:', dispoid, ';typeDecompte:', typeDecompte));
+
+		-- Si la dispo est un congé
+		IF typeDecompte = 'conges' THEN
+			CALL messageSystem('La dispo est un congé : appel delConges', 'TRACE', 'delDispo', NULL, CONCAT('dispoid:', dispoid, ';typeDecompte:', typeDecompte));
+			CALL delConges( uid_, date_, dispoid, NULL, perequation );
+		ELSE
+			CALL messageSystem('Suppression de la dispo', 'TRACE', 'delDispo', NULL, CONCAT('dispoid:', dispoid, ';typeDecompte:', typeDecompte, 'date:', date_));
+			DELETE FROM TBL_L_SHIFT_DISPO
+			WHERE uid = uid_
+			AND did = dispoid
+			AND date = date_
+			AND pereq = perequation
+			LIMIT 1;
+		END IF;
+	ELSE -- La date n'est pas éditable
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'delDispo', 'read only', CONCAT("uid_:", uid_, ";date:", date_, ";dipo:", disponibilite, ";"));
+	END IF;
+END
+|
+DROP PROCEDURE IF EXISTS delConges|
+CREATE PROCEDURE delConges( IN uid_ SMALLINT(6) , IN date_ DATE , IN dispoid INT(11) , IN anneeConge INT(11) , IN perequation BOOLEAN )
+BEGIN
+	-- anneeConge doit être NULL sauf dans le cas de péréquation
+	-- /!\
+	-- Dans le cas de péréquations, la date permet de définir l'affectation
+	-- /!\
+	DECLARE isReadOnly BOOLEAN DEFAULT 0;
+	DECLARE	shiftDid INT(11); -- sdid du congé
+	DECLARE	etatConge INT(11); -- etat du congé
+	DECLARE	debutDemiCycle DATE; -- La date de début du demi-cycle
+	DECLARE	finDemiCycle DATE; -- La date d efin du demi-cycle
+	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
+	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
+	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+	DECLARE vac VARCHAR(8);
+
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
+
+	-- Vérifie que la date correspond à un jour travaillé si il ne s'agit pas d'une péreq
+	IF NOT perequation THEN
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac = 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	ELSE
+		-- De même si il s'agit d'une péréquation, on vérifie que la date est un jour de repos
+		SELECT vacation
+		INTO vac
+		FROM TBL_CYCLE AS c,
+		TBL_GRILLE AS g
+		WHERE c.cid = g.cid
+		AND date = date_
+		AND g.centre = centre_
+		AND g.team = team_
+		AND (c.centre = centre_ OR c.centre = 'all')
+		AND (c.team = team_ OR c.team = 'all');
+		IF vac != 'Repos' THEN
+			SET isReadOnly = 1;
+		END IF;
+	END IF;
+
+	IF NOT perequation THEN
+		-- Vérifie si la date est éditable
+		SELECT readOnly
+		INTO isReadOnly
+		FROM TBL_GRILLE
+		WHERE date = date_
+		AND (centre = centre_ OR centre = 'all')
+		AND (team = team_ OR team = 'all');
+	ELSE
+		SET isReadOnly = 0;
+	END IF;
+
+	IF NOT isReadOnly THEN
+		-- Cas particulier des congés en demi-cycle
+		IF dispoid = 1 THEN
+			IF NOT perequation THEN
+				CALL demiCycle(date_, centre_, team_, debutDemiCycle, finDemiCycle);
+				SET date_ = debutDemiCycle;
+				REPEAT
+				-- Supprime des congés de la table
+				CALL __delConges(uid_, date_, dispoid, anneeConge, 0);
+				SET date_ = DATE_ADD(date_, INTERVAL 1 DAY);
+				UNTIL date_ > finDemiCycle END REPEAT;
+			ELSE
+				-- Supprime des congés de la table
+				CALL __delConges(uid_, date_, dispoid, anneeConge, 1);
+				CALL __delConges(uid_, date_, dispoid, anneeConge, 1);
+				CALL __delConges(uid_, date_, dispoid, anneeConge, 1);
+			END IF;
+		ELSE
+			-- Supprime des congés de la table
+			CALL __delConges(uid_, date_, dispoid, anneeConge, perequation);
+		END IF;
+	ELSE -- La date n'est pas éditable
+		CALL messageSystem("La date n'est pas éditable", 'USER', 'delConges', 'read only', CONCAT("uid_:", uid_, ";date:", date_, ";dipoid:", dispoid, ";"));
+	END IF;
+END
+|
+DROP PROCEDURE IF EXISTS __delConges|
+CREATE PROCEDURE __delConges( IN uid_ SMALLINT(6) , IN date_ DATE , IN dispoid INT(11) , IN anneeConge INT(11) , IN perequation BOOLEAN )
+BEGIN
+	DECLARE shiftDid INT(11); -- sdid du congé
+	DECLARE	dateLimite DATE; -- date limite des congés de l'année précédente
+	DECLARE	etatConge INT(11); -- etat du congé
+	DECLARE	congeBougeable INT(11); -- Le sdid d'un congé qui peut prendre l'année libérée
+	DECLARE centre_ VARCHAR(50); -- Centre de l'utilisateur à la date date_
+	DECLARE team_ VARCHAR(10); -- L'équipe de l'utilisateur à la date date_
+	DECLARE grad VARCHAR(64); -- Le grade de l'utilisateur à la date date_
+
+	CALL searchAffectation(uid_, date_, centre_, team_, grad);
+	
+	-- Recherche le sdid du congé
+	SELECT sdid
+	INTO shiftDid
+	FROM TBL_L_SHIFT_DISPO
+	WHERE date = date_
+	AND uid = uid_
+	AND pereq = perequation
+	LIMIT 1;
+	-- Supprime le congé
+	DELETE FROM TBL_L_SHIFT_DISPO
+	WHERE sdid = shiftDid;
+	IF NOT perequation THEN
+		-- Recherche l'état du congé
+		SELECT etat
+		INTO etatConge
+		FROM TBL_VACANCES
+		WHERE sdid = shiftDid;
+		-- Si le congé a été déposé
+		IF etatConge > 0 THEN
+			INSERT INTO TBL_VACANCES_A_ANNULER
+			(uid, did, date)
+			VALUES
+			(uid_, dispoid, date_);
+		END IF;
+		-- Recherche l'année du congé
+		SELECT year
+		INTO anneeConge
+		FROM TBL_VACANCES
+		WHERE sdid = shiftDid;
+		-- Si l'année du congé est l'année qui précède l'année de la date du congé
+		IF anneeConge < YEAR(date_) THEN
+			-- On recherche la date limite des congés
+			CALL dateLimiteConges(anneeConge, centre_, dateLimite);
+			-- On recherche les congés de même type entre le début d'année et la date limite qui sont posés sur l'année suivante
+			SELECT v.sdid
+			INTO congeBougeable
+			FROM TBL_VACANCES AS v,
+			TBL_L_SHIFT_DISPO AS l
+			WHERE l.sdid = v.sdid
+			AND YEAR(date) = YEAR(date_)
+			AND date <= dateLimite
+			AND year = YEAR(date_)
+			AND uid = uid_
+			ORDER BY date ASC
+			LIMIT 1;
+			-- On attribue l'année au congé
+			UPDATE TBL_VACANCES
+			SET year = YEAR(date_) - 1
+			WHERE sdid = congeBougeable;
+		END IF;
+	ELSE
+		DELETE FROM TBL_L_SHIFT_DISPO
+		WHERE sdid = shiftDid;
+	END IF;
+	-- Supprime le congé de la table des congés
+	DELETE FROM TBL_VACANCES
+	WHERE sdid = shiftDid;
+END
+|
+DROP PROCEDURE IF EXISTS recapConges|
+CREATE PROCEDURE recapConges( IN year_ YEAR(4) )
+BEGIN
+	DROP TABLE IF EXISTS tmpConges1;
+	TRUNCATE TBL_VACANCES_RECAP;
+	CREATE TEMPORARY TABLE tmpConges1 (
+		centre VARCHAR(50),
+		team VARCHAR(10),
+		uid INT(11),
+		nom VARCHAR(64),
+		did SMALLINT(6),
+		dispo VARCHAR(16),
+		nom_long VARCHAR(45),
+		year YEAR(4),
+		déposé SMALLINT(6),
+		reliquat SMALLINT(6),
+		quantity SMALLINT(6),
+		poids SMALLINT(6)
+	);
+	INSERT INTO tmpConges1
+		(SELECT a.centre,
+		a.team,
+		u.uid,
+		nom,
+		d.did,
+		dispo,
+		nom_long,
+		year,
+		COUNT(v.sdid) AS déposé,
+		quantity - COUNT(l.did) AS reliquat,
+		quantity,
+		u.poids FROM TBL_USERS AS u,
+		TBL_L_SHIFT_DISPO AS l,
+		TBL_DISPO AS d,
+		TBL_VACANCES AS v,
+		TBL_AFFECTATION AS a
+		WHERE u.uid = l.uid
+		AND u.uid = a.uid
+		AND NOW() BETWEEN beginning
+		AND end
+		AND l.sdid = v.sdid
+		AND l.did = d.did
+		AND (l.did = 1 OR l.did = 2)
+		AND year BETWEEN year_ AND year_ + 1
+		GROUP BY l.uid,
+		year,
+		l.did
+		ORDER BY centre,
+		team,
+		poids,
+		year);
+	INSERT INTO TBL_VACANCES_RECAP
+		(SELECT centre,
+			team,
+			uid,
+			nom,
+			0,
+			'V / F',
+			'Jour et vac fractionnable',
+			year,
+			SUM(déposé) AS déposé,
+			SUM(quantity) - SUM(déposé) - 6 AS reliquat,
+			SUM(quantity) - 6,
+			poids
+		FROM tmpConges1
+		GROUP BY uid,
+		year
+		ORDER BY centre,
+		team,
+		poids,
+		year);
+	INSERT INTO TBL_VACANCES_RECAP
+		(SELECT *
+		FROM tmpConges1);
+	INSERT INTO TBL_VACANCES_RECAP
+		(SELECT a.centre,
+			a.team,
+			u.uid,
+			nom,
+			d.did,
+			dispo,
+			nom_long,
+			year,
+			COUNT(v.sdid) AS déposé,
+			quantity - COUNT(v.sdid) AS reliquat,
+			quantity,
+			u.poids
+			FROM TBL_USERS AS u,
+			TBL_L_SHIFT_DISPO AS l,
+			TBL_DISPO AS d,
+			TBL_VACANCES AS v,
+			TBL_AFFECTATION AS a
+			WHERE u.uid = l.uid
+			AND u.uid = a.uid
+			AND NOW() BETWEEN beginning AND end
+			AND l.sdid = v.sdid
+			AND l.did = d.did
+			AND d.did != 1
+			AND d.did != 2
+			AND year BETWEEN year_ AND year_ + 1
+			AND `type decompte` = 'conges'
+			GROUP BY l.uid,
+			l.did,
+			year
+	);
+	DROP TABLE tmpConges1;
+END
+|
+DELIMITER ;

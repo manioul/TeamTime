@@ -34,127 +34,33 @@ class jourTravail extends Date {
 	private $awaitingSQL = array(); // Tableau des requêtes en attente de traitement
 	private $Users; // Un tableau des utilisateurs avec leurs dispos
 			// $Users['uid'] = array('dispo1', 'dispo2',...'dispoN') ; cid est le cid du jourTravail (V, J, w, stage...)
+	private $centre;
+	private $team;
 	//private $dispo; // Un tableau des disponibilités possible pour ce jour (V, J, W...)
 	/*
 	 * Méthodes statiques
 	 */
 	//-----------------------------------------
 	// Ajoute une occupation pour l'utilisateur
-	// dispo = array (uid=> , date=> , dispo => , oldDispo => )
+	// dispo = array (uid=> , date=> , dispo => , oldDispo => , pereq => 0|1)
 	// log = TRUE => les opérations sont loguées
 	//-----------------------------------------
-	public static function addDispo($dispo, $log=false) {
-		if (isset($_SESSION['MY_EDIT']) && $dispo['uid'] != $_SESSION['utilisateur']->uid() && !isset($_SESSION['ADMIN']) && !isset($_SESSION['EDITEURS'])) {
+	public static function addDispo($dispo, $centre, $team, $log=false) {
+		$return = "";
+		if (isset($_SESSION['MY_EDIT']) && $dispo['uid'] != $_SESSION['utilisateur']->uid() && !isset($_SESSION['ADMIN']) && !isset($_SESSION['EDITEURS']) && !isset($_SESSION['TEAMEDIT'])) {
 			return "N'éditez que votre ligne, svp.";
 		}
-		$return = "";
-		// Vérifie si la date est éditable
-		$sql = sprintf("SELECT `readOnly` FROM `TBL_GRILLE` WHERE `date` = '%s'", $dispo['date']);
-		$result = $_SESSION['db']->db_interroge($sql);
-		$row = $_SESSION['db']->db_fetch_row($result);
-		mysqli_free_result($result);
-		if ($row[0] == 1) return "Cette grille ne peut plus être éditée";
-		firePhpInfo($sql, $row[0] == 0 ? 'la date est éditable' : "la date n'est pas éditable");
-
-		// Supprime la précédente dispo
-		$sql = sprintf("DELETE FROM `TBL_L_SHIFT_DISPO` WHERE `date` = '%s' AND `uid` = '%s' AND `did` = (SELECT `did` FROM `TBL_DISPO` WHERE `dispo` = '%s')", $dispo['date'], $dispo['uid'], $dispo['oldDispo']);
-		firePhpInfo($sql, 'Suppression de la précédente dispo');
+		$sql = sprintf("CALL addDispo(%d, '%s', '%s', NULL, %s)"
+			, (int) $dispo['uid']
+			, $_SESSION['db']->db_real_escape_string($dispo['date'])
+			, $_SESSION['db']->db_real_escape_string($dispo['dispo'])
+			, (!empty($dispo['pereq']) ? 'TRUE' : 'FALSE')
+		);
 		$_SESSION['db']->db_interroge($sql);
-
-		// Les congés sont traités particulièrement
-		// Ils sont comptabilisés dans TBL_VACANCES
-		$aVacances = array();
-		$sql = "SELECT `dispo`, `did`, `date limite depot`, `quantity` FROM `TBL_DISPO` WHERE `need_compteur` = TRUE AND `actif` = TRUE AND `type decompte` = 'conges'";
-		$result = $_SESSION['db']->db_interroge($sql);
-		while ($row = $_SESSION['db']->db_fetch_row($result)) {
-			$aVacances[$row[0]]['did'] = $row[1]; // dispo -> did
-			$aVacances[$row[0]]['dld'] = $row[2]; // dispo -> date limite de dépôt du congé
-			$aVacances[$row[0]]['quantity'] = $row[3]; // dispo -> quantité du congé par année
+		foreach ($_SESSION['utilisateur']->retrMessages() as $message) {
+			$return .= $message->message();
+			$message->setRead();
 		}
-		mysqli_free_result($result);
-		// Si la nouvelle dispo est un congé
-		// on doit l'ajouter dans TBL_VACANCES
-		if (in_array($dispo['dispo'], array_keys($aVacances))) {
-			// Calcul de l'année du congé
-			//
-			// La date limite de dépôt des congés de l'année est fixée dans TBL_CONSTANTS
-			// elle se nomme "dlCong_$year" où $year est l'année concernée (par ex dlCong_2012)
-			// Si cette constante n'est pas définie, elle prend la valeur par défaut dlCong_default
-			// Si le congé est sur une date au-delà de la date limite des congés de l'année,
-			// il est passé sur l'année suivante.
-			// Si il est sur une date avant la date limite des congés de l'année,
-			// et si il reste suffisamment de congés de ce type pour l'année en cours
-			// il est posé sur l'année en cours
-			if ( ! $date = new Date($dispo['date'])) {
-				firePhpError("dispo['date'] incorrecte", $dispo['date']);
-				return false;
-			}
-			$Year = $date->annee();
-			$previousYear = $Year - 1;
-			// Si la date du congé est antérieure à la date limite de dépôt de l'année précédente,
-			// il est possible (si il reste des vacances) que l'année du congé soit l'année passée
-			$dlCong = $Year . "-" . $aVacances[$dispo['dispo']]['dld'];
-			firePhpInfo($dlCong, 'dlCong');
-			if ($date->compareDate($dlCong) < 0) {
-				$sql = sprintf("SELECT %d - COUNT(`vid`) FROM `TBL_VACANCES` WHERE `did` = %d AND `uid` = %d AND `year` = %d", $aVacances[$dispo['dispo']]['quantity'], $aVacances[$dispo['dispo']]['did'], $dispo['uid'], $previousYear);
-				firePhpInfo($sql, 'Décompte de congés');
-				$result = $_SESSION['db']->db_interroge($sql);
-				$row = $_SESSION['db']->db_fetch_row($result);
-				mysqli_free_result($result);
-				if ($row[0] > 0) $Year = $previousYear;
-			}
-			// fin du calcul de l'année du congé
-
-			// Recherche si il reste des congés disponibles
-			$sql = sprintf("SELECT %d - COUNT(`vid`) FROM `TBL_VACANCES` WHERE `did` = %d AND `uid` = %d AND `year` = %d", $aVacances[$dispo['dispo']]['quantity'], $aVacances[$dispo['dispo']]['did'], $dispo['uid'], $Year);
-			firePhpInfo($sql, 'Décompte de congés');
-			$result = $_SESSION['db']->db_interroge($sql);
-			$row = $_SESSION['db']->db_fetch_row($result);
-			mysqli_free_result($result);
-			if ($row[0] <= 0) return "Ce congé n'est plus disponible";
-
-			$sql = sprintf("INSERT INTO `TBL_VACANCES` (`uid`, `date`, `did`, `year`) VALUES (%d, '%s', %d, %d)", $dispo['uid'], $dispo['date'], $aVacances[$dispo['dispo']]['did'], $Year);
-			firePhpInfo($sql, 'Décompte vacances');
-			$_SESSION['db']->db_interroge($sql);
-			if (mysql_error()) {
-				firePhpError($sql, mysql_error());
-				$return = sprintf("add_dispo(): %s / %s", mysql_error(), $sql);
-			}
-		}
-		// Si l'ancienne dispo était un congé
-		// on doit supprimer son entrée dans TBL_VACANCES
-		if (in_array($dispo['oldDispo'], array_keys($aVacances))) {
-			$sql = sprintf("DELETE FROM `TBL_VACANCES` WHERE `uid` = %d AND `date` = '%s' AND `did` = %d", $dispo['uid'], $dispo['date'], $aVacances[$dispo['oldDispo']]['did']);
-			firePhpInfo($sql, 'Décompte vacances');
-			$_SESSION['db']->db_interroge($sql);
-			if (mysql_error()) {
-				firePhpError($sql, mysql_error());
-				$return = sprintf("add_dispo(): %s / %s", mysql_error(), $sql);
-			}
-		}
-
-		// Ajoute la nouvelle dispo
-		if ($dispo['dispo'] != "") {
-			$sql = sprintf("INSERT INTO `TBL_L_SHIFT_DISPO` (`date`, `uid`, `did`) VALUES ('%s', '%s', (SELECT `did` FROM `TBL_DISPO` WHERE `dispo` = '%s'))", $dispo['date'], $dispo['uid'], $dispo['dispo']);
-			//$undo = sprintf("DELETE FROM `TBL_L_SHIFT_DISPO` WHERE `date` = '%s' AND `uid` = '%s' AND `did` = (SELECT `did` FROM `TBL_DISPO` WHERE `dispo` = '%s'))", $dispo['date'], $dispo['uid'], $dispo['dispo']);
-			$_SESSION['db']->db_interroge($sql);
-			firePhpInfo($sql, 'Màj');
-			if (mysql_error()) {
-				$return = sprintf("safe_insert_dispo(): %s / %s", mysql_error(), $sql);
-				firePhpError($sql, mysql_error());
-			}
-		}
-		firePhpInfo($sql, 'vacances');
-		firePhpInfo($aVacances, '$aVacances');
-		firePhpInfo($dispo, '$dispo');
-		/*if ($log) { // Faut-il loguer la modification ?
-			$logSql = sprintf("INSERT INTO `TBL_LOG` (`date`, `uid`, `dateCel`, `uidCel`, `did`, `previous`, `undo`, `ip`) VALUES (NOW(), '%s', '%s', '%s', '%s', '%s', '%s', '%s')", $_SESSION['utilisateur']->uid(), $dispo['date'], $dispo['uid'], $dispo['did'], $dispo['oldDid'], $_SESSION['db']->escape_string($undo), $_SERVER['REMOTE_ADDR']);
-			firePhpInfo($logSql, "Requête de log de l'opération");
-			$_SESSION['db']->db_interroge($logSql);
-			if (mysql_error()) {
-				$return = sprintf("safe_insert_dispo(): %s / %s", mysql_error(), $sql);
-			}
-		}*/
 		return $return;
 	}
 	//-----------------------------------------
@@ -166,7 +72,17 @@ class jourTravail extends Date {
 	// la méthode elle-même
 	//-----------------------------------------
 	public static function addRempla($rempla) {
-		$sql = sprintf("REPLACE INTO `TBL_REMPLA` (`uid`,`date`,`nom`,`phone`,`email`) VALUES (%02d, '%s', '%s', '%s', '%s')", $rempla['uid'], $_SESSION['db']->db_real_escape_string($rempla['date']), $_SESSION['db']->db_real_escape_string($rempla['nom']), $_SESSION['db']->db_real_escape_string($rempla['phone']), $_SESSION['db']->db_real_escape_string($rempla['email']));
+		$sql = sprintf("
+			REPLACE INTO `TBL_REMPLA`
+			(`uid`,`date`,`nom`,`phone`,`email`)
+			VALUES (%d, '%s', '%s', '%s', '%s')
+			"
+			, $rempla['uid']
+			, $_SESSION['db']->db_real_escape_string($rempla['date'])
+			, $_SESSION['db']->db_real_escape_string($rempla['nom'])
+			, $_SESSION['db']->db_real_escape_string($rempla['phone'])
+			, $_SESSION['db']->db_real_escape_string($rempla['email'])
+		);
 		$_SESSION['db']->db_interroge($sql);
 	}
 	//-----------------------------------
@@ -174,10 +90,18 @@ class jourTravail extends Date {
 	// si actif est non nul, seules les
 	// dispos actives seront analysées
 	//-----------------------------------
-	public static function proprietesDispo($actif = NULL) {
+	public static function proprietesDispo($actif = NULL, $centre = 'athis', $team = '9e') {
 		$array = array();
-		$sql = "SELECT * FROM `TBL_DISPO`";
-		if (!is_null($actif)) $sql .= " WHERE `actif` = 1";
+		$sql = sprintf("
+			SELECT *
+			FROM `TBL_DISPO`
+			WHERE (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $centre
+			, $team
+		);
+		if (!is_null($actif)) $sql .= " AND `actif` = 1";
 		$result = $_SESSION['db']->db_interroge($sql);
 		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 			foreach ($row as $key => $value) {
@@ -187,16 +111,129 @@ class jourTravail extends Date {
 		mysqli_free_result($result);
 		return $array;
 	}
+	//----------------------------------
+	// Ajoute une préréquation d'un type
+	// de dispo à un utilisateur
+	// $pereq = array(uid => , date => , did => , year => )
+	// year est l'année du congé (si la péréq correspond à un congé)
+	// si year n'existe pas, on considère que la péréq n'est pas un congé
+	//----------------------------------
+	public static function addPereq($pereq) {
+		// La date n'est pas indispensable pour une péréq et peut valoir 0 (0000-00-00)
+		if (! isset($pereq['date'])) $pereq['date'] = 0;
+		$sql = sprintf("
+			INSERT INTO `TBL_L_SHIFT_DISPO`
+			(`sdid`, `date`, `uid`, `did`, `pereq`)
+			VALUES
+			(NULL, '%s', %d, %d, TRUE)
+			", $pereq['date']
+			, $pereq['uid']
+			, $pereq['did']
+		);
+		$_SESSION['db']->db_interroge($sql);
+		if (isset($pereq['year']) && !empty($pereq['year'])) {
+			$sql = sprintf("
+				INSERT INTO `TBL_VACANCES`
+				(`sdid`, `etat`, `year`)
+				VALUES
+				(%d, 2, %d)
+				", $_SESSION['db']->db_insert_id()
+				, $pereq['year']
+			);
+			$_SESSION['db']->db_interroge($sql);
+		}
+	}
+	//-----------------------------------
+	// Supprime une péréq
+	// $pereq = array(uid => , date => , did => , nb =>)
+	// nb est le nombre de pereq de ce type à supprimer pour l'utilisateur
+	//-----------------------------------
+	public static function delPereq($pereq) {
+		// La date n'est pas indispensable pour une péréq et peut valoir 0 (0000-00-00)
+		if (! isset($pereq['date'])) $pereq['date'] = '0000-00-00';
+		if (! isset($pereq['nb'])) $pereq['nb'] = 1;
+		// Recherche du sdid
+		if (isset($pereq['year'])) {
+			$sql = sprintf("
+				SELECT `l`.`sdid`
+				FROM `TBL_L_SHIFT_DISPO` `l`
+				, `TBL_VACANCES` `v`
+				WHERE `date` = '%s'
+				AND `uid` = %d
+				AND `did` = %d
+				AND `year` = %d
+				AND `l`.`sdid` = `v`.`sdid`
+				AND `pereq` = TRUE
+				LIMIT %d
+				", $pereq['date']
+				, $pereq['uid']
+				, $pereq['did']
+				, $pereq['year']
+				, $pereq['nb']
+			);
+		} else {
+			$sql = sprintf("
+				SELECT `sdid`
+				FROM `TBL_L_SHIFT_DISPO`
+				WHERE `date` = '%s'
+				AND `uid` = %d
+				AND `did` = %d
+				LIMIT %d
+				", $pereq['date']
+				, $pereq['uid']
+				, $pereq['did']
+				, $pereq['nb']
+			);
+		}
+		$result = $_SESSION['db']->db_interroge($sql);
+		while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
+			$sql = sprintf("
+				DELETE FROM `TBL_L_SHIFT_DISPO`
+				WHERE `sdid` = %d
+				", $row['sdid']
+			);
+			$_SESSION['db']->db_interroge($sql);
+			$sql = sprintf("
+				DELETE FROM `TBL_VACANCES`
+				WHERE `sdid` = %d
+				", $row['sdid']
+			);
+			$_SESSION['db']->db_interroge($sql);
+		}
+		mysqli_free_result($result);
+	}
 
 	/*
 	 * constructeur
 	 */
-	public function __construct($row=false) {
+	public function __construct($row=false, $centre = NULL, $team = NULL) {
+		if (!array_key_exists('ADMIN', $_SESSION) || true !== $_SESSION['ADMIN'] || is_null($centre) || is_null($team)) {
+			$date = isset($row['date']) ? $row['date'] : date('Y-m-d');
+			$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
+			$this->centre($affectation['centre']);
+			$this->team($affectation['team']);
+		}
+		if (isset($_SESSION['ADMIN']) && !is_null($centre)) {
+			$this->centre($centre);
+		}
+		if (isset($_SESSION['ADMIN']) && !is_null($team)) {
+			$this->team($team);
+		}
 		if ($row) {
 			$check = 0;
 			if (is_string($row)) { // si $row est une chaîne...
 				if (parent::__construct($row)) { // ... au format date
-					$sql = sprintf("SELECT * FROM `TBL_GRILLE` WHERE `date` = '%s'", $this->date());
+					$sql = sprintf("
+						SELECT *
+						FROM `TBL_GRILLE`
+						WHERE `date` = '%s'
+						AND `centre` = '%s'
+						AND `team` = '%s'
+						"
+						, $this->date()
+						, $this->centre
+						, $this->team
+					);
 					$result = $_SESSION['db']->db_interroge($sql);
 					if (mysqli_num_rows($result) == 1) {
 						$row = $_SESSION['db']->db_fetch_assoc($result);
@@ -206,10 +243,7 @@ class jourTravail extends Date {
 				}
 			}
 			if (is_array($row)) {
-				parent::__construct($row['date']);
-				foreach ($row as $cle => $valeur) {
-					$this->$cle = $valeur;
-				}
+				$this->setFromRow($row);
 			}
 			$this->jourDeLaSemaine();
 		}
@@ -224,11 +258,13 @@ class jourTravail extends Date {
 	 * Accesseurs
 	 */
 	// Attention à bien passer un (string) en paramètre.
-	// IL est fortement conseillé de caster le paramètre passé
+	// Il est fortement conseillé de caster le paramètre passé
+	// FIXME Ceci n'est pas compatible multicentre, 
+	// il faut utiliser le rang à la place de cid /FIXME
 	public function cid($param = false) {
 		if (ctype_digit($param)) { // On vérifie que cid est composé uniquement de chiffres
 			// On doit ruser car modulo renvoie [0 .. cycleLength]
-			$this->cid = ($param-1) % $GLOBALS['cycleLength'] + 1;
+			$this->cid = ($param-1) % Cycle::getCycleLength() + 1;
 			$this->vacation(true);
 		} else if ($param) {
 			$this->cid = false;
@@ -239,9 +275,19 @@ class jourTravail extends Date {
 	// $param s'il existe, devrait être positionné à true
 	// Retourne le nom de la journée de travail si aucun paramètre n'est passé
 	public function vacation($param = false) {
-		if ($param || ! isset($this->vacation)) {
+		if ($param || empty($this->vacation)) {
 			if (!isset($this->cid)) {
-				$query = sprintf("SELECT `cid` FROM `TBL_CYCLE` WHERE `vacation` = '%s'", (string) $param);
+				$query = sprintf("
+					SELECT `cid`
+					FROM `TBL_CYCLE`
+					WHERE `vacation` = '%s'
+					AND (`centre` = '%s' OR `centre` = 'all')
+					AND (`team` = '%s' OR `team` = 'all')
+					"
+					, (string) $param
+					, $this->centre
+					, $this->team
+				);
 				$result = $_SESSION['db']->db_interroge($query);
 				if ($result && mysqli_num_rows($result)==1) {
 					$row = $_SESSION['db']->db_fetch_row($result);
@@ -251,7 +297,13 @@ class jourTravail extends Date {
 				}
 				mysqli_free_result($result);
 		       	}
-			$query = sprintf("SELECT `vacation` FROM `TBL_CYCLE` WHERE `cid` = '%s'", $this->cid());
+			$query = sprintf("
+				SELECT `vacation`
+				FROM `TBL_CYCLE`
+				WHERE `cid` = %d
+				"
+				, $this->cid()
+			);
 			$result = $_SESSION['db']->db_interroge($query);
 			if ($result) {
 				$row = $_SESSION['db']->db_fetch_row($result);
@@ -299,7 +351,14 @@ class jourTravail extends Date {
 		}
 		return $this->conf;
 	}
-	public function readOnly() {
+	public function readOnly($param = NULL) {
+		if (!is_null($param)) {
+			if ($param) {
+				$this->readOnly = true;
+			} else {
+				$this->readOnly = false;
+			}
+		}
 		return $this->readOnly;
 	}
 	public function setReadWrite() {
@@ -320,9 +379,17 @@ class jourTravail extends Date {
 			$this->awaitingSQL[] = $this->_dbQueryUpdateReadOnly();
 		}
 	}
+	public function centre($centre = NULL) {
+		if (is_null($centre)) return $this->centre;
+		return $this->centre = $centre;
+	}
+	public function team($team = NULL) {
+		if (is_null($team)) return $this->team;
+		return $this->team = $team;
+	}
 	// Retourne le cid suivant celui du jourTravail
 	public function nextCid() {
-		$nCid = ($this->cid() % $GLOBALS['cycleLength']) + 1;
+		$nCid = ($this->cid() % Cycle::getCycleLength($this->centre, $this->team)) + 1;
 		return $nCid;
 	}
 	// Retourne le prochain jour de travail (!= REPOS)
@@ -331,7 +398,7 @@ class jourTravail extends Date {
 			$date = new Date($this->date());
 			do {
 				$date->incDate();
-				$this->nextWorkingDay = new jourTravail($date->date());
+				$this->nextWorkingDay = new jourTravail($date->date(), $this->centre, $this->team);
 			} while ($this->nextWorkingDay->vacation() == REPOS);
 		}
 		return $this->nextWorkingDay;
@@ -342,7 +409,7 @@ class jourTravail extends Date {
 			$date = new Date($this->date());
 			do {
 				$date->decDate();
-				$this->previousWorkingDay = new jourTravail($date->date());
+				$this->previousWorkingDay = new jourTravail($date->date(), $this->centre, $this->team);
 			} while ($this->previousWorkingDay->vacation() == REPOS);
 		}
 		return $this->previousWorkingDay;
@@ -362,10 +429,44 @@ class jourTravail extends Date {
 	public function presente() {
 		//printf("%s ---> %s - %s<br />", $this->date_(), $this->vacation(), $this->jourDeLaSemaine());
 	}
-	// Interactions avec la bdd
+	public function setFromRow($row) {
+		parent::__construct($row['date']);
+		foreach ($row as $key => $value) {
+			if (method_exists($this, $key)) {
+				$this->$key($value);
+			} else {
+				$this->key = $value;
+			}
+		}
+	}
+	/**
+	 * Retourne une chaîne JSON contenant les valeurs devant être loguées de l'objet.
+	 *
+	 * @return string une chaîne au format JSON.
+	 */
+	private function logJSON() {
+		$array = array(
+			'date'		=> $this->formatDate('fr')
+			, 'vacation'	=> $this->vacation
+			, 'conf'	=> $this->conf
+			, 'readonly'	=> $this->readOnly
+		);
+		return json_encode($array);
+	}
+// Interactions avec la bdd
 	// Insertion dans la base
 	public function __dbQueryInsert() {
-		$sql = sprintf("INSERT INTO `TBL_GRILLE` (`date`, `cid`, `ferie`) VALUES ('%s', '%s', '%s')", $this->date(), $this->cid(), $this->ferie()); // TODO confirmer la valeur de ferie attendue (true ou 1?)
+		$sql = sprintf("
+			INSERT INTO `TBL_GRILLE`
+			(`date`, `cid`, `ferie`, `centre`, `team`)
+			VALUES ('%s', '%s', '%s', '%s', '%s')
+			"
+			, $this->date()
+			, $this->cid()
+			, $this->ferie()
+			, $this->centre
+			, $this->team
+		);
 		return $sql;
 	}
 	public function _dbInsert() {
@@ -383,11 +484,41 @@ class jourTravail extends Date {
 		return $awaiting;
 	}
 	public function __dbQueryUpdate() {
-		$sql = sprintf("UPDATE `TBL_GRILLE` SET `cid` = '%s', `ferie` = '%s' WHERE `date` = '%s'", $this->cid(), $this->ferie(), $this->date()); // TODO confirmer la valeur de ferie attendue (true ou 1?)
+		$sql = sprintf("
+			UPDATE `TBL_GRILLE`
+			SET `cid` = '%s',
+			`ferie` = '%s'
+			WHERE `date` = '%s'
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $this->cid()
+			, $this->ferie()
+			, $this->date()
+			, $this->centre
+			, $this->team
+		);
 		return $sql;
 	}
 	private function _dbQueryUpdateReadOnly() {
-		return sprintf("UPDATE `TBL_GRILLE` SET `readOnly` = '%s' WHERE `date` = '%s'", $this->readOnly(), $this->date());
+		$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("Le jour est maintenant %s", "TRACE", "%s", "%s", "%s")'
+			, ($this->readOnly ? "non modifiable" : "modifiable")
+			, __METHOD__
+			, ($this->readOnly ? "readOnly" : "writable")
+			, $_SESSION['db']->db_real_escape_string($this->logJSON())
+		));
+		return sprintf("
+			UPDATE `TBL_GRILLE`
+			SET `readOnly` = '%s'
+			WHERE `date` = '%s'
+			AND `centre` = '%s'
+			AND `team` = '%s'
+			"
+			, $this->readOnly()
+			, $this->date()
+			, $this->centre
+			, $this->team
+		);
 	}
 	private function _dbUpdateReadOnly() {
 		$_SESSION['db']->db_interroge($this->_dbQueryUpdateReadOnly());
@@ -396,7 +527,17 @@ class jourTravail extends Date {
 		$_SESSION['db']->db_interroge($this->__dbQueryUpdate());
 	}
 	public function dbSafeInsert() {
-		$sql = sprintf("SELECT * FROM `TBL_GRILLE` WHERE `date` = '%s'", $this->date());
+		$sql = sprintf("
+			SELECT *
+			FROM `TBL_GRILLE`
+			WHERE `date` = '%s'
+			AND (`centre` = '%s' OR `centre` = 'all')
+			AND (`team` = '%s' OR `team` = 'all')
+			"
+			, $this->date()
+			, $this->centre
+			, $this->team
+		);
 		if (mysqli_num_rows($_SESSION['db']->db_interroge($sql)) > 0) {
 			$this->_dbUpdate();
 		} else {

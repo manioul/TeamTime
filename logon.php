@@ -25,8 +25,6 @@ if (empty($_POST['login']) || empty($_POST['pwd'])) {
 	header("Location:index.php?norights=1");
 }
 
-$login = $_POST['login'];
-$pwd = $_POST['pwd'];
 
 $conf['page']['include']['constantes'] = NULL; // Ce script nécessite la définition des constantes
 $conf['page']['include']['errors'] = NULL; // le script gère les erreurs avec errors.inc.php
@@ -42,25 +40,8 @@ $conf['page']['include']['class_cycle'] = NULL; // La classe cycle est nécessai
 
 require 'required_files.inc.php';
 
-$sql = sprintf("SELECT * FROM `TBL_USERS` WHERE `login` = '%s' AND `sha1` = SHA1('%s')", $_SESSION['db']->db_real_escape_string($login), $_SESSION['db']->db_real_escape_string($login . $pwd));
-$result = $_SESSION['db']->db_interroge($sql);
-if (mysqli_num_rows($result) > 0) {
-	session_regenerate_id(); // Éviter les attaques par fixation de session
-	$row = $_SESSION['db']->db_fetch_assoc($result);
-	$row['sha1'] = NULL; // Le sha1 n'a pas vocation à sortir
-	$_SESSION['utilisateur'] = new utilisateurGrille($row);
-	$_SESSION['AUTHENTICATED'] = true;
-	// Mise à jour des informations de connexion
-	$upd = sprintf("UPDATE `TBL_USERS` SET `lastlogin` = NOW(), `nblogin` = %s WHERE `login` = '%s'", $row['nblogin'] + 1, $row['login']);
-	$_SESSION['db']->db_interroge($upd);
-	$sql = sprintf("SELECT `groupe` FROM `TBL_GROUPS` WHERE `gid` >= '%s'", $row['gid']);
-	$result2 = $_SESSION['db']->db_interroge($sql);
-	while ($row = $_SESSION['db']->db_fetch_array($result2)) {
-		$_SESSION[strtoupper($row[0])] = true;
-	}
-	mysqli_free_result($result2);
-}
-mysqli_free_result($result);
+utilisateurGrille::logon($_POST['login'], $_POST['pwd']);
+
 header('Location:index.php');
 
 

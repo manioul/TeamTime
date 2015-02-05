@@ -1,27 +1,23 @@
 {* Smarty *}
-{* ATTENTION à ne pas ajouter de retour charriot qui casse le code javascript notamment du décompte de présents >:o *}
-{* Huh ?! Malgré des modifications de mise en page dans ce template, le code semble continuer de fonctionner normalement *}
 <div id="tgrille">
 	<table id="grille">
-{foreach from=$grille key="lineNb" item="lines" name="lineBoucle"}{* Les deux premières lignes sont dans un thead, les suivantes dans le tbody *}
-	{if $lineNb == 0}<thead>{elseif $lineNb == 2}</thead>
+{foreach $grille as $lines}{* Les deux premières lignes sont dans un thead, les suivantes dans le tbody *}
+	{if $lines@first}<thead>{elseif $lines@iteration == 3}</thead>
 	<tbody>{/if}
-	<tr id="line{$lineNb}">
-{foreach from=$lines item=value}
-	{if $lineNb < 2}<th{else}<td{/if}{if $value.id} id="{$value.id}"{/if}{if $value.classe} class="{$value.classe}"{/if}{if $value.title} title="{$value.title|escape:html}"{/if}{if $value.colspan} colspan="{$value.colspan}"{/if}>{if $value.navigateur}{* Construction d'un navigateur entre les cycles pour la case contenant l'année *}
-	<div class="nav-prev"><a href="?dateDebut={$previousCycle}" title="Reculer d'un cycle"><img src="{$image}" class="nav-prev" alt="&lt;" /></a></div>
-	<div class="nav-present"><a href="?dateDebut={$presentCycle}">{$value.nom}</a></div>
-	<div class="nav-next"><a href="?dateDebut={$nextCycle}" title="Avancer d'un cycle"><img src="{$image}" class="nav-next" alt="&lt;" /></a></div>{elseif $value.vacation}
+	<tr id="line{$lines@iteration}">
+{foreach $lines as $value}
+	{if $lines@iteration < 3}<th{else}<td{/if}{if isset($value.id)} id="{$value.id}"{/if}{if isset($value.classe)} class="{$value.classe}"{/if}{if isset($value.title)} title="{$value.title}"{/if}{if isset($value.style)} style="{$value.style}"{/if}{if isset($value.colspan)} colspan="{$value.colspan}"{/if}>{if isset($value.navigateur)}{* Construction d'un navigateur entre les cycles pour la case contenant l'année *}
+	<div class="nav-prev"><a href="?dateDebut={$previousCycle}&amp;nbCycle={$nbCycle}" title="Reculer d'un cycle"><img src="{$image}" class="nav-prev" alt="&lt;" /></a></div>
+	<div class="nav-present"><a href="?dateDebut={$presentCycle}&amp;nbCycle={$nbCycle}">{if isset($value.nom)}{$value.nom}{/if}</a></div>
+	<div class="nav-next"><a href="?dateDebut={$nextCycle}&amp;nbCycle={$nbCycle}" title="Avancer d'un cycle"><img src="{$image}" class="nav-next" alt="&lt;" /></a></div>{elseif isset($value.vacation)}
 	<div class="{$value.vacances}"></div>
 	<div class="{$value.periodeCharge}"></div>
-	<div class="{if !$value.briefing}no{/if}brief"{if $value.briefing} title="{$value.briefing}"{/if}></div>
+	<div class="{if !$value.briefing}no{/if}brief"{if isset($value.briefing)} title="{$value.briefing}"{/if}></div>
 	<div class="dateGrille">{$value.jds}</div>
-	<div class="dateGrille">{$value.jdm}</div>
-	<div class="shift">{$value.vacation}</div>{else}{$value.nom}{/if}
-{if $lineNb < 2}
-	</th>{else}</td>
-	{/if}{/foreach}</tr>
-{if $smarty.foreach.lineBoucle.last}</tbody>{/if}{/foreach}
+	<div class="dateGrille">{if $nbCycle > 1}<a href="affiche_grille.php?dateDebut={$value.date}&amp;nbCycle={$nbCycle}" title="Débuter l'affichage par ce cyle">{$value.jdm}</a>{else}{$value.jdm}{/if}</div>
+	<div class="shift">{$value.vacation}</div>{elseif isset($value.nom)}{$value.nom}{/if}{if $lines@iteration < 3}</th>{else}</td>{/if}{/foreach}
+</tr>
+{if $lines@last}</tbody>{/if}{/foreach}
 	</table>
 </div>
 {*
@@ -29,7 +25,7 @@
 		Le contenu est construit dynamiquement, en fonction de la case à modifier
 		*} 
 		<div id="sandbox"></div>
-{*	div qui contient un formulaire pour les remplacement *}
+{*	div qui contient un formulaire pour les remplacements *}
 		<form id="fFormRemplacement" method="post" action="set_rempla.php">
 		<div id="dFormRemplacement">
 				<input type="hidden" name="uid" id="remplaUid" />
@@ -62,6 +58,18 @@
 			</table>
 		</div>
 		</form>
-{* Des messages de debug peuvent être passés dans ce div
-	*}
-	{* <div id="debugMessages"><a href="#">Hide</a></div> *}
+{*	div qui contient un formulaire pour les infos supplémentaires *}
+		<form id="fFormInfoSup" method="post" action="ajax.php" style="display:none;">
+		<div id="dFormInfoSup">
+				<input type="hidden" name="q" value="IS" />
+				<input type="hidden" name="ajax" value="true" />
+				<input type="hidden" name="cachemoi" value="1" />
+				<input type="hidden" name="uid" id="infoSupUid" />
+				<input type="hidden" name="Year" id="infoSupYear" />
+				<input type="hidden" name="Month" id="infoSupMonth" />
+				<input type="hidden" name="Day" id="infoSupDay" />
+				<input name="info" id="infoSupNom" type="text" placeholder="Description" />
+				<input type="reset" value="Effacer" class="bouton" />
+				<input type="submit" />
+		</div>
+		</form>

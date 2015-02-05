@@ -24,7 +24,7 @@
 
 // Require authenticated user
 // L'utilisateur doit être admin pour accéder à cette page
-$requireAdmin = true;
+$requireEditeur = true;
 
 /*
  * Configuration de la page
@@ -57,6 +57,7 @@ if (!isset($_GET['id']) || !isset($_GET['t'])) {
 } else if ($_GET['id'] != (int) $_GET['id'] || $_GET['t'] != (int) $_GET['t']) {
 	$err = "Paramètre incorrect... :o";
 } else {
+	$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 	$tables =  array('TBL_BRIEFING', 'TBL_VACANCES_SCOLAIRES', 'TBL_PERIODE_CHARGE');
 	$champs = array(
 		array(
@@ -72,8 +73,25 @@ if (!isset($_GET['id']) || !isset($_GET['t'])) {
 			,0
 		)
 	);
-	$sql1 = sprintf("DELETE FROM `%s` WHERE `id` = %d", $tables[$_GET['t']], $_GET['id']);
-	$sql2 = sprintf("UPDATE `TBL_GRILLE` SET `%s` = %s WHERE `date` BETWEEN (SELECT `dateD` FROM `%s` WHERE `id` = %s) AND (SELECT `dateF` FROM `%s` WHERE `id` = %s)", $champs[$_GET['t']][0], $champs[$_GET['t']][1], $tables[$_GET['t']], $_GET['id'], $tables[$_GET['t']], $_GET['id']);
+	$sql1 = sprintf("
+		DELETE FROM `%s`
+		WHERE `id` = %d
+		", $tables[$_GET['t']]
+		, $_GET['id']);
+	$sql2 = sprintf("
+		UPDATE `TBL_GRILLE`
+		SET `%s` = %s
+		WHERE `date` BETWEEN (SELECT `dateD` FROM `%s` WHERE `id` = %s)
+		AND (SELECT `dateF` FROM `%s` WHERE `id` = %s)
+		AND `centre` = '%s'
+		", $champs[$_GET['t']][0]
+		, $champs[$_GET['t']][1]
+		, $tables[$_GET['t']]
+		, $_GET['id']
+		, $tables[$_GET['t']]
+		, $_GET['id']
+		, $affectation['centre']
+	);
 	$_SESSION['db']->db_interroge($sql1);
 	$_SESSION['db']->db_interroge($sql2);
 }

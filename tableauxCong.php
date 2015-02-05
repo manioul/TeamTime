@@ -47,7 +47,7 @@ ob_start();
 /*
  * Configuration de la page
  */
-        $titrePage = "Gestion des congés - TeamTime"; // Le titre de la page
+        $conf['page']['titre'] = "Gestion des congés - TeamTime"; // Le titre de la page
 // Définit la valeur de $DEBUG pour le script
 // on peut activer le debug sur des parties de script et/ou sur certains scripts :
 // $DEBUG peut être activer dans certains scripts de required et désactivé dans d'autres
@@ -98,8 +98,7 @@ ob_start();
 	// Feuilles de styles
 	// Utilisation de la feuille de style general.css
 	$conf['page']['stylesheet']['general'] = true;
-	// La feuille de style pour la page de gestion des congés
-	$conf['page']['stylesheet']['conG'] = true;
+	$conf['page']['stylesheet']['grille'] = true;
 	// La feuille de style pour jquery-ui
 	$conf['page']['stylesheet']['jquery-ui'] = true;
 
@@ -115,36 +114,84 @@ require 'required_files.inc.php';
 $year = (!empty($_GET['year']) ? sprintf("%04d", $_GET['year']) : date('Y'));
 $titre = "Congés";
 
-$sql = "SELECT `nom`, `classe`, `uid` FROM `TBL_USERS` WHERE `actif` = TRUE ORDER BY `poids` ASC";
+$affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
 
-$results = $_SESSION['db']->db_interroge($sql);
-while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
-	$users[] = array('nom'	=> htmlentities($res['nom'])
-		,'classe'	=> sprintf('nom %s', $res['classe'])
-		,'uid'		=> $res['uid']
-	);
-}
-mysqli_free_result($results);
-
+$users = utilisateursDeLaGrille::getInstance()->getActiveUsersFromTo("$year-01-01", "$year-12-31", $affectation['centre'], $affectation['team']);
 
 $tab = array();
-$sql = "SELECT `did`, `nom_long`, `quantity` FROM `TBL_DISPO` WHERE `need_compteur` = TRUE AND `actif` = TRUE AND `type decompte` = 'conges'";
+$sql = sprintf("SELECT `did`
+	, `nom_long`
+	, `quantity`
+	FROM `TBL_DISPO`
+	WHERE `need_compteur` = TRUE
+	AND `actif` = TRUE
+	AND `type decompte` = 'conges'
+	AND (`centre` = 'all' OR `centre` = '%s')
+	AND (`team` = 'all' OR `team` = '%s')
+	", $affectation['centre']
+	, $affectation['team']
+);
 $results = $_SESSION['db']->db_interroge($sql);
+// Recherche la date limite de dépôt des congés
+$sql = sprintf("
+	SELECT `valeur`
+	FROM `TBL_CONSTANTS`
+	WHERE `nom` = 'dlCong_%d_%s'
+	UNION
+	SELECT CONCAT('%d-', `valeur`)
+	FROM `TBL_CONSTANTS`
+	WHERE `nom` = 'dlCong_default_%s'
+	LIMIT 1
+	", $year
+	, $affectation['centre']
+	, $year + 1
+	, $affectation['centre']
+);
+$result = $_SESSION['db']->db_interroge($sql);
+$row = $_SESSION['db']->db_fetch_row($result);
+$dlCong = $row[0];
+mysqli_free_result($result);	
 while ($res = $_SESSION['db']->db_fetch_assoc($results)) {
 	$onglets[] = array('nom'	=> htmlspecialchars($res['nom_long'], ENT_COMPAT, 'UTF-8')
 		,'quantity'		=> $res['quantity']
 		,'param'		=> $res['did']
 	);
-	// Recherche des congés de l'année en cours
-	$sql = sprintf('SELECT `uid`, `date`, `etat` FROM `TBL_VACANCES` WHERE `year` = %d AND `did` = %d ORDER BY `date` ASC', $year, $res['did']);
-	$r = $_SESSION['db']->db_interroge($sql);
-	while ($s = $_SESSION['db']->db_fetch_assoc($r)) {
+	/* Recherche des congés de l'année en cours
+	 * des utilisateurs étant passés dans l'équipe
+	 * sur l'année
+	 */
+	$sql = sprintf("
+		SELECT `l`.`uid`
+		, `date`
+		, `etat`
+		FROM `TBL_L_SHIFT_DISPO` `l`
+		, `TBL_VACANCES` AS `v`
+		WHERE `l`.`sdid` = `v`.`sdid`
+		AND `year` = %d
+		AND `did` = %d
+		AND `l`.`uid` IN (SELECT `uid`
+				FROM `TBL_AFFECTATION`
+				WHERE `beginning` <= '%d-12-31'
+				AND `end` >= '%d-01-01'
+				AND `centre` = '%s'
+				AND `team` = '%s'
+			)
+		ORDER BY `date` ASC
+		", $year
+		, $res['did']
+		, $year
+		, $year
+		, $affectation['centre']
+		, $affectation['team']
+	);
+	$result = $_SESSION['db']->db_interroge($sql);
+	while ($row = $_SESSION['db']->db_fetch_assoc($result)) {
 		$class = '';
-		$class .= ($s['etat'] == 1 ? ' filed' : '');
-		$class .= ($s['etat'] == 2 ? ' confirmed' : '');
-		$date = new Date($s['date']);
-		$tab[$res['did']][$s['uid']][] = array(	'date' => $date->formatDate()
-							,'classe' => $class
+		$class .= ($row['etat'] == 1 ? ' filed' : '');
+		$class .= ($row['etat'] == 2 ? ' valide' : '');
+		$date = new Date($row['date']);
+		$tab[$res['did']][$row['uid']][] = array(	'date' => $date->formatDate()
+			,'classe' => $class
 		);
 	}
 }
@@ -156,26 +203,25 @@ $smarty->assign('onglets', $onglets);
 $smarty->assign('users', $users);
 $smarty->assign('tab', $tab);
 
-
-// Affichage des en-têtes de page
-$smarty->display('header.tpl');
-
-// Ajout du menu horizontal
-if ($conf['page']['elements']['menuHorizontal']) include('menuHorizontal.inc.php');
-
-// Ajout des messages
-if ($conf['page']['elements']['messages']) include('messages.inc.php');
-
-// Ajout du choix du thème
-if ($conf['page']['elements']['choixTheme']) include('choixTheme.inc.php');
-
-// Affichage du menu d'administration
-if ($conf['page']['elements']['menuAdmin']) include('menuAdmin.inc.php');
-
-
 $smarty->display('tableauxCong.tpl');
 
-if (isset($_SESSION['EDITEURS'])) $smarty->display('depotConges.tpl');
+if (array_key_exists('TEAMEDIT', $_SESSION)) {
+	$sql = sprintf("SELECT *
+		FROM `TBL_VACANCES_A_ANNULER`
+		WHERE `edited` IS FAlSE
+		AND `uid` IN (SELECT `uid`
+			FROM `TBL_ANCIENNETE_EQUIPE`
+			WHERE `centre` = '%s'
+			AND `team` = '%s'
+			AND NOW() BETWEEN `beginning` AND `end`)
+			", $affectation['centre']
+			, $affectation['team']
+		);
+	if (mysqli_num_rows($_SESSION['db']->db_interroge($sql)) > 0) {
+		$smarty->assign('annulation', TRUE);
+	}
+	$smarty->display('depotConges.tpl');
+}
 
 /*
  * Informations de debug
