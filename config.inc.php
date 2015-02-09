@@ -36,18 +36,21 @@ $DEBUG = false;
 
 // Configurations relatives au thème
 	$conf['theme']['default']	 	= 'anis'; // Nom du thème par défaut
+	$conf['theme']['current']		= $conf['theme']['default'];
 	$conf['theme']['cookieLifeTime'] 	= time() + 60 * 60 * 24 * 365; // La durée du cookie pour le thème est de 365 jours
 	// Gestion et enregistrement du thème dans un cookie
 		// Les noms de thèmes sont uniquement composés de lettres, de chiffres ou du caractère underscore
-		if (!empty($_GET['theme']) && preg_match("/^[a-zA-Z0-9_]+$/", $_GET['theme'])) {
-			setcookie('theme', $_GET['theme'], $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
-			if (!empty($_GET['back'])) {
-				header("Location:$back");
-			}
-		} else {
-			setcookie('theme', $conf['theme']['default'], $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
+		if (array_key_exists('theme', $_COOKIE) && preg_match("/^[a-zA-Z0-9_]+$/", $_COOKIE['theme'])) {
+			$conf['theme']['current'] = $_COOKIE['theme'];
 		}
-	$conf['theme']['current'] = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : $conf['theme']['default'];
+		if (array_key_exists('theme', $_REQUEST) && preg_match("/^[a-zA-Z0-9_]+$/", $_REQUEST['theme'])) {
+			$conf['theme']['current'] = $_REQUEST['theme'];
+		}
+		setcookie('theme', $conf['theme']['current'], $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
+
+		if (!empty($_GET['back'])) {
+			header("Location:".$_GET['back']);
+		}
 	
 // Gestion des emails
 	// adresse mail d'expédition des emails
