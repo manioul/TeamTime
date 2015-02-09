@@ -5,8 +5,7 @@
 
 // Require authenticated user
 // L'utilisateur doit être logué/admin pour accéder à cette page
-// $requireAuthenticatedUser = true;
-$requireEditeur = true;
+$requireAuthenticatedUser = true;
 
 header('Content-Type: application/javascript');
 //ob_start();
@@ -30,7 +29,7 @@ $colonnes = array();
 while ($row = $_SESSION['db']->db_fetch_array($result)) {
        $colonnes[] = $row[0];
 }
-if (array_key_exists('ADMIN', $_SESSION)) {
+if ($_SESSION['utilisateur']->hasRole('admin')) {
 	$colonnes[] = 'centre';
 	$colonnes[] = 'team';
 	$sql = sprintf("
@@ -150,7 +149,7 @@ function showUsers(field)
 	$('input[name="uid"]').val("");
 	$('#login').val("");
 <?php
-	if (array_key_exists('ADMIN', $_SESSION)) {
+	if ($_SESSION['utilisateur']->hasRole('admin')) {
 		?>
 	$('#submitContact2').hide();
 <?php
@@ -257,7 +256,7 @@ function ANU()
 	$('#administration').show();
 	$('#affectation').show();
 <?php
-	if (array_key_exists('ADMIN', $_SESSION)) {
+	if ($_SESSION['utilisateur']->hasRole('admin')) {
 		?>
 	$('#submitContact2').show();
 <?php
