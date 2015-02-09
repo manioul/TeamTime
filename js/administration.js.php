@@ -198,7 +198,7 @@ function showUsers(field)
 
 		req.open("POST", 'ajax.php', true); 
 		req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-		req.send('form=LU&nom='+field.value);
+		req.send('q=LU&nom='+field.value);
 	}
 }
 //
@@ -242,7 +242,7 @@ function fillUser(uid)
 
 	req.open("POST", "ajax.php", true); 
 	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	req.send("form=FU&uid="+uid);
+	req.send("q=FU&uid="+uid);
 }
 //
 // Crée les champs pour la création d'un nouvel utilisateur
