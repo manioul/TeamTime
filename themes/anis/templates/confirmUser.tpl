@@ -13,7 +13,7 @@
 {$user.prenom|capitalize} <strong>{$user.nom|capitalize}</strong> ({$user.email})
 vient-il dans votre équipe ?
 </li><li>
-<input type="hidden" name="form" value="CU" />
+<input type="hidden" name="q" value="CU" />
 <input type="hidden" name="ajax" value="true" />
 <input type="hidden" name="cachemoi" value="1" />
 <input type="hidden" name="submit" value="confirm" id="subValue" />
