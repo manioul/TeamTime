@@ -6,8 +6,7 @@
 <ul>
 {foreach $users as $user}
 <li id="cf{$user.id}">
-<div class="ng w24">
-<ul>
+<ul class="ng w24">
 <form name="user{$user.id}" action="ajax.php" method="POST">
 <li>
 {$user.prenom|capitalize} <strong>{$user.nom|capitalize}</strong> ({$user.email})
@@ -28,7 +27,6 @@ vient-il dans votre équipe ?
 </li>
 </form>
 </ul>
-</div>
 </li>
 {/foreach}
 </ul>
