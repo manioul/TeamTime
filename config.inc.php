@@ -48,10 +48,6 @@ $DEBUG = false;
 		}
 		setcookie('theme', $conf['theme']['current'], $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
 
-		if (!empty($_GET['back'])) {
-			header("Location:".$_GET['back']);
-		}
-	
 // Gestion des emails
 	// adresse mail d'expédition des emails
 	$GLOBALS['emailsender'] = 'noreply@mail.com';
