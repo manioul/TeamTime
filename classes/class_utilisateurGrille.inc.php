@@ -580,7 +580,7 @@ class utilisateurGrille extends utilisateur {
 			);
 			$this->pref = json_decode($param, false);
 			// Ajoute les compteurs en fin de grille sur tous les affichages
-			if (array_key_exists('cpt', $this->pref)) {
+			if (is_array($this->pref) && array_key_exists('cpt', $this->pref)) {
 				setcookie('cpt', (int) $this->pref->cpt, 0, $conf['session_cookie']['path'], NULL, $conf['session_cookie']['secure']);
 			}
 		} elseif (!is_array($this->pref)) {
