@@ -25,7 +25,7 @@ $messages = array();
 $index = 0;
 
 if (!array_key_exists('iAmVirtual', $_SESSION)) {
-	if (array_key_exists('ADMIN', $_SESSION)) {
+	if ($_SESSION['utilisateur']->hasRole('admin')) {
 		$messages[$index]['message'] = "Connecté en tant que " . $_SESSION['utilisateur']->login();
 		$messages[$index]['lien'] = "";
 		$messages[$index]['classe'] = "warn";
@@ -37,7 +37,7 @@ if (!array_key_exists('iAmVirtual', $_SESSION)) {
 	$messages[$index]['classe'] = "warn";
 	$index++;
 }
-if (array_key_exists('ADMIN', $_SESSION) && !get_sql_globals_constant('online')) {
+if ($_SESSION['utilisateur']->hasRole('admin') && !get_sql_globals_constant('online')) {
 	$messages[$index]['message'] = "Le site est actuellement hors-ligne.";
 	$messages[$index]['lien'] = "administration.php";
 	$messages[$index]['classe'] = "warn";
@@ -56,7 +56,7 @@ foreach ($_SESSION['utilisateur']->retrMessages() as $message) {
 }
 $_SESSION['utilisateur']->flushMessages();
 // Recherche les comptes créés en attente de validation
-if (array_key_exists('EDITEURS', $_SESSION)) {
+if ($_SESSION['utilisateur']->hasRole('editeurs')) {
 	$sql = sprintf("SELECT * FROM `TBL_SIGNUP_ON_HOLD`
 		WHERE `centre` = '%s'
 		AND `team` = '%s'
