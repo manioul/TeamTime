@@ -572,6 +572,7 @@ class utilisateurGrille extends utilisateur {
 	 * @param $param string chaîne JSON
 	 */
 	public function pref($param = NULL) {
+		global $conf;
 		if (is_string($param)) {
 			$_SESSION['db']->db_interroge(sprintf('CALL messageSystem("msg", "TRACE", "%s", "short", "%s")'
 				, __METHOD__
