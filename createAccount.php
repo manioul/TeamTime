@@ -148,7 +148,14 @@ if (mysqli_num_rows($result) > 1) {
 		", $_SESSION['db']->db_real_escape_string($_REQUEST['k'])
 		, $_SESSION['db']->db_real_escape_string($sql)
 	));
-	die("Aucune clé ne correspond. Les administrateurs ont été avisés. Si vous êtes certain de l'adresse contactez un administrateur. Désolés pour la gêne occasionnée.");
+	$article = new Article('wrong key');
+	$smarty->assign('erreur', $article->texte());
+	$smarty->display('erreur.tpl');
+	// Affichage du bas de page
+	$smarty->display('footer.tpl');
+
+	ob_end_flush(); // Obligatoire pour firePHP
+	die();
 }
 $row = $_SESSION['db']->db_fetch_assoc($result);
 mysqli_free_result($result);

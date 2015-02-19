@@ -554,6 +554,13 @@ BEGIN
 
 END
 |
+DROP PROCEDURE IF EXISTS post_2_6a|
+CREATE PROCEDURE post_2_6a()
+BEGIN
+	-- Ajout d'un message pour tentative de création de compte avec une mauvaise clé
+	INSERT INTO `ttm`.`TBL_ARTICLES` (`idx`, `titre`, `description`, `texte`, `analyse`, `creation`, `modification`, `restricted`, `actif`) VALUES (NULL, 'Mauvaise clé', 'wrong key', 'Aucune clé ne correspond. Les administrateurs ont été avisés. Si vous êtes certain de l''adresse contactez un administrateur.', '0', NOW(), CURRENT_TIMESTAMP, '0', '1');
+END
+|
 
 DELIMITER ;
 
