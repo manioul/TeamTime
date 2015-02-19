@@ -118,13 +118,13 @@ ob_start(); // Obligatoire pour firePHP
 require 'required_files.inc.php';
 
 // Recherche les comptes en attente de validation
-$sql = sprintf("SELECT `id`, `nom`, `prenom`, `email`, `timestamp` AS `dateD`, DATE_ADD(NOW(), INTERVAL 1 YEAR) AS `dateF`
+$sql = sprintf("SELECT `id`, `nom`, `prenom`, `email`, `timestamp` AS `dateD`, DATE_ADD(NOW(), INTERVAL 1 YEAR) AS `dateF`, `centre`, `team`
 	FROM `TBL_SIGNUP_ON_HOLD`
 	WHERE `centre` = '%s'
 	AND `team` = '%s'
 	AND url IS NULL
 	UNION
-	SELECT `aid` AS `id`, `nom`, `prenom`, `email`, `beginning` AS `dateD`, `end` AS `dateF`
+	SELECT `aid` AS `id`, `nom`, `prenom`, `email`, `beginning` AS `dateD`, `end` AS `dateF`, `centre`, `team`
 	FROM TBL_AFFECTATION AS a,
 	TBL_USERS AS u
 	WHERE a.uid = u.uid
@@ -137,6 +137,19 @@ $sql = sprintf("SELECT `id`, `nom`, `prenom`, `email`, `timestamp` AS `dateD`, D
 	, $_SESSION['utilisateur']->centre()
 	, $_SESSION['utilisateur']->team()
 );
+// Les admins ont accès à toutes les créations de compte
+if ($_SESSION['utilisateur']->hasRole('admin')) {
+	$sql = "SELECT `id`, `nom`, `prenom`, `email`, `timestamp` AS `dateD`, DATE_ADD(NOW(), INTERVAL 1 YEAR) AS `dateF`, `centre`, `team`
+		FROM `TBL_SIGNUP_ON_HOLD`
+		WHERE url IS NULL
+		UNION
+		SELECT `aid` AS `id`, `nom`, `prenom`, `email`, `beginning` AS `dateD`, `end` AS `dateF`, `centre`, `team`
+		FROM TBL_AFFECTATION AS a,
+		TBL_USERS AS u
+		WHERE a.uid = u.uid
+		AND `actif` IS TRUE
+		AND `validated` IS FALSE";
+}
 $users = array();
 $i = 0;
 $result = $_SESSION['db']->db_interroge($sql);

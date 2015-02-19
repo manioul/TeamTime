@@ -10,7 +10,7 @@
 <form name="user{$user.id}" action="ajax.php" method="POST">
 <li>
 {$user.prenom|capitalize} <strong>{$user.nom|capitalize}</strong> ({$user.email})
-vient-il dans votre équipe ?
+dans l'équipe {$user.team} ({$user.centre})
 </li><li>
 <input type="hidden" name="q" value="CU" />
 <input type="hidden" name="ajax" value="true" />

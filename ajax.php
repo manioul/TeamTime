@@ -231,18 +231,27 @@ if (sizeof($_REQUEST) > 0) {
 				// id contient l'identifiant de l'entrée dans la table TBL_SIGNUP_ON_HOLD
 				if (array_key_exists('submit', $_REQUEST) && $_REQUEST['submit'] == "infirm") {
 					if (array_key_exists('id', $_REQUEST)) {
-						// On précise centre et équipe pour éviter
-						// la suppression d'inscription dans
-						// d'autres équipes que celle de l'utilisateur
-						$_SESSION['db']->db_interroge(sprintf(
-							"DELETE FROM `TBL_SIGNUP_ON_HOLD`
-							WHERE `id` = %d
-							AND `centre` = '%s'
-							AND `team` = '%s'
-							", $_REQUEST['id']
-							, $_SESSION['utilisateur']->centre()
-							, $_SESSION['utilisateur']->team()
-						));
+						if ($_SESSION['utilisateur']->hasRole('admin')) {
+							// Les admins peuvent supprimer tous les comptes en attente
+							// indépendamment de l'affectation
+							$_SESSION['db']->db_interroge(sprintf(
+								"DELETE FROM `TBL_SIGNUP_ON_HOLD`
+								WHERE `id` = %d
+								", $_REQUEST['id']));
+						} else {
+							// On précise centre et équipe pour éviter
+							// la suppression d'inscription dans
+							// d'autres équipes que celle de l'utilisateur
+							$_SESSION['db']->db_interroge(sprintf(
+								"DELETE FROM `TBL_SIGNUP_ON_HOLD`
+								WHERE `id` = %d
+								AND `centre` = '%s'
+								AND `team` = '%s'
+								", $_REQUEST['id']
+								, $_SESSION['utilisateur']->centre()
+								, $_SESSION['utilisateur']->team()
+							));
+						}
 						die(htmlspecialchars("Utilisateur Supprimé"));
 					}
 				} elseif (array_key_exists('submit', $_REQUEST) && $_REQUEST['submit'] == "confirm" && array_key_exists('dateD', $_REQUEST) && array_key_exists('dateF', $_REQUEST) && array_key_exists('grade', $_REQUEST)) {

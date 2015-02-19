@@ -64,9 +64,14 @@ if ($_SESSION['utilisateur']->hasRole('editeurs')) {
 		", $_SESSION['utilisateur']->centre()
 		, $_SESSION['utilisateur']->team()
 	);
+	// Les admins accèdent à l'ensemble des créations de compte
+	if ($_SESSION['utilisateur']->hasRole('admin')) {
+		$sql = "SELECT * FROM `TBL_SIGNUP_ON_HOLD`
+			WHERE `url` IS NULL";
+	}
 	$result = $_SESSION['db']->db_interroge($sql);
 	if (mysqli_num_rows($result) > 0) {
-		$messages[$index]['message'] = "Des utilisateurs ont fait une demande d'inscription dans votre équipe et attendent votre acceptation.";
+		$messages[$index]['message'] = "Des utilisateurs ont fait une demande d'inscription et attendent votre acceptation.";
 		$messages[$index]['lien'] = 'confirmUser.php';
 		$index++;
 	}
