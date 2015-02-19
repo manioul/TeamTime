@@ -985,27 +985,20 @@ dl.sous-onglets dd {
 /*
  * classe pour marquer les erreurs
  */
-.erreur {
+.erreur, .erreur-box {
 	font-style:italic;
+	border:2px solid rgb(255,200,200);
+}
+.erreur-box {
+	text-align:justify;
 	font-size:150%;
 	color:#060;
 	width:30%;
 	margin:auto;
 	padding:5px 25px;
 	background: #ceffce; /* Old browsers */
-	background: -moz-linear-gradient(top, #ceffce 0%, #c7ffc7 50%, #c0f9c0 51%, #ceffce 100%); /* FF3.6+ */
-	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ceffce), color-stop(50%,#c7ffc7), color-stop(51%,#c0f9c0), color-stop(100%,#ceffce)); /* Chrome,Safari4+ */
-	background: -webkit-linear-gradient(top, #ceffce 0%,#c7ffc7 50%,#c0f9c0 51%,#ceffce 100%); /* Chrome10+,Safari5.1+ */
-	background: -o-linear-gradient(top, #ceffce 0%,#c7ffc7 50%,#c0f9c0 51%,#ceffce 100%); /* Opera 11.10+ */
-	background: -ms-linear-gradient(top, #ceffce 0%,#c7ffc7 50%,#c0f9c0 51%,#ceffce 100%); /* IE10+ */
 	background: linear-gradient(to bottom, #ceffce 0%,#c7ffc7 50%,#c0f9c0 51%,#ceffce 100%); /* W3C */
-	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ceffce', endColorstr='#ceffce',GradientType=0  ); /* IE6-9 */
-	-moz-border-radius: 10px;
-	-webkit-border-radius: 10px;
-	-ms-border-radius: 10px;
-	-o-border-radius: 10px;
 	border-radius: 10px;
-	border:2px solid rgb(255,200,200);
 }
 
 
