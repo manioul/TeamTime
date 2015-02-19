@@ -158,7 +158,7 @@ $err = array();
  * Traitement du formulaire
  */
 if (sizeof($_POST) > 0) {
-	if ($_POST['pwd'] != $_POST['pwdchk']) {
+	if ($_POST['pwd'] != $_POST['pwd1']) {
 		// Le reset de mot de passe ne s'est pas fait correctement
 		header('Location:' . $_SERVER['REQUEST_URI'] . '&e=pwdmm');
 		exit;
@@ -236,7 +236,7 @@ if (sizeof($_POST) > 0) {
 			, array(
 				'type'		=> 'password'
 				, 'label'	=> 'Répétez le mot de passe'
-				, 'name'	=> 'pwdchk'
+				, 'name'	=> 'pwd1'
 				, 'placeholder'	=> '****'
 			)
 			, array(
