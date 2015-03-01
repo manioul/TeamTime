@@ -394,9 +394,9 @@ BEGIN
 		-- AND date > date_
 		-- ORDER BY date DESC;
 		
-		-- Les W ne sont posables que sur l'année => dateLimite = 31/12
+		-- Les W ne sont posables que sur l'année => on s'arrange pour que date_ > dateLimite afin de toujours attribuer l'année du congé au congé
 		IF (dispoid = 3) THEN
-			SET dateLimite = CONCAT(YEAR(date_), '-12-31');
+			SET dateLimite = CONCAT(YEAR(date_) - 1, '-12-31');
 		END IF;
 
 		-- Si le congé est situé avant la date limite de l'année passée
