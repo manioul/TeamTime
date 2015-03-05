@@ -1651,7 +1651,7 @@ class utilisateursDeLaGrille {
 						WHERE (`centre` = 'all' OR `centre` = '%s')
 						AND (`team` = 'all' OR `team` = '%s')
 					)
-				GROUP BY `td`.`did`, `uid`"
+				GROUP BY `td`.`type decompte`, `uid`"
 				, $cycle[$nbCycle-1]->dateRef()->date()
 				, $centre
 				, $team
