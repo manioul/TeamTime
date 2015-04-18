@@ -28,9 +28,6 @@
 <label for="totd">tip of the day : </label><input type="checkbox" id="totd" name="totd" />
 </li>
 <li>
-<label for="poids">poids : </label><input type="text" name="poids" id="poids" />
-</li>
-<li>
 <label for="sendmail" title="Informe l'utilisateur sur le moyen de se connecter à TeamTime">Envoyer un mail</label><input type="checkbox" checked="checked" name="sendmail" />
 </li>
 </ul>

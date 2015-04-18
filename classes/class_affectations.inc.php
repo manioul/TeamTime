@@ -33,6 +33,7 @@ class Affectation {
 	private $centre;
 	private $team;
 	private $grade;
+	private $poids;
 	private $centreDisplay;
 	private $teamDisplay;
 	private $gradeDisplay;
@@ -104,6 +105,12 @@ class Affectation {
 			$this->grade = (string) $grade;
 		}
 		return $this->grade;
+	}
+	public function poids($poids = NULL) {
+		if (!is_null($poids)) {
+			$this->poids = (int) $poids;
+		}
+		return $this->poids;
 	}
 	public function centreDisplay() {
 		if (!isset($this->centreDisplay)) {
@@ -198,6 +205,7 @@ class Affectation {
 			, 'centre'	=> $this->centre
 			, 'team'	=> $this->team
 			, 'grade'	=> $this->grade
+			, 'poids'	=> $this->poids
 			, 'beginning'	=> $this->beginning->formatDate()
 			, 'end'		=> $this->end->formatDate()
 		);
@@ -216,13 +224,14 @@ class Affectation {
 	}
 	public function insert() {
 		$sql = sprintf("
-			CALL addAffectation( %d, '%s', '%s', '%s', '%s', '%s')
+			CALL addAffectation( %d, '%s', '%s', '%s', '%s', '%s', %d)
 			", $this->uid
 			, $this->centre
 			, $this->team
 			, $this->grade
 			, $this->beginning->date()
 			, $this->end->date()
+			, $this->poids
 		);
 		$_SESSION['db']->db_interroge($sql);
 		return $_SESSION['db']->db_insert_id();

@@ -213,10 +213,10 @@ BEGIN
 END
 |
 DROP PROCEDURE IF EXISTS addAffectation|
-CREATE PROCEDURE addAffectation( IN uid_ INT , IN centre_ VARCHAR(50) , IN team_ VARCHAR(10) , IN grade_ VARCHAR(64) , IN debut DATE , IN fin DATE )
+CREATE PROCEDURE addAffectation( IN uid_ INT , IN centre_ VARCHAR(50) , IN team_ VARCHAR(10) , IN grade_ VARCHAR(64) , IN debut DATE , IN fin DATE , IN poids_ INT )
 BEGIN
 	DECLARE notFound, prevFound, nextFound BOOLEAN DEFAULT 0;
-	DECLARE prevAffectId, nextAffectId INT;
+	DECLARE prevAffectId, nextAffectId, prevPoids, nextPoids INT;
 	DECLARE prevBeginning, prevEnd DATE;
 	DECLARE prevGrade VARCHAR(64);
 	DECLARE prevCentre VARCHAR(50);
@@ -235,8 +235,8 @@ BEGIN
 			AND end <= fin
 			AND uid = uid_;
 		-- Cherche l'affectation dont le début précède l'affectation à ajouter
-		SELECT aid, centre, team, grade, beginning, end
-			INTO prevAffectId, prevCentre, prevTeam, prevGrade, prevBeginning, prevEnd
+		SELECT aid, centre, team, grade, beginning, end, poids
+			INTO prevAffectId, prevCentre, prevTeam, prevGrade, prevBeginning, prevEnd, prevPoids
 			FROM TBL_AFFECTATION
 			WHERE uid = uid_
 			AND beginning < debut
@@ -251,8 +251,8 @@ BEGIN
 		SET notFound = 0;
 
 		-- Cherche l'affectation dont la fin suit l'affectation à ajouter
-		SELECT aid, centre, team, grade, beginning, end
-			INTO nextAffectId, nextCentre, nextTeam, nextGrade, nextBeginning, nextEnd
+		SELECT aid, centre, team, grade, beginning, end, poids
+			INTO nextAffectId, nextCentre, nextTeam, nextGrade, nextBeginning, nextEnd, nextPoids
 			FROM TBL_AFFECTATION
 			WHERE uid = uid_
 			AND end > fin
@@ -270,9 +270,9 @@ BEGIN
 		IF NOT prevFound AND NOT nextFound THEN
 			-- Ajoute la nouvelle affectation
 			INSERT INTO TBL_AFFECTATION
-			(aid, uid, centre, team, grade, beginning, end, validated)
+			(aid, uid, centre, team, grade, beginning, end, validated, poids)
 			VALUES
-			(NULL, uid_, centre_, team_, grade_, debut, fin, TRUE);
+			(NULL, uid_, centre_, team_, grade_, debut, fin, TRUE, poids_);
 		ELSE
 			-- Si la nouvelle affectation est identique à la précédente, on prolonge la précédente au besoin
 			IF centre_ = prevCentre AND team_ = prevTeam AND grade_ = prevGrade AND prevEnd < fin THEN
@@ -288,9 +288,9 @@ BEGIN
 				ELSE
 					-- Ajoute la nouvelle affectation
 					INSERT INTO TBL_AFFECTATION
-					(aid, uid, centre, team, grade, beginning, end, validated)
+					(aid, uid, centre, team, grade, beginning, end, validated, poids)
 					VALUES
-					(NULL, uid_, centre_, team_, grade_, debut, fin, TRUE);
+					(NULL, uid_, centre_, team_, grade_, debut, fin, TRUE, poids_);
 
 					IF prevFound THEN
 						-- Modifie la date de fin de l'affectation précédente
@@ -302,9 +302,9 @@ BEGIN
 						-- l'ancien poste, après la nouvelle affectation
 						IF fin < prevEnd AND NOT nextFound THEN
 							INSERT INTO TBL_AFFECTATION
-							(aid, uid, centre, team, grade, beginning, end, validated)
+							(aid, uid, centre, team, grade, beginning, end, validated, poids)
 							VALUES
-							(NULL, uid_, prevCentre, prevTeam, prevGrade, DATE_ADD(fin, INTERVAL 1 DAY), prevEnd, TRUE);
+							(NULL, uid_, prevCentre, prevTeam, prevGrade, DATE_ADD(fin, INTERVAL 1 DAY), prevEnd, TRUE, prevPoids_);
 						END IF;
 					END IF;
 					IF nextFound THEN
@@ -317,9 +317,9 @@ BEGIN
 						-- l'ancien poste, après la nouvelle affectation
 						IF debut > prevBeginning AND NOT prevFound THEN
 							INSERT INTO TBL_AFFECTATION
-							(aid, uid, centre, team, grade, beginning, end, validated)
+							(aid, uid, centre, team, grade, beginning, end, validated, poids)
 							VALUES
-							(NULL, uid_, nextCentre, nextTeam, nextGrade, nextBeginning, DATE_SUB(fin, INTERVAL 1 DAY), TRUE);
+							(NULL, uid_, nextCentre, nextTeam, nextGrade, nextBeginning, DATE_SUB(fin, INTERVAL 1 DAY), TRUE, nextPoids_);
 						END IF;
 					END IF;
 				END IF;
@@ -705,7 +705,7 @@ DELIMITER ;
 
 DROP VIEW IF EXISTS affectations;
 CREATE VIEW affectations AS
-	SELECT nom, centre, team, grade, beginning, end
+	SELECT nom, centre, team, grade, beginning, end, a.poids
 	FROM TBL_AFFECTATION a
 	, TBL_USERS u
 	WHERE a.uid = u.uid

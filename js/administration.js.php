@@ -229,7 +229,7 @@ function fillUser(uid)
 				// Affiche les affectations de l'utilisateur
 				for (var i=0;i < aUser.affectations.length; i++)
 				{
-					$('tbody').append("<tr id='affectation"+aUser.affectations[i].aid+"'><td>"+$('option[value="'+aUser.affectations[i].centre+'"]').text()+"</td><td>"+$('option[value="'+aUser.affectations[i].team+'"]').text()+"</td><td>"+$('option[value="'+aUser.affectations[i].grade+'"]').text()+"</td><td>"+aUser.affectations[i].beginning+"</td><td>"+aUser.affectations[i].end+"</td><td><div class='imgwrapper12' title="+'"Supprimer l'+"'"+'entrée" onclick="supprInfo('+"'affectation', "+aUser.affectations[i].aid+", "+aUser.uid+')" style="left:5px;cursor:pointer;"><img class="cnl" src="themes/<?=$conf['theme']['current']?>/images/glue.png" alt="supprimer" /></div></td></tr>');
+					$('tbody').append("<tr id='affectation"+aUser.affectations[i].aid+"'><td>"+$('option[value="'+aUser.affectations[i].centre+'"]').text()+"</td><td>"+$('option[value="'+aUser.affectations[i].team+'"]').text()+"</td><td>"+$('option[value="'+aUser.affectations[i].grade+'"]').text()+"</td><td>"+aUser.affectations[i].beginning+"</td><td>"+aUser.affectations[i].end+"</td><td>"+aUser.poids+"</td><td><div class='imgwrapper12' title="+'"Supprimer l'+"'"+'entrée" onclick="supprInfo('+"'affectation', "+aUser.affectations[i].aid+", "+aUser.uid+')" style="left:5px;cursor:pointer;"><img class="cnl" src="themes/<?=$conf['theme']['current']?>/images/glue.png" alt="supprimer" /></div></td></tr>');
 				}
 			}	
 			else	
