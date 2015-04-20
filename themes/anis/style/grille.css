@@ -93,7 +93,8 @@ div.nobrief {
 #grille td.pc {
 	background-color: #93fda9;
 }
-#grille td.c {
+#grille td.c,
+#grille td.theo {
 	background-color: #b7f9bf;
 }
 .fmp {
