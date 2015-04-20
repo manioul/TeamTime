@@ -1,5 +1,5 @@
 {* Smarty *}
-<table class="altern-row">
+<table class="altern-row panel">
 {foreach $activites as $activite}
 {if $activite@first}<thead>{elseif $activite@iteration == 2}</thead><tbody>{/if}
 <tr>
