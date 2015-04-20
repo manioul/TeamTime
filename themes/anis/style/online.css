@@ -6,7 +6,6 @@ img.online {
 }
 div#onoff {
 	position:relative;
-	margin: 15px;
 	left:50px;
 	cursor: pointer;
 }
