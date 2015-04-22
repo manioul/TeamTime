@@ -102,6 +102,7 @@ BEGIN
 
 	CLOSE curDate;
 END|
+-- Distribue les heures pour une journée à tous les utilisateurs de l'équipe
 DROP PROCEDURE IF EXISTS dispatchOneDayHeures|
 CREATE PROCEDURE dispatchOneDayHeures ( IN centre_ CHAR(50) , IN team_ CHAR(10) , IN date_ DATE )
 BEGIN
@@ -250,46 +251,19 @@ BEGIN
 			SET normales = valeurFixed
 			, statut = 'fixed'
 			, rid = ruleid
-			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
-			AND (FIND_IN_SET(did, didFixed) OR did = didFixed);
-			-- Pour les attribution fixes à des grades particuliers sans dispo particulières
-			UPDATE tmpPresents
-			SET normales = valeurFixed
-			, statut = 'fixed'
-			, rid = ruleid
-			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
-			AND didFixed IS NULL
-			AND did IS NULL;
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed) AND (FIND_IN_SET(did, didFixed) OR did = didFixed OR didFixed IS NULL);
 		ELSEIF typeFixed = 'instru' THEN
 			UPDATE tmpPresents
 			SET instruction = valeurFixed
 			, statut = 'fixed'
 			, rid = ruleid
-			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
-			AND (FIND_IN_SET(did, didFixed) OR did = didFixed);
-			-- Pour les attribution fixes à des grades particuliers sans dispo particulières
-			UPDATE tmpPresents
-			SET normales = valeurFixed
-			, statut = 'fixed'
-			, rid = ruleid
-			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
-			AND didFixed IS NULL
-			AND did IS NULL;
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed) AND (FIND_IN_SET(did, didFixed) OR did = didFixed OR didFixed IS NULL);
 		ELSEIF typeFixed = 'simu' THEN
 			UPDATE tmpPresents
 			SET simulateur = valeurFixed
 			, statut = 'fixed'
 			, rid = ruleid
-			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
-			AND (FIND_IN_SET(did, didFixed) OR did = didFixed);
-			-- Pour les attribution fixes à des grades particuliers sans dispo particulières
-			UPDATE tmpPresents
-			SET normales = valeurFixed
-			, statut = 'instru'
-			, rid = ruleid
-			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed)
-			AND didFixed IS NULL
-			AND did IS NULL;
+			WHERE (FIND_IN_SET(grade, gradeFixed) OR grade = gradeFixed) AND (FIND_IN_SET(did, didFixed) OR did = didFixed OR didFixed IS NULL);
 		END IF;
 	END IF;
 	UNTIL done END REPEAT;
