@@ -218,8 +218,8 @@ function addHeures()
 					{
 						var theDate = new Date(aArr[i]["date"]);
 						var month = theDate.getMonth() + 1;
-						var sId = 'u'+aArr[i]["uid"]+'a'+theDate.getFullYear()+'m'+month+'j'+theDate.getDate();
-						$("<ul class='heures'><li>"+aArr[i]['normales']+"</li><li>"+aArr[i]['instruction']+"</li><li>"+aArr[i]['simulateur']+"</li><li>"+aArr[i]['double']+"</li></ul>").appendTo($("td[id^="+sId+"]"));
+						var sId = 'u'+aArr[i]["uid"]+'a'+theDate.getFullYear()+'m'+month+'j'+theDate.getDate()+"s";
+						$("<ul class='heures' title='"+aArr[i]['date']+"|"+aArr[i]["uid"]+"'><li>"+aArr[i]['normales']+"</li><li>"+aArr[i]['instruction']+"</li><li>"+aArr[i]['simulateur']+"</li><li>"+aArr[i]['double']+"</li></ul>").appendTo($("td[id^="+sId+"]"));
 					}
 					});
 				}
