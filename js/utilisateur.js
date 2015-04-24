@@ -225,6 +225,7 @@ function addHeures()
 				}
 			}
 			);
+	$('#bHeures').detach();
 }
 $(function() {
 	$("form").has("input[name='ajax'][value='true']").attr('onsubmit', 'return subAutoForm(this)');

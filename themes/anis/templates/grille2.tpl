@@ -20,7 +20,7 @@
 {if $lines@last}</tbody>{/if}{/foreach}
 	</table>
 </div>
-<div class="panel" style="max-width:150px;margin-top:15px;"><button class="bouton" onclick="addHeures();">Afficher les heures</button></div>
+<div class="panel" style="max-width:150px;margin-top:15px;"><button id="bHeures" class="bouton" onclick="addHeures();">Afficher les heures</button></div>
 {*
 	div qui contiendra la liste de valeurs à attribuer à une case de la grille
 		Le contenu est construit dynamiquement, en fonction de la case à modifier
