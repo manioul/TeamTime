@@ -193,6 +193,39 @@ function validateCrtAcct() {
 	}
 	return true;
 }
+/*
+ * Ajoute de l'info à des champs dont l'id peut être recréé à partir de la date et l'uid
+ * par exemple dans des cases de la grille
+ */
+function addTextToGrille(aArray,info)
+{
+	var sId = 'u'+aArray["uid"]+'a'+aArray["Year"]+'m'+aArray["Month"]+'j'+aArray["Day"];
+	$("<p>"+info+"</p>").appendTo($("*[id*="+sId+"]"));
+}
+/*
+ * Affiche les heures attribuées aux utilisateurs sur chaque jour de travail
+ */
+function addHeures()
+{
+	$("th[id^='a']").each(
+			function()
+			{
+				var aArray = infosFromId($(this).attr("id"));
+				if (aArray instanceof Array) {
+					$.post('ajax.php', {q:"GH",d:aArray['Day'],m:aArray['Month'],y:aArray['Year']}).done(function(x){
+						var aArr = JSON.parse(x);
+						for (var i in aArr)
+					{
+						var theDate = new Date(aArr[i]["date"]);
+						var month = theDate.getMonth() + 1;
+						var sId = 'u'+aArr[i]["uid"]+'a'+theDate.getFullYear()+'m'+month+'j'+theDate.getDate();
+						$("<ul class='heures'><li>"+aArr[i]['normales']+"</li><li>"+aArr[i]['instruction']+"</li><li>"+aArr[i]['simulateur']+"</li><li>"+aArr[i]['double']+"</li></ul>").appendTo($("td[id^="+sId+"]"));
+					}
+					});
+				}
+			}
+			);
+}
 $(function() {
 	$("form").has("input[name='ajax'][value='true']").attr('onsubmit', 'return subAutoForm(this)');
 	// Formulaire de création de compte TeamTime ou récupération de mot de passe fcrtAcct

@@ -295,3 +295,7 @@ div#dFormRemplacement table td {
 .filed {
 	color:#f00;
 }
+.heures {
+	color:white;
+	text-shadow: 1px 1px black;
+}

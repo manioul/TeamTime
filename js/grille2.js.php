@@ -606,7 +606,19 @@ function infosFromId(sId) {
 				}
 				else
 				{
-					return false;
+					aId = sId.match(/a(\d+)m(\d+)j(\d+)s(.+)/);
+					if (aId instanceof Array) {
+						var aArray = new Array();
+						aArray["Year"] = aId[1];
+						aArray["Month"] = aId[2];
+						aArray["Day"] = aId[3];
+						aArray["Vacation"] = aId[4];
+						return aArray;
+					}
+					else
+					{
+						return false;
+					}
 				}
 			}
 		}

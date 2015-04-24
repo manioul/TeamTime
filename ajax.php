@@ -412,6 +412,39 @@ if (sizeof($_REQUEST) > 0) {
 					}
 			}
 			break;
+		/**
+		 * Retourne les heures attribuées sur la date demandée.
+		 */
+		case 'GH':
+			if (array_key_exists('d', $_REQUEST)
+			    && array_key_exists('m', $_REQUEST)
+			    && array_key_exists('y', $_REQUEST)) {
+				$date = new Date(sprintf("%04d-%02d-%02d", $_REQUEST['y'], $_REQUEST['m'], $_REQUEST['d']));
+				$affectation = $_SESSION['utilisateur']->affectationOnDate($date);
+				$return = "";
+				$sql = sprintf("
+					SELECT *
+					FROM `TBL_HEURES`
+					WHERE `date` = '%s'
+					AND `uid` IN (SELECT `uid` FROM `TBL_AFFECTATION`
+						WHERE '%s' BETWEEN `beginning` AND `end`
+						AND `centre` = '%s'
+						AND `team` = '%s')
+					"
+					, $date->date()
+					, $date->date()
+					, $affectation['centre']
+					, $affectation['team']
+				);
+				$result = $_SESSION['db']->db_interroge($sql);
+				while($row = $_SESSION['db']->db_fetch_assoc($result)) {
+					 $return[$row['uid']] = $row;
+				}
+				mysqli_free_result($result);				
+				print(json_encode($return));
+				return true;
+			}
+			break;
 		}
 	}
 }
