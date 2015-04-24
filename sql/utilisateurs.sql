@@ -228,7 +228,7 @@ BEGIN
 
 	DECLARE CONTINUE HANDLER FOR NOT FOUND SET notFound = 1;
 
-	IF debut < fin THEN
+	IF debut <= fin THEN
 		-- Supprime les périodes recouvertes entièrement
 		DELETE FROM TBL_AFFECTATION
 	       		WHERE beginning >= debut
