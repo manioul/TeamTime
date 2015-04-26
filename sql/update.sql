@@ -620,4 +620,23 @@ DELIMITER ;
 -- CALL post_2_3e();
 -- CALL pre_2_4();
 -- CALL post_2_4a();
-CALL post_2_5c();
+-- CALL post_2_5c();
+CALL post_2_6a();
+	-- Le timestamp de TBL_SIGNUP_ON_HOLD est modifié à la mise à jour de l'enregistrement
+	ALTER TABLE `TBL_SIGNUP_ON_HOLD` CHANGE `timestamp` `timestamp` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+	-- Création d'un évènement pour supprimer les comptes en attente de création obsolètes (> 1 WEEK)
+	DROP EVENT IF EXISTS cleanObsoletePendingAccounts;
+
+	DELIMITER |
+	CREATE EVENT cleanObsoletePendingAccounts
+	ON SCHEDULE
+	EVERY 1 DAY
+	COMMENT 'Supprime les comptes en attente devenus obsolètes'
+	DO
+		BEGIN
+			DELETE FROM TBL_SIGNUP_ON_HOLD
+			WHERE NOW() > DATE_ADD(timestamp, INTERVAL 1 WEEK)
+			AND url IS NOT NULL;
+		END|
+	DELIMITER ;
