@@ -29,48 +29,208 @@ BEGIN
 END
 |
 
--- Supprime les activités posées en double sur une même journée pour un
+-- Supprime les activités multiples posées sur une même journée pour un
 -- même utilisateur et qui ne correspondent pas une pereq.
 DROP PROCEDURE IF EXISTS cleanMultipleActivites|
 CREATE PROCEDURE cleanMultipleActivites()
 BEGIN
-	DECLARE uid_, compteur, did_ SMALLINT(6);
+	DECLARE uid_, compt_, did_ SMALLINT(6);
 	DECLARE date_ DATE;
-	DECLARE pereq_ BOOLEAN;
 	DECLARE done BOOLEAN DEFAULT 0;
 
-	DECLARE curMulAct CURSOR FOR
-		SELECT date, uid, COUNT(uid), pereq, did
+	-- Recherche les activités multiples ayant le même did
+	-- Certaines entrées peuvent avoir un titre (title) défini, d'autres non,
+	-- ce qui aide dans le choix de l'entrée à supprimer...
+	DECLARE curDblAct CURSOR FOR
+		SELECT date, uid, COUNT(uid) AS compteur, did
 		FROM TBL_L_SHIFT_DISPO
+		WHERE pereq IS FALSE
+		AND date != 0
 		GROUP BY date, uid, did
 		HAVING compteur > 1
-		AND date != 0
-		AND pereq IS FALSE
 		ORDER BY uid;
+	
+	-- Recherche les activités multiples ayant des did différents
+	-- L'activité ayant le sdid le plus élevé est l'entrée la plus récente
+	-- et sera, à ce titre, considérée comme valide
+	DECLARE curMultAct CURSOR FOR
+		SELECT date, uid, COUNT(uid) AS compteur
+		FROM TBL_L_SHIFT_DISPO
+		WHERE pereq IS FALSE
+		AND date != 0
+		GROUP BY date, uid
+		HAVING compteur > 1
+		ORDER BY uid;
+	
 	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
 	
-	OPEN curMulAct;
+	OPEN curDblAct;
 
-	REPEAT
-	FETCH curMulAct INTO date_, uid_, compteur, pereq_, did_;
-		CALL cleanMultipleActivitesUidDate(uid_, date_, did_);
-	UNTIL done END REPEAT;
+	lDoubleActivites : LOOP
+		FETCH curDblAct INTO date_, uid_, compt_, did_;
 
-	CLOSE curMulAct;
-END;
+		CALL cleanDoubleActivitesUidDate(uid_, date_, did_);
+
+		IF done THEN
+			CLOSE curDblAct;
+			LEAVE lDoubleActivites;
+		END IF;
+	END LOOP;
+
+	SET done = 0;
+	SET compt_ = 0;
+
+	OPEN curMultAct;
+
+	lMultipleActivites : LOOP
+		FETCH curMultAct INTO date_, uid_, compt_;
+
+		CALL cleanMultipleActivitesUidDate(uid_, date_);
+
+		IF done THEN
+			CLOSE curMultAct;
+			LEAVE lMultipleActivites;
+		END IF;
+
+	END LOOP;
+END
+|
 -- Supprime les activités en double pour l'utilisateur dont l'uid est passé à la date date_
-DROP PROCEDURE IF EXISTS cleanMultipleActivitesUidDate|
-CREATE PROCEDURE cleanMultipleActivitesUidDate( IN uid_ SMALLINT(6) , IN date_ DATE , IN did_ SMALLINT(6) )
+DROP PROCEDURE IF EXISTS cleanDoubleActivitesUidDate|
+CREATE PROCEDURE cleanDoubleActivitesUidDate( IN uid_ SMALLINT(6) , IN date_ DATE , IN did_ SMALLINT(6) )
 BEGIN
-	DECLARE currentSdid, savedSdid BIGINT(20);
-	DECLARE done BOOLEAN;
-	DECLARE curSdid CURSOR FOR
-		SELECT sdid
-		FROM TBL_L_SHIFT_DISPO
+	DECLARE withTitle, compteur BIGINT(20);
+
+	CREATE TABLE IF NOT EXISTS sauvegardeActivitesMultiples (
+		 `sdid` bigint( 20  ) NOT NULL AUTO_INCREMENT COMMENT 'identifiant unique de l''occupation',
+		`date` date NOT NULL ,
+		`uid` smallint( 6  ) NOT NULL ,
+		`did` smallint( 6  ) NOT NULL ,
+		`pereq` tinyint( 1  ) NOT NULL COMMENT 'Ceci est une péréquation et ne correspond pas à un évènement réel',
+		`priorite` tinyint( 4  ) DEFAULT NULL COMMENT 'Définit un ordre dans le cas de dispo multiples',
+		`title` text COMMENT 'Le contenu du champ title (affiché au survol)',
+		`newDid` smallint( 6  ) DEFAULT NULL,
+		PRIMARY KEY ( `sdid`  ) ,
+		KEY `date` ( `date`  ) ,
+		KEY `uid` ( `uid`  ) ,
+		KEY `did` ( `did`  )
+	) ENGINE = InnoDB DEFAULT CHARSET = utf8;
+
+	-- Recherche si une activité contient un title (le cas échéant, c'est probablement l'entrée à conserver)
+	SELECT COUNT(date) - 1
+	INTO withTitle
+	FROM TBL_L_SHIFT_DISPO
+	WHERE date = date_
+	AND uid = uid_
+	AND did = did_
+	AND pereq IS FALSE
+	AND title IS NOT NULL;
+
+	IF withTitle >= 0 THEN
+		-- Suppression des activités n'ayant pas de title défini
+		-- Sauvegarde avant suppression
+		INSERT INTO sauvegardeActivitesMultiples
+		(SELECT sdid, date, uid, did, pereq, priorite, title, NULL
+			FROM TBL_L_SHIFT_DISPO
+			WHERE uid = uid_
+			AND date = date_
+			AND did = did_
+			AND pereq IS FALSE
+			AND title IS NULL);
+		DELETE FROM TBL_L_SHIFT_DISPO
+		WHERE uid = uid_
+		AND date = date_
+		AND did = did_
+		AND pereq IS FALSE
+		AND title IS NULL;
+
+		IF withTitle >= 1 THEN
+			INSERT INTO sauvegardeActivitesMultiples
+			(SELECT sdid, date, uid, did, pereq, priorite, title, NULL
+				FROM TBL_L_SHIFT_DISPO
+				WHERE uid = uid_
+				AND date = date_
+				AND did = did_
+				AND pereq IS FALSE
+				LIMIT withTitle);
+			DELETE FROM TBL_L_SHIFT_DISPO
+			WHERE uid = uid_
+			AND date = date_
+			AND did = did_
+			AND pereq IS FALSE
+			LIMIT withTitle;
+		END IF;
+	END IF;
+
+	SELECT COUNT(uid) - 1
+	INTO compteur
+	FROM TBL_L_SHIFT_DISPO
+	WHERE date = date_
+	AND uid = uid_
+	AND did = did_
+	AND pereq IS FALSE
+	ORDER BY uid;
+
+	IF compteur >= 1 THEN
+		INSERT INTO sauvegardeActivitesMultiples
+		(SELECT sdid, date, uid, did, pereq, priorite, title, NULL
+			FROM TBL_L_SHIFT_DISPO
+			WHERE date = date_
+			AND uid = uid_
+			AND did = did_
+			AND pereq IS FALSE
+			LIMIT compteur);
+			
+		DELETE FROM TBL_L_SHIFT_DISPO
 		WHERE date = date_
 		AND uid = uid_
 		AND did = did_
-		AND pereq IS FALSE;
+		AND pereq IS FALSE
+		LIMIT compteur;
+	END IF;
+END
+|
+-- Supprile les activités multiples pour l'utilisateur dont l'uid est passé à la date date_
+DROP PROCEDURE IF EXISTS cleanMultipleActivitesUidDate|
+CREATE PROCEDURE cleanMultipleActivitesUidDate( IN uid_ SMALLINT(6) , IN date_ DATE )
+BEGIN
+	DECLARE compt_ BIGINT(20);
+
+	SELECT COUNT(uid) - 1
+	INTO compt_
+	FROM TBL_L_SHIFT_DISPO
+	WHERE date = date_
+	AND uid = uid_
+	AND pereq IS FALSE
+	ORDER BY uid;
+
+	IF compt_ >= 1 THEN
+		INSERT INTO sauvegardeActivitesMultiples
+		(SELECT sdid, date, uid, did, pereq, priorite, title, NULL
+			FROM TBL_L_SHIFT_DISPO
+			WHERE date = date_
+			AND uid = uid_
+			AND pereq IS FALSE
+			ORDER BY sdid
+			LIMIT compt_);
+			
+		DELETE FROM TBL_L_SHIFT_DISPO
+		WHERE date = date_
+		AND uid = uid_
+		AND pereq IS FALSE
+		ORDER BY sdid
+		LIMIT compt_;
+	END IF;
+
+	UPDATE sauvegardeActivitesMultiples
+	SET newDid = (SELECT did
+		FROM TBL_L_SHIFT_DISPO
+		WHERE date = date_
+		AND uid = uid_)
+	WHERE date = date_
+	AND uid = uid_;
+END
+|
 	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
 	OPEN curSdid;
 	REPEAT
