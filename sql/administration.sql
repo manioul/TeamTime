@@ -236,6 +236,57 @@ END
 	REPEAT
 	FETCH curSdid INTO ;
 	UNTIL done END REPEAT;
-	CLOSE curSdid;
-END;
+|
+-- Supprime les activités saisies dans TBL_L_SHIFT_DISPO et qui n'existent plus
+DROP PROCEDURE IF EXISTS deleteInexistantActivities|
+CREATE PROCEDURE deleteInexistantActivities()
+BEGIN
+	DELETE FROM TBL_L_SHIFT_DISPO WHERE did NOT IN (SELECT did FROM TBL_DISPO);
+END
+|
+-- Supprime les activités saisies dans TBL_L_SHIFT_DISPO pour des utilisateurs qui n'existent pas
+DROP PROCEDURE IF EXISTS deleteInexistantUserActivities|
+CREATE PROCEDURE deleteInexistantUserActivities()
+BEGIN
+	DELETE FROM TBL_L_SHIFT_DISPO WHERE uid NOT IN (SELECT uid FROM TBL_DISPO);
+END
+|
+-- Supprime les uid inexistant de TBL_AFFECTATION
+DROP PROCEDURE IF EXISTS deleteInexistantAffectations|
+CREATE PROCEDURE deleteInexistantAffectations()
+BEGIN
+	DELETE FROM TBL_AFFECTATION WHERE uid NOT IN (SELECT uid FROM TBL_USERS);
+END
+|
+-- Supprime les uid inexistant de TBL_HEURES
+DROP PROCEDURE IF EXISTS deleteInexistantHeures|
+CREATE PROCEDURE deleteInexistantHeures()
+BEGIN
+	DELETE FROM TBL_HEURES WHERE uid NOT IN (SELECT uid FROM TBL_USERS);
+END
+|
+-- Maintenance quotidienne
+DROP EVENT IF EXISTS dailyMaintenance|
+CREATE EVENT dailyMaintenance
+ON SCHEDULE
+EVERY 1 DAY
+COMMENT 'Maintenance quotidienne'
+DO
+	BEGIN
+		CALL deleteInexistantActivities();
+		CALL deleteInexistantUserActivities();
+		CALL deleteInexistantAffectations();
+		CALL deleteInexistantHeures();
+	END
+	|
+-- Maintenance hebdomadaire
+DROP EVENT IF EXISTS weeklyMaintenance|
+CREATE EVENT weeklyMaintenance
+ON SCHEDULE
+EVERY 1 WEEK
+COMMENT 'Maintenance hebdomadaire'
+DO
+	BEGIN
+	END
+	|
 DELIMITER ;
