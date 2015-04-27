@@ -1,17 +1,98 @@
 DELIMITER |
 -- CREATION/SUPPRESSION UTILISATEURS
 DROP PROCEDURE IF EXISTS __createUtilisateurDb|
-CREATE PROCEDURE __createUtilisateurDb ( IN uid_ SMALLINT(6) , IN passwd VARCHAR(64) )
+CREATE PROCEDURE __createUtilisateurDb ( IN dbUser_ VARCHAR(128) , IN pass VARCHAR(64) )
 BEGIN
-	INSERT INTO mysql.user
-		(Host, User, Password)
-		VALUES
-		('localhost', CONCAT('ttm.', uid_), PASSWORD(passwd));
-	INSERT INTO mysql.db
-		(Host, Db, User, Select_priv, Insert_priv, Update_priv, Delete_priv, Execute_priv, Create_tmp_table_priv)
-		VALUES
-		('localhost', 'ttm', CONCAT('ttm.', uid_), 'Y', 'Y', 'Y', 'Y', 'Y', 'Y'); 
+	SET @query1 = CONCAT('CREATE USER "', dbUser_,'"@"localhost" IDENTIFIED BY "', pass, '"');
+	PREPARE stmt FROM @query1;
+	EXECUTE stmt;
+	DEALLOCATE PREPARE stmt;
+	CALL __attribStdPriv( dbUser_ );
+END
+|
+-- Ajoute les droits standards de tous les utilsiateurs
+DROP PROCEDURE IF EXISTS __attribStdPriv|
+CREATE PROCEDURE __attribStdPriv ( IN dbUser_ VARCHAR(128) )
+BEGIN
+	-- Ignore les erreurs liées aux privilèges à supprimer et qui n'existent pas
+	-- (supprimer des privilèges à un utilisateur qui n'a pas ces privilèges déclenche une erreur 42000)
+	DECLARE CONTINUE HANDLER FOR SQLSTATE '42000' BEGIN END;
+	SET @query1 = CONCAT('REVOKE ALL PRIVILEGES ON ttm . * FROM "', dbUser_, '"@"localhost"');
+	PREPARE stmt FROM @query1;
+	EXECUTE stmt;
+	DEALLOCATE PREPARE stmt;
+	SET @query1 = CONCAT('REVOKE GRANT OPTION ON ttm . * FROM "', dbUser_, '"@"localhost"');
+	PREPARE stmt FROM @query1;
+	EXECUTE stmt;
+	DEALLOCATE PREPARE stmt;
 	FLUSH PRIVILEGES;
+	SET @query1 = CONCAT('GRANT SELECT , INSERT , UPDATE , DELETE , CREATE TEMPORARY TABLES , EXECUTE ON ttm . * TO "', dbUser_, '"@"localhost"');
+	PREPARE stmt FROM @query1;
+	EXECUTE stmt;
+	DEALLOCATE PREPARE stmt;
+END
+|
+-- Ajout de droits étendus pour les rôles >= editeurs
+DROP PROCEDURE IF EXISTS __attribExtraPriv|
+CREATE PROCEDURE __attribExtraPriv ( IN dbUser_ VARCHAR(128) )
+BEGIN
+	-- Ignore les erreurs liées aux privilèges à supprimer et qui n'existent pas
+	-- (supprimer des privilèges à un utilisateur qui n'a pas ces privilèges déclenche une erreur 42000)
+	DECLARE CONTINUE HANDLER FOR SQLSTATE '42000' BEGIN END;
+	SET @query1 = CONCAT('REVOKE ALL PRIVILEGES ON ttm . * FROM "', dbUser_, '"@"localhost"');
+	PREPARE stmt FROM @query1;
+	EXECUTE stmt;
+	DEALLOCATE PREPARE stmt;
+	SET @query1 = CONCAT('REVOKE GRANT OPTION ON ttm . * FROM "', dbUser_, '"@"localhost"');
+	PREPARE stmt FROM @query1;
+	EXECUTE stmt;
+	DEALLOCATE PREPARE stmt;
+	FLUSH PRIVILEGES;
+	SET @query1 = CONCAT('GRANT SELECT, INSERT, UPDATE, DELETE, CREATE TEMPORARY TABLES, EXECUTE ON ttm . * TO "', dbUser_, '"@"localhost" WITH GRANT OPTION');
+	PREPARE stmt FROM @query1;
+	EXECUTE stmt;
+	DEALLOCATE PREPARE stmt;
+END
+|
+-- Attribue les privilèges à l'utilisateur de ttm dont l'uid est passé
+-- Editeurs ont GRANT (pour créer des utilsiateurs)
+DROP PROCEDURE IF EXISTS __attribPriv|
+CREATE PROCEDURE __attribPriv( IN uid_ SMALLINT(6) )
+BEGIN
+	DECLARE compt INT(11);
+
+	SELECT COUNT(role)
+	INTO compt
+	FROM TBL_ROLES
+	WHERE role = 'editeurs'
+	AND uid = uid_;
+	IF compt > 0 THEN
+		CALL __attribExtraPriv(CONCAT('ttm.', uid_));
+	ELSE
+		CALL __attribStdPriv(CONCAT('ttm.', uid_));
+	END IF;
+END
+|
+-- Corrige les privilèges de l'ensemble des utilisateurs
+DROP PROCEDURE IF EXISTS __globallyAttribPriv|
+CREATE PROCEDURE __globallyAttribPriv()
+BEGIN
+	DECLARE uid_ SMALLINT(6);
+	DECLARE done BOOLEAN DEFAULT 0;
+	DECLARE curUids CURSOR FOR SELECT uid FROM TBL_USERS;
+	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
+
+	OPEN curUids;
+	lUsers : LOOP
+		FETCH curUids INTO uid_;
+		CALL __attribPriv(uid_);
+		IF done THEN
+			CLOSE curUids;
+			LEAVE lUsers;
+		END IF;
+	END LOOP;
+END
+|
 END
 |
 -- Accepte l'inscription d'un utilisateur prépare les informations pour le compte
@@ -165,6 +246,7 @@ BEGIN
 			(uid, role, centre, team, beginning, end, commentaire, confirmed)
 			VALUES
 			(uid_, role_, centre_, team_, beginning_, end_, commentaire_, confirmed_);
+		CALL __attribPriv(uid_);
 	ELSE
 		IF beginning_ < debut THEN
 			IF end_ > fin THEN
