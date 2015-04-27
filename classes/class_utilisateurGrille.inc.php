@@ -1824,6 +1824,7 @@ class utilisateursDeLaGrille {
 									WHERE `sdid` = (SELECT `sdid`
 								       			FROM `TBL_L_SHIFT_DISPO`
 											WHERE `date` = '%s'
+											AND `pereq` IS FALSE
 											AND `uid` = %d
 											AND `did` IN (SELECT `did`
 													FROM `TBL_DISPO`
