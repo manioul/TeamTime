@@ -19,6 +19,7 @@
 <td><input type="submit" class="bouton" name="submitAffect" value="Ajouter" /></td>
 </tr>
 {* La partie carrière et affectations peut être remplie par la fonction javascript fillUser (administration.js.php) *}
+{* ajoutUtilisateur.php utilise le remplissage par javascript, monCompte.php utilise la boucle qui suit... *}
 {foreach $datas as $carriere}
 <tr id="affectation{$carriere->aid()}">
 <td>{$carriere->centreDisplay()}</td>
