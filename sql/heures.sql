@@ -118,7 +118,7 @@ BEGIN
 		WHERE date = date_
 		AND did NOT IN (SELECT did
 			FROM TBL_DISPO
-			WHERE absence IS TRUE
+			WHERE absence = 1
 			OR dispo = 'fmp'
 			OR dispo = 'cds')
 		AND uid IN (
@@ -158,14 +158,14 @@ BEGIN
 			AND DATE_SUB(date_, INTERVAL 4 MONTH) BETWEEN beginning AND end)
 		AND did NOT IN (SELECT did
 			FROM TBL_DISPO
-			WHERE (absence IS TRUE OR dispo = 'fmp' OR dispo = 'cds'))
+			WHERE (absence = 1 OR dispo = 'fmp' OR dispo = 'cds'))
 		GROUP BY uid
 		ORDER BY instru ASC
 		LIMIT nbInstructeurs;
 	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
 
 	-- Table temporaire listant les utilisateurs présents au regard du décompte d'heure
-	CREATE TEMPORARY TABLE IF NOT EXISTS tmpPresents (
+	CREATE TABLE IF NOT EXISTS tmpPresents (
 		uid INT(11) NOT NULL,
 		grade VARCHAR(64) NOT NULL,
 		did INT(11) NOT NULL,
@@ -197,7 +197,7 @@ BEGIN
 			WHERE date = date_
 			AND did IN (SELECT did
 				FROM TBL_DISPO
-				WHERE absence IS TRUE
+				WHERE absence = 1
 				OR dispo = 'fmp'
 				OR dispo = 'cds')
 			)
@@ -284,7 +284,7 @@ BEGIN
 		WHERE date = date_
 		AND did IN (SELECT did
 			FROM TBL_DISPO
-			WHERE absence IS TRUE
+			WHERE absence = 1
 			AND centre = centre_
 			AND team = team_));
 	IF eleves > 0 THEN
