@@ -1609,13 +1609,14 @@ class utilisateursDeLaGrille {
 			// Récupération des compteurs
 			if (isset($DEBUG) && true === $DEBUG) debug::getInstance()->startChrono('Relève compteur'); // Début chrono
 			$sql = "
-				SELECT `type decompte`
+				SELECT DISTINCT `type decompte`
 				FROM `TBL_DISPO`
 				WHERE `actif` = TRUE
 				AND `need_compteur` = TRUE
 				AND `type decompte` != 'conges'
 				AND (`centre` = 'all' OR `centre` = '$centre')
 				AND (`team` = 'all' OR `team` = '$team')
+				ORDER BY `did` ASC
 				";
 			$results = $_SESSION['db']->db_interroge($sql);
 			while ($res = $_SESSION['db']->db_fetch_array($results)) {

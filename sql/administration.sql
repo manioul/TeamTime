@@ -231,6 +231,27 @@ BEGIN
 	AND uid = uid_;
 END
 |
+-- Échange deux did afin de réorganiser l'ordre des compteurs associés à ces did
+-- La table TBL_DISPO est modifiée et la magie des clés étrangères devrait faire le reste.
+-- Les tables concernées par la magie :
+--	- TBL_DISPO
+--	- TBL_DISPATCH_HEURES
+--	- TBL_EVENEMENTS_SPECIAUX
+--	- TBL_HEURES
+--	- TBL_L_SHIFT_DISPO
+--	- TBL_VACANCES_A_ANNULER
+DROP PROCEDURE IF EXISTS swapDid|
+CREATE PROCEDURE swapDid( IN did1_ INT(11) , IN did2_ INT(11) )
+BEGIN
+	DECLARE pivotDid SMALLINT(6);
+
+	SELECT MAX(did) + 100 INTO pivotDid FROM TBL_DISPO;
+	
+	UPDATE TBL_DISPO SET did = pivotDid WHERE did = did1_;	
+	UPDATE TBL_DISPO SET did = did1_ WHERE did = did2_;	
+	UPDATE TBL_DISPO SET did = did2_ WHERE did = pivotDid;
+END
+|
 	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
 	OPEN curSdid;
 	REPEAT
