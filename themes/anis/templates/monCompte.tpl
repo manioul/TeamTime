@@ -134,9 +134,6 @@
 </li>
 {/if}
 {if $smarty.session.EDITEURS}
-<li>
-<label for="poids">poids : </label><input type="text" name="poids" id="poids" value="{$utilisateur->poids()}" />
-</li>
 </ul>
 </fieldset>
 
