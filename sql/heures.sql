@@ -165,7 +165,7 @@ BEGIN
 	DECLARE CONTINUE HANDLER FOR SQLSTATE '02000' SET done = 1;
 
 	-- Table temporaire listant les utilisateurs présents au regard du décompte d'heure
-	CREATE TABLE IF NOT EXISTS tmpPresents (
+	CREATE TEMPORARY TABLE IF NOT EXISTS tmpPresents (
 		uid INT(11) NOT NULL,
 		grade VARCHAR(64) NOT NULL,
 		did INT(11) NOT NULL,
