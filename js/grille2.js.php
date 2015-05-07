@@ -428,7 +428,7 @@ function comptePresents(sId)
 	?>
 	var aAbsent = {<?=substr($absences, 0, -2)?>};
 	var aD = {<?=substr($dispo, 0, -2)?>};
-	var aPresents = {'cds': 0, 'ce': 0, 'fmp' : 0, 'dtch': 0, 'pc': 0, 'c': 0, 'aD':0};
+	var aPresents = {'cds': 0, 'ce': 0, 'fmp' : 0, 'dtch': 0, 'pc': 0, 'theo': 0, 'c': 0, 'aD':0};
 	var aListeUid = listeUid();
 	for (var iUid in aListeUid)
 	{
@@ -437,18 +437,19 @@ function comptePresents(sId)
 		{
 			if ($(sTemp).text() == " ") {
 				aPresents[aListeUid[iUid]]++;
-				if (aListeUid[iUid] != 'c') {
+				if (aListeUid[iUid] != 'c' && aListeUid[iUid] != 'theo') {
 					aPresents['aD']++;
 				}
 			} else {
 				aPresents[aListeUid[iUid]] += aAbsent[$(sTemp).text()] || 0;
-				if (aListeUid[iUid] != 'c') {
+				if (aListeUid[iUid] != 'c' && aListeUid[iUid] != 'theo') {
 					aPresents['aD'] += aD[$(sTemp).text()] || 0;
 				}
 			}
 		}
 	}
 	aPresents['pc'] += aPresents['ce'] + aPresents['cds'] + aPresents['dtch'] + aPresents['fmp'];
+	aPresents['c'] += aPresents['theo'];
 	$('#dec'+sDate).text(aPresents['aD']+"/"+aPresents['pc']+"/"+aPresents['c']);
 	if (aPresents['pc'] < <?=get_sql_globals_constant('effectif_mini')?> && !$('#dec'+sDate).hasClass('protected'))
 	{
@@ -628,7 +629,7 @@ function infosFromId(sId) {
 // Retourne un tableau avec les uid présents sur le tableau
 ?>
 function listeUid() {
-	var aClasses = new Array('cds', 'ce', 'pc', 'c', 'dtch', 'fmp');
+	var aClasses = new Array('cds', 'ce', 'pc', 'theo', 'c', 'dtch', 'fmp');
 	var aEffectif = new Array();
 	var aClass = new Array();
 	for (var iClass in aClasses)
