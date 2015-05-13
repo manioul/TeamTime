@@ -590,6 +590,10 @@ class utilisateurGrille extends utilisateur {
 			$row = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
 			$this->pref = json_decode($row['pref'], false);
 		}
+		if ($this->pref->theme) {
+			$conf['theme']['current'] = $this->pref->theme;
+			setcookie('theme', $conf['theme']['current'], $conf['theme']['cookieLifeTime'], $conf['session_cookie']['path'], $conf['session_cookie']['domain'], $conf['session_cookie']['secure']);
+		}
 		return $this->pref;
 	}
 	/**
