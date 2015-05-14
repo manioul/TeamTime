@@ -182,6 +182,9 @@ if (sizeof($_POST) > 0) {
 		} else {
 			$utilisateur->addPref('dtch', 0);
 		}
+		if (array_key_exists('theme', $_POST)) {
+			$utilisateur->addPref('theme', $_POST['theme']);
+		}
 
 		// S'il y a un nouveau téléphone à ajouter
 		if (array_key_exists('newnb', $_POST)) {
@@ -209,12 +212,37 @@ if (sizeof($_POST) > 0) {
 			);
 		}
 		$utilisateur->fullUpdateDB();
+		$utilisateur->pref();
 	}
 	if ($reloadUser) {
 		// On recharge l'utilisateur pour prendre en compte les modifications de son compte
 		$_SESSION['utilisateur'] = new utilisateurGrille($_SESSION['utilisateur']->uid());
 	}
 }
+
+// Choix du thème
+$themes = array(
+	'label'		=> 'Thème'
+	, 'name'	=> 'theme'
+);
+$rsc = opendir('./themes');
+$i = 0;
+while (($theme = readdir($rsc)) != false) {
+	if (preg_match('/^\./', $theme) === 1 || file_exists("./themes/$theme/.ignore") || !file_exists("./themes/$theme/theme.ini")) {
+		continue;
+	}
+	$arr = parse_ini_file("./themes/$theme/theme.ini");
+	$themes['options'][$i] = array(
+		'value'		=> $arr['abb']
+		, 'content'	=> $arr['nom']
+	);
+	if ($utilisateur->getPref('theme') == $arr['abb']) {
+		$themes['options'][$i]['selected'] = 1;
+	}
+	$i++;
+}
+closedir($rsc);
+$smarty->assign('themes', $themes);
 
 // Données nécessaires à la partie contact
 $affectation = $_SESSION['utilisateur']->affectationOnDate(date('Y-m-d'));
