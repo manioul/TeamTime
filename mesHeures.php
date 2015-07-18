@@ -136,9 +136,41 @@ $affectation = $_SESSION['utilisateur']->affectationOnDate($dateDebut);
 
 $previousYear = (int) date('Y');
 $previousYear--;
-$smarty->assign('defaultD', '01/01/' . $previousYear);
 
-$smarty->display('debutHeuresForm.tpl');
+$fIntervalHeures = array(
+	'name'		=> "fIntervalHeures"
+	, 'id'		=> "fIntervalHeures"
+	, 'method'	=> "POST"
+	, 'action'	=> ""
+	, 'classe'	=> "ng w24"
+	, 'fieldsets'	=> array(
+		array(
+			'display'	=> "none"
+			, 'row'		=> array(
+				array(
+					'name'		=> "dateD"
+					, 'id'		=> "dateD"
+					, 'type'	=> "date"
+					, 'label'	=> "Début des heures"
+					, 'value'	=> '01/01/' . $previousYear
+				)
+				, array(
+					'name'		=> "dateF"
+					, 'id'		=> "dateF"
+					, 'type'	=> "date"
+					, 'label'	=> "Fin des heures"
+				)
+				, array(
+					, 'type'	=> "submit"
+				)
+			)
+		)
+	)
+);
+
+$smarty->assign('form', $fIntervalHeures);
+
+$smarty->display('html.form_ul.tpl');
 
 $smarty->display('saisieHeuresIndividuelles.tpl');
 
@@ -201,6 +233,8 @@ if (!empty($dateDebut)) {
 		, $exclude
 	);
 	$aTotaux = $_SESSION['db']->db_fetch_assoc($_SESSION['db']->db_interroge($sql));
+
+	
 
 	$smarty->assign('dateDebut', $dateDebut->formatDate('fr'));
 	$smarty->assign('dateFin', $dateFin->formatDate('fr'));
