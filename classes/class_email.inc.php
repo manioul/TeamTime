@@ -178,7 +178,7 @@ class Email {
 			'to'		=> $row['email']
 			, 'subject'	=> $row['subject']
 			, 'content'	=> sprintf($row['texte']
-			, htmlentities(ucfirst($row['prenom']))
+			, ucfirst($row['prenom'])
 			, $array['proto']
 			, $_SERVER['SERVER_NAME']
 			, $row['k']
@@ -224,7 +224,7 @@ class Email {
 			'to'		=> $row['email']
 			, 'subject'	=> $row['subject']
 			, 'content'	=> sprintf($row['texte']
-			, htmlentities(ucfirst($row['prenom']))
+			, ucfirst($row['prenom'])
 			, $array['proto']
 			, $_SERVER['SERVER_NAME']
 			, $array['k']
@@ -264,8 +264,8 @@ class Email {
 			'to'		=> $array['to']
 			, 'subject'	=> $row['subject']
 			, 'content'	=> sprintf($row['texte']
-					, htmlentities(ucfirst($row['prenom']))
-					, htmlentities($row['login'])
+					, ucfirst($row['prenom'])
+					, $row['login']
 			)
 		);
 	}
@@ -302,10 +302,10 @@ class Email {
 			'to'		=> $row['email']
 			, 'subject'	=> $row['subject']
 			, 'content'	=> sprintf($row['texte']
-					, htmlentities(ucfirst($row['prenom']))
+					, ucfirst($row['prenom'])
 					, $array['proto']
 					, $_SERVER['SERVER_NAME']
-					, htmlentities($array['password'])
+					, $array['password']
 					)
 		);
 	}
@@ -340,7 +340,7 @@ class Email {
 			'to'		=> $row['email']
 			, 'subject'	=> $row['subject']
 			, 'content'	=> sprintf($row['texte']
-					, htmlentities(ucfirst($row['prenom']))
+					, ucfirst($row['prenom'])
 					, $array['proto']
 					, $_SERVER['SERVER_NAME']
 					, $k
