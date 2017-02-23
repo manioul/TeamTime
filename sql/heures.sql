@@ -181,17 +181,21 @@ BEGIN
 
 	DELETE FROM tmpPresents WHERE team = team_ AND centre = centre_;
 	INSERT INTO tmpPresents
-		SELECT uid, grade, 0, 0, 0, 0, 0, 'unattr', 0, centre_, team_
-		FROM TBL_AFFECTATION
+		SELECT a.uid, a.grade, 0, 0, 0, 0, 0, 'unattr', 0, centre_, team_
+		FROM TBL_AFFECTATION AS a,
+		TBL_USERS AS u
 		WHERE centre = centre_
 		AND team = team_
+		AND a.uid = u.uid
 		AND date_ BETWEEN beginning AND end
 		AND validated IS TRUE
+		-- Le compte doit être actif
+		AND active IS TRUE
 		-- Les c n'ont pas d'heure
 		AND grade != 'c'
 		AND grade != 'theo'
 		-- les utilisateurs qui ont une case remplie qui n'est pas une absence
-		AND uid NOT IN (SELECT uid
+		AND a.uid NOT IN (SELECT uid
 			FROM TBL_L_SHIFT_DISPO
 			WHERE date = date_
 			AND did IN (SELECT did
@@ -201,11 +205,12 @@ BEGIN
 				OR dispo = 'cds')
 			)
 		-- cds en nuit (2)
-		AND uid NOT IN (SELECT uid
+		AND a.uid NOT IN (SELECT uid
 			FROM TBL_L_SHIFT_DISPO
 			WHERE date = date_
 			AND did = (SELECT did
 				FROM TBL_DISPO
+				-- FIXME valable que pour les équipes utilisant l'activité '2'
 				WHERE dispo = '2'
 				AND centre = centre_
 				AND team = team_
